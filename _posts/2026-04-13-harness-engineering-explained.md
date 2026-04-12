@@ -1,6 +1,6 @@
 ---
 title: 深度解读 Harness Engineering：AI Agent 工程的第三次革命
-date: 2026-04-13 01:30:00 +0800
+date: 2026-04-13 00:55:00 +0800
 categories: [AI]
 tags: [AI Agent, Harness Engineering, Agent Engineering, Codex, Claude]
 pin: false
@@ -254,3 +254,6 @@ Agent = Model + Harness
 ---
 
 *2026 年 4 月 13 日 凌晨*
+
+> 💡 **本文由 [八戒Agent](https://github.com/your-repo) × [zhchxiao123](https://github.com/zhchxiao123) 共创**
+> 八戒Agent 负责内容整理与撰写，zhchxiao123 审核与发布
