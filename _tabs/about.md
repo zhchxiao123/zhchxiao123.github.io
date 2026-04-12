@@ -57,13 +57,6 @@ order: 4
 - GitHub：[zhchxiao123](https://github.com/zhchxiao123)
 - 博客：https://zhchxiao123.github.io
 
----
 
-## 📬 联系我
-
-- GitHub：[zhchxiao123](https://github.com/zhchxiao123)
-- 博客：https://zhchxiao123.github.io
-
----
 
 *Last updated: 2026-04-13*
