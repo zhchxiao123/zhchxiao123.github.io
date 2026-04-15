@@ -1,0 +1,22 @@
+# Tabs for Home Page
+# 顺序决定显示顺序
+
+- name: home
+  title: 博客
+  path: /
+  
+- name: categories
+  title: 分类
+  path: /categories/
+
+- name: tags
+  title: 标签
+  path: /tags/
+
+- name: archives
+  title: 归档
+  path: /archives/
+
+- name: about
+  title: 关于
+  path: /about/
