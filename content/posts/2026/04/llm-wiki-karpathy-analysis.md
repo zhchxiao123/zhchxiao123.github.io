@@ -1,25 +1,19 @@
 ---
 title: "Karpathy 的 LLM Wiki：杀死 RAG 还是开启知识管理新范式？"
-date: 2026-04-15 21:50:00 +0800
-categories: [AI, 技术解读]
-tags: [AI, RAG, LLM Wiki, 知识管理, Karpathy, LLM]
+date: "2026-04-15"
 description: "深入解析 Karpathy 提出的 LLM Wiki 模式，探讨其与传统 RAG 的区别，以及对 AI 知识管理领域的深远影响。"
+tags: ["AI", "RAG", "LLM Wiki", "知识管理", "Karpathy", "LLM"]
+categories: ["AI技术", "技术解读"]
 video_url: "https://timelog-1257904505.cos.ap-guangzhou.myqcloud.com/video/llm-wiki-karpathy.mp4"
 video_duration: "8分19秒"
 source: "https://medium.com/towards-artificial-intelligence/andrej-karpathy-killed-rag-or-did-he-the-llm-wiki-pattern-7824d876e790"
+thumbnail: "/images/llm-wiki-cover.jpg"
 draft: false
 ---
 
-## 📺 视频演示
+# Karpathy 的 LLM Wiki：杀死 RAG 还是开启知识管理新范式？
 
-<video controls width="100%" preload="metadata">
-  <source src="https://timelog-1257904505.cos.ap-guangzhou.myqcloud.com/video/llm-wiki-karpathy.mp4" type="video/mp4">
-  您的浏览器不支持视频播放。
-</video>
-
-> 🎬 **视频时长**：8分19秒 | **分辨率**：3000×1688 | **大小**：20 MB
-
----
+> 📺 **视频版本**：[点击观看完整视频讲解](https://timelog-1257904505.cos.ap-guangzhou.myqcloud.com/video/llm-wiki-karpathy.mp4) （8分19秒）
 
 ## 前言
 
@@ -193,15 +187,10 @@ Karpathy 的 LLM Wiki 不是一个炫技的项目，而是一个**直击本质**
 
 ## 参考来源
 
-| 来源 | 标题 | 链接 |
-|------|------|------|
-| Medium | Andrej Karpathy: Killed RAG or Did He? The LLM Wiki Pattern | [访问](https://medium.com/towards-artificial-intelligence/andrej-karpathy-killed-rag-or-did-he-the-llm-wiki-pattern-7824d876e790) |
+- 📝 **原文**：["Andrej Karpathy: Killed RAG or Did He? The LLM Wiki Pattern"](https://medium.com/towards-artificial-intelligence/andrej-karpathy-killed-rag-or-did-he-the-llm-wiki-pattern-7824d876e790)
+- 🎬 **视频讲解**：LLM Wiki 深度解析视频（8分19秒）
+- 🐙 **GitHub**：LLM Wiki 开源项目
 
 ---
 
 *如果你觉得这篇文章有帮助，欢迎分享给更多朋友！*
-
-> 💡 **本文由 [八戒Agent](https://github.com/zhchxiao123/bajie) × [zhchxiao123](https://github.com/zhchxiao123) 共创**
-> 
-> 🐷 八戒Agent 负责：资料搜索、内容整理、视频生成、博客撰写
-> 👤 zhchxiao123 负责：审核发布、GitHub部署
