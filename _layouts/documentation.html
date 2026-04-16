@@ -16,10 +16,17 @@ layout: compress
 
   <body class="docs-layout">
     <!-- Overlay mask for mobile -->
-    <div id="mask" class="docs-mask position-fixed w-100 h-100 z-1" style="display:none; background: rgba(0,0,0,0.5); top:0; left:0;"></div>
+    <div id="docs-mask" class="docs-mask position-fixed w-100 h-100 z-1" style="display:none; background: rgba(0,0,0,0.5); top:0; left:0;"></div>
 
-    <!-- Advanced Documentation Sidebar -->
-    <aside aria-label="Sidebar" id="sidebar" class="d-flex flex-column align-items-start px-3 py-4">
+    <!-- Hidden stub: Chirpy theme JS requires #sidebar with .sidebar-bottom -->
+    <aside id="sidebar" class="d-none">
+      <div class="sidebar-bottom">
+        <button id="mode-toggle"></button>
+      </div>
+    </aside>
+
+    <!-- Documentation Sidebar (independent from theme) -->
+    <aside aria-label="Sidebar" id="docs-sidebar" class="d-flex flex-column align-items-start px-3 py-4">
       <div class="sidebar-header w-100 mb-4 px-2">
         <div class="d-flex justify-content-between align-items-center mb-3">
           <a href="{{ '/' | relative_url }}" class="back-link d-inline-flex align-items-center">
@@ -64,11 +71,6 @@ layout: compress
           {% endfor %}
         </ul>
       </nav>
-
-      <!-- Hidden: required by Chirpy theme JS -->
-      <div class="sidebar-bottom d-none">
-        <button id="mode-toggle"></button>
-      </div>
     </aside>
 
     <div id="main-wrapper" class="d-flex justify-content-center">
@@ -129,42 +131,41 @@ layout: compress
       </aside>
     </div>
 
+    <div id="mask" class="d-none"></div>
+
     {% include_cached search-loader.html lang=lang %}
 
     {% if site.pwa.enabled %}
       {% include_cached notification.html lang=lang %}
     {% endif %}
 
-
-    
     <!-- Documentation Toggle Logic -->
     <script>
       document.addEventListener('DOMContentLoaded', function() {
         const sidebarTrigger = document.getElementById('sidebar-trigger');
-        const mask = document.getElementById('mask');
+        const docsMask = document.getElementById('docs-mask');
         const docsLayout = document.querySelector('.docs-layout');
 
         function toggleSidebar() {
           docsLayout.classList.toggle('sidebar-opened');
-          mask.style.display = docsLayout.classList.contains('sidebar-opened') ? 'block' : 'none';
+          docsMask.style.display = docsLayout.classList.contains('sidebar-opened') ? 'block' : 'none';
         }
 
         if (sidebarTrigger) sidebarTrigger.addEventListener('click', toggleSidebar);
-        if (mask) mask.addEventListener('click', toggleSidebar);
+        if (docsMask) docsMask.addEventListener('click', toggleSidebar);
       });
     </script>
     
     <style>
       :root {
-        --sidebar-width: 300px;
+        --docs-sidebar-width: 300px;
       }
 
       /* Fix Topbar Title on Mobile */
       .docs-layout #topbar-title {
-        display: none !important; /* 隐藏默认的显示 logic */
+        display: none !important;
       }
       
-      /* 在 Topbar 中间注入当前页标题 (仅移动端可见，因为宽屏下标题在内容区) */
       @media (max-width: 991px) {
         #topbar::after {
           content: "{{ page.title }}";
@@ -181,10 +182,11 @@ layout: compress
         }
       }
       
-      .docs-layout #sidebar {
+      /* Documentation Sidebar - completely independent */
+      #docs-sidebar {
         background-color: var(--main-bg);
         border-right: 1px solid var(--main-border-color);
-        width: var(--sidebar-width);
+        width: var(--docs-sidebar-width);
         position: fixed;
         top: 0;
         bottom: 0;
@@ -196,8 +198,8 @@ layout: compress
       }
       
       .docs-layout #main-wrapper {
-        margin-left: var(--sidebar-width);
-        width: calc(100% - var(--sidebar-width));
+        margin-left: var(--docs-sidebar-width);
+        width: calc(100% - var(--docs-sidebar-width));
         min-height: 100vh;
         background-color: var(--main-bg);
       }
@@ -334,7 +336,7 @@ layout: compress
         line-height: 1.6;
         color: inherit;
         font-family: var(--font-family-monospace) !important;
-        white-space: pre-wrap; /* 让代码在移动端自动换行或保持滚动 */
+        white-space: pre-wrap;
         word-break: break-all;
       }
 
@@ -347,9 +349,9 @@ layout: compress
         font-size: 88%;
       }
 
-      /* Mobile Adaptivity Fixes */
+      /* Mobile Adaptivity */
       @media (max-width: 991px) {
-        .docs-layout #sidebar {
+        #docs-sidebar {
           transform: translateX(-100%);
           box-shadow: 2px 0 10px rgba(0,0,0,0.1);
         }
@@ -357,7 +359,7 @@ layout: compress
           margin-left: 0;
           width: 100%;
         }
-        .docs-layout.sidebar-opened #sidebar {
+        .docs-layout.sidebar-opened #docs-sidebar {
           transform: translateX(0);
         }
         .docs-layout .docs-mask {
