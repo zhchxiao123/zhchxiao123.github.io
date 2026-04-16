@@ -1,0 +1,44 @@
+<section id="access-projects" class="mb-4">
+  <div class="access-title">{{ "系列专题" | upcase }}</div>
+  <ul class="content list-unstyled ps-0 pb-1 ms-1 mt-2">
+    {% for project in site.data.projects %}
+    <li class="project-item mb-3">
+      <a href="{{ project.doc_url | relative_url }}" class="d-flex align-items-center text-decoration-none">
+        <div class="project-icon-mini me-2 d-flex align-items-center justify-content-center shadow-sm" 
+             style="width: 32px; height: 32px; background: var(--sidebar-hover-bg); border-radius: 8px; color: var(--link-color); overflow: hidden;">
+          {% if project.icon contains '/' or project.icon contains '.' %}
+            <img src="{{ project.icon | relative_url }}" style="width: 20px; height: 20px; object-fit: contain;">
+          {% else %}
+            <i class="fas {{ project.icon }} fa-sm"></i>
+          {% endif %}
+        </div>
+        <div class="project-info-mini overflow-hidden">
+          <div class="project-name-mini text-truncate fw-bold" style="font-size: 0.85rem; color: var(--text-color);">
+            {{ project.name }}
+          </div>
+          {% assign sidebar_name = project.sidebar_data | default: "docs_sidebar" %}
+          <div class="project-stats-mini text-muted small" style="font-size: 0.7rem;">
+            <i class="far fa-file-alt me-1"></i>{{ site.data[sidebar_name].size }} 章节
+          </div>
+        </div>
+      </a>
+    </li>
+    {% endfor %}
+  </ul>
+</section>
+
+<style>
+  .project-item {
+    transition: transform 0.2s;
+  }
+  .project-item:hover {
+    transform: translateX(5px);
+  }
+  .project-icon-mini {
+    transition: all 0.2s;
+  }
+  .project-item:hover .project-icon-mini {
+    background: var(--link-color) !important;
+    color: white !important;
+  }
+</style>

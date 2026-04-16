@@ -1,0 +1,9 @@
+
+- name: Claude Code 源码分析
+  id: claude-code-source
+  description: 24 章节深度复盘 Claude Code 核心架构与实现细节。
+  icon: /assets/img/claude-logo.png
+  sidebar_data: claude_code_sidebar
+  doc_url: /docs/claude-code/01-entry-points-bootstrap/
+
+

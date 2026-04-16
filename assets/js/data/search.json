@@ -1,0 +1,40 @@
+---
+layout: compress
+swcache: true
+---
+
+[
+  {% assign first_item = true %}
+
+  {% comment %} --- Indexing Posts --- {% endcomment %}
+  {% for post in site.posts %}
+    {% unless first_item %},{% endunless %}
+    {
+      "title": {{ post.title | jsonify }},
+      "url": {{ post.url | relative_url | jsonify }},
+      "categories": {{ post.categories | join: ', ' | jsonify }},
+      "tags": {{ post.tags | join: ', ' | jsonify }},
+      "date": {{ post.date | jsonify }},
+      {% capture content -%}{% include post-summary.html full_text=true %}{%- endcapture -%}
+      "content": {{ content | strip_html | strip_newlines | jsonify }}
+    }
+    {% assign first_item = false %}
+  {% endfor %}
+
+  {% comment %} --- Indexing Documentation Pages --- {% endcomment %}
+  {% for doc_page in site.pages %}
+    {% if doc_page.layout == 'documentation' %}
+      {% unless first_item %},{% endunless %}
+      {
+        "title": {{ doc_page.title | jsonify }},
+        "url": {{ doc_page.url | relative_url | jsonify }},
+        {% assign project = site.data.projects | where: "id", doc_page.project_id | first %}
+        "categories": {{ project.name | default: "技术文档" | jsonify }},
+        "tags": {{ doc_page.tags | join: ', ' | jsonify }},
+        "date": {{ doc_page.last_modified_at | default: site.time | jsonify }},
+        "content": {{ doc_page.content | strip_html | strip_newlines | truncate: 5000 | jsonify }}
+      }
+      {% assign first_item = false %}
+    {% endif %}
+  {% endfor %}
+]
