@@ -7,7 +7,7 @@
         <div class="project-icon-mini me-2 d-flex align-items-center justify-content-center shadow-sm" 
              style="width: 32px; height: 32px; background: var(--sidebar-hover-bg); border-radius: 8px; color: var(--link-color); overflow: hidden;">
           {% if project.icon contains '/' or project.icon contains '.' %}
-            <img src="{{ project.icon | relative_url }}" style="width: 20px; height: 20px; object-fit: contain;">
+            <img src="{{ project.icon | relative_url }}" alt="{{ project.name }} icon" style="width: 20px; height: 20px; object-fit: contain;">
           {% else %}
             <i class="fas {{ project.icon }} fa-sm"></i>
           {% endif %}
