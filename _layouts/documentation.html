@@ -64,6 +64,11 @@ layout: compress
           {% endfor %}
         </ul>
       </nav>
+
+      <!-- Hidden: required by Chirpy theme JS -->
+      <div class="sidebar-bottom d-none">
+        <button id="mode-toggle"></button>
+      </div>
     </aside>
 
     <div id="main-wrapper" class="d-flex justify-content-center">
@@ -126,17 +131,7 @@ layout: compress
 
     {% include_cached search-loader.html lang=lang %}
 
-    <!-- Ghost Elements for Theme JS Stability -->
-    <div style="display: none;">
-      <aside id="sidebar-stub">
-        <div class="sidebar-bottom">
-          <button id="mode-toggle"></button>
-        </div>
-      </aside>
-      <div id="search-wrapper">
-        <input id="search-input">
-      </div>
-    </div>
+
     
     <!-- Documentation Toggle Logic -->
     <script>
