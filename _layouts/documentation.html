@@ -125,11 +125,17 @@ layout: compress
     </div>
 
     {% include_cached search-loader.html lang=lang %}
+
+    <!-- Ghost Elements for Theme JS Stability -->
+    <div style="display: none;">
+      <button id="mode-toggle"></button>
+      <div id="sidebar-trigger"></div>
+    </div>
     
     <!-- Documentation Toggle Logic -->
     <script>
       document.addEventListener('DOMContentLoaded', function() {
-        const sidebarTrigger = document.getElementById('sidebar-trigger'); /* The one in topbar */
+        const sidebarTrigger = document.getElementById('sidebar-trigger');
         const mask = document.getElementById('mask');
         const docsLayout = document.querySelector('.docs-layout');
 
