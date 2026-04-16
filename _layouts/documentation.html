@@ -131,6 +131,10 @@ layout: compress
 
     {% include_cached search-loader.html lang=lang %}
 
+    {% if site.pwa.enabled %}
+      {% include_cached notification.html lang=lang %}
+    {% endif %}
+
 
     
     <!-- Documentation Toggle Logic -->
