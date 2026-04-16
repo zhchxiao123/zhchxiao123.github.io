@@ -128,8 +128,14 @@ layout: compress
 
     <!-- Ghost Elements for Theme JS Stability -->
     <div style="display: none;">
-      <button id="mode-toggle"></button>
-      <div id="sidebar-trigger"></div>
+      <aside id="sidebar-stub">
+        <div class="sidebar-bottom">
+          <button id="mode-toggle"></button>
+        </div>
+      </aside>
+      <div id="search-wrapper">
+        <input id="search-input">
+      </div>
     </div>
     
     <!-- Documentation Toggle Logic -->
