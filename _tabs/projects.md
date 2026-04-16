@@ -14,7 +14,7 @@ order: 2
         <div class="project-icon-large d-flex align-items-center justify-content-center" 
              style="width: 64px; height: 64px; background: var(--sidebar-hover-bg); color: var(--link-color);">
           {% if project.icon contains '/' or project.icon contains '.' %}
-            <img src="{{ project.icon | relative_url }}" style="width: 40px; height: 40px; object-fit: contain;">
+            <img src="{{ project.icon | relative_url }}" alt="{{ project.name }} logo" style="width: 40px; height: 40px; object-fit: contain;">
           {% else %}
             <i class="fas {{ project.icon }} fa-2x"></i>
           {% endif %}
