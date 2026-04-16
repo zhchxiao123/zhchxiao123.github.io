@@ -204,6 +204,13 @@ layout: compress
         background-color: var(--main-bg);
       }
 
+      /* Force right panel visible on wide screens */
+      @media (min-width: 1200px) {
+        .docs-layout #panel-wrapper {
+          display: block !important;
+        }
+      }
+
       /* Adaptive Content Container */
       .docs-article {
         max-width: 100%;
