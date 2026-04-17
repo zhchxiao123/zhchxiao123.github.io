@@ -4,14 +4,14 @@ date: 2026-04-17 00:00:00 +0800
 categories: [AI, 技术报告]
 tags: [AI Agent, MemPalace, 记忆系统, Local-First, 2026趋势]
 description: "深入调研 MemPalace 这款革命性 AI 记忆系统的完整报告。解读创始人故事、核心架构设计、Token 经济优势，以及它如何在48小时内获得47K GitHub Stars。附带视频演示和完整PPT。"
-image: https://timelog-1257904505.cos.ap-guangzhou.myqcloud.com/images/2026-04-17/mempalace/slide-01.png
+image: https://timelog-1257904505.cos.ap-guangzhou.myqcloud.com/images/2026-04-17/mempalace/slide_01.png
 video: https://timelog-1257904505.cos.ap-guangzhou.myqcloud.com/videos/2026-04-17/mempalace-deep-research-report.mp4
 pin: true
 ---
 
 ## 📺 视频演示
 
-<video controls width="100%" preload="metadata" poster="https://timelog-1257904505.cos.ap-guangzhou.myqcloud.com/images/2026-04-17/mempalace/slide-01.png">
+<video controls width="100%" preload="metadata" poster="https://timelog-1257904505.cos.ap-guangzhou.myqcloud.com/images/2026-04-17/mempalace/slide_01.png">
   <source src="https://timelog-1257904505.cos.ap-guangzhou.myqcloud.com/videos/2026-04-17/mempalace-deep-research-report.mp4" type="video/mp4">
   您的浏览器不支持视频播放。
 </video>
