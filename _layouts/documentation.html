@@ -1,5 +1,4 @@
 ---
-layout: compress
 ---
 
 <!doctype html>
@@ -161,7 +160,7 @@ layout: compress
         if (sidebarTrigger) sidebarTrigger.addEventListener('click', toggleSidebar);
         if (docsMask) docsMask.addEventListener('click', toggleSidebar);
 
-        // === Collapsible Sidebar Logic ===
+        /* === Collapsible Sidebar Logic === */
         const STORAGE_KEY = 'docs_sidebar_collapsed_ids';
         const toggleLinks = document.querySelectorAll('.section-toggle');
 
@@ -175,7 +174,7 @@ layout: compress
           }
         }
 
-        // Click handler
+        /* Click handler */
         toggleLinks.forEach(toggle => {
           toggle.addEventListener('click', (e) => {
             e.preventDefault();
@@ -217,17 +216,17 @@ layout: compress
             const target = document.getElementById(targetId);
             if (!target) return;
 
-            // Priority 1: Mandatory expand for active section
+            /* Priority 1: Mandatory expand for active section */
             if (targetId === activeSectionId) {
               setToggleState(toggle, target, false);
               return;
             }
 
-            // Priority 2: Stored state
+            /* Priority 2: Stored state */
             if (collapsedIds.length > 0) {
               setToggleState(toggle, target, collapsedIds.includes(targetId));
             } else {
-              // Priority 3: Default behavior (expand first, collapse others)
+              /* Priority 3: Default behavior (expand first, collapse others) */
               const allLinks = Array.from(toggleLinks);
               const isFirst = allLinks.indexOf(toggle) === 0;
               setToggleState(toggle, target, !isFirst);
