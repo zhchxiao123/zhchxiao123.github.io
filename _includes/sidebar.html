@@ -1,4 +1,16 @@
 <!-- The Side Bar -->
+<style>
+#sidebar .nav-item a[data-bs-toggle="collapse"] .fa-chevron-right {
+  transition: transform 0.2s ease;
+}
+#sidebar .nav-item a[data-bs-toggle="collapse"]:not(.collapsed) .fa-chevron-right {
+  transform: rotate(90deg);
+}
+#sidebar .collapse.show {
+  border-left: 1px dashed rgba(128,128,128,0.3);
+  margin-left: 4px;
+}
+</style>
 
 <aside aria-label="Sidebar" id="sidebar" class="d-flex flex-column align-items-end">
   <header class="profile-wrapper">
@@ -32,13 +44,14 @@
           </div>
         </li>
         {% for item in site.data.docs_sidebar %}
-          <li class="nav-item{% if item.url == page.url %}{{ " active" }}{% endif %}">
-            <a href="{{ item.url | relative_url }}" class="nav-link">
-              <i class="fa-fw fas {% if item.children %}fa-folder{% else %}fa-file-alt{% endif %}"></i>
-              <span>{{ item.title }}</span>
-            </a>
-            {% if item.children %}
-              <ul class="nav flex-column ps-3">
+          {% if item.children %}
+            {% assign section_id = item.title | replace: ' ', '-' | replace: '/', '-' | replace: ':', '' | downcase %}
+            <li class="nav-item">
+              <a href="#collapse-{{ section_id }}" class="nav-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="collapse-{{ section_id }}">
+                <i class="fa-fw fas fa-chevron-right"></i>
+                <span>{{ item.title }}</span>
+              </a>
+              <ul class="nav flex-column ps-3 collapse" id="collapse-{{ section_id }}">
                 {% for child in item.children %}
                   <li class="nav-item{% if child.url == page.url %}{{ " active" }}{% endif %}">
                     <a href="{{ child.url | relative_url }}" class="nav-link py-1">
@@ -48,8 +61,15 @@
                   </li>
                 {% endfor %}
               </ul>
-            {% endif %}
-          </li>
+            </li>
+          {% else %}
+            <li class="nav-item{% if item.url == page.url %}{{ " active" }}{% endif %}">
+              <a href="{{ item.url | relative_url }}" class="nav-link">
+                <i class="fa-fw fas fa-file-alt"></i>
+                <span>{{ item.title }}</span>
+              </a>
+            </li>
+          {% endif %}
         {% endfor %}
       {% else %}
         <!-- Default Blog Sidebar -->

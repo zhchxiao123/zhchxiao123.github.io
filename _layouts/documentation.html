@@ -44,20 +44,17 @@ layout: compress
       <nav class="w-100 docs-nav">
         {% assign sidebar_name = project.sidebar_data | default: "docs_sidebar" %}
         {% assign sidebar_data = site.data[sidebar_name] %}
-        
+
         <ul class="nav flex-column w-100">
           {% for item in sidebar_data %}
-            <li class="nav-item">
-              {% if item.url %}
-                <a href="{{ item.url | relative_url }}" class="nav-link {% if item.url == page.url %}active{% endif %}">
+            {% if item.children %}
+              {% assign section_id = forloop.index %}
+              <li class="nav-item">
+                <a href="#docs-section-{{ section_id }}" class="nav-link section-toggle" role="button">
                   <span class="link-text">{{ item.title }}</span>
+                  <i class="fas fa-chevron-right toggle-icon ms-auto"></i>
                 </a>
-              {% else %}
-                <div class="nav-section-title">{{ item.title }}</div>
-              {% endif %}
-              
-              {% if item.children %}
-                <ul class="nav flex-column sub-nav">
+                <ul class="nav flex-column sub-nav collapsed" id="docs-section-{{ section_id }}">
                   {% for child in item.children %}
                     <li class="nav-item">
                       <a href="{{ child.url | relative_url }}" class="nav-link sub-link {% if child.url == page.url %}active{% endif %}">
@@ -66,8 +63,18 @@ layout: compress
                     </li>
                   {% endfor %}
                 </ul>
-              {% endif %}
-            </li>
+              </li>
+            {% else %}
+              <li class="nav-item">
+                {% if item.url %}
+                  <a href="{{ item.url | relative_url }}" class="nav-link {% if item.url == page.url %}active{% endif %}">
+                    <span class="link-text">{{ item.title }}</span>
+                  </a>
+                {% else %}
+                  <div class="nav-section-title">{{ item.title }}</div>
+                {% endif %}
+              </li>
+            {% endif %}
           {% endfor %}
         </ul>
       </nav>
@@ -153,6 +160,113 @@ layout: compress
 
         if (sidebarTrigger) sidebarTrigger.addEventListener('click', toggleSidebar);
         if (docsMask) docsMask.addEventListener('click', toggleSidebar);
+
+        // === Pure CSS/JS Collapsible Sidebar ===
+        const STORAGE_KEY = 'docs_sidebar_collapsed';
+        const toggleLinks = document.querySelectorAll('.section-toggle');
+
+        // Click handler for toggle links
+        toggleLinks.forEach(toggle => {
+          toggle.addEventListener('click', (e) => {
+            e.preventDefault();
+            const targetId = toggle.getAttribute('href').substring(1);
+            const target = document.getElementById(targetId);
+            if (!target) return;
+
+            const isCollapsed = toggle.classList.contains('collapsed');
+
+            if (isCollapsed) {
+              // Expand
+              toggle.classList.remove('collapsed');
+              target.classList.remove('collapsed');
+            } else {
+              // Collapse
+              toggle.classList.add('collapsed');
+              target.classList.add('collapsed');
+            }
+
+            // Save state
+            saveCollapsedState();
+          });
+        });
+
+        // Save collapsed state to localStorage
+        function saveCollapsedState() {
+          try {
+            const collapsedSet = [];
+            toggleLinks.forEach(toggle => {
+              if (toggle.classList.contains('collapsed')) {
+                collapsedSet.push(toggle.getAttribute('href').substring(1));
+              }
+            });
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(collapsedSet));
+          } catch (e) {
+            console.warn('Failed to save sidebar state:', e);
+          }
+        }
+
+        // Restore collapsed state from localStorage
+        function restoreCollapsedState() {
+          try {
+            const stored = localStorage.getItem(STORAGE_KEY);
+            const collapsedSet = stored ? new Set(JSON.parse(stored)) : new Set();
+            const activeLink = document.querySelector('.docs-nav .sub-link.active');
+
+            // If there's an active link, find its parent section and don't collapse it
+            let activeSectionId = null;
+            if (activeLink) {
+              const parentSection = activeLink.closest('.docs-nav .collapse');
+              if (parentSection) {
+                activeSectionId = parentSection.id;
+              }
+            }
+
+            // Apply collapsed/expanded state
+            toggleLinks.forEach(toggle => {
+              const targetId = toggle.getAttribute('href').substring(1);
+              const target = document.getElementById(targetId);
+              if (!target) return;
+
+              // Skip the active section
+              if (targetId === activeSectionId) {
+                toggle.classList.remove('collapsed');
+                target.classList.remove('collapsed');
+                return;
+              }
+
+              // Apply stored state
+              if (collapsedSet.has(targetId)) {
+                toggle.classList.add('collapsed');
+                target.classList.add('collapsed');
+              } else {
+                toggle.classList.remove('collapsed');
+                target.classList.remove('collapsed');
+              }
+            });
+
+            // If no stored state, collapse all by default (except active)
+            if (!stored && !activeLink && toggleLinks.length > 0) {
+              toggleLinks.forEach((toggle, index) => {
+                const targetId = toggle.getAttribute('href').substring(1);
+                const target = document.getElementById(targetId);
+                if (index === 0) {
+                  // Expand first section by default
+                  toggle.classList.remove('collapsed');
+                  target.classList.remove('collapsed');
+                } else {
+                  // Collapse others
+                  toggle.classList.add('collapsed');
+                  target.classList.add('collapsed');
+                }
+              });
+            }
+          } catch (e) {
+            console.warn('Failed to restore sidebar state:', e);
+          }
+        }
+
+        // Initial restore
+        restoreCollapsedState();
       });
     </script>
     
@@ -269,6 +383,42 @@ layout: compress
         padding: 0.3rem 0.75rem !important;
       }
 
+      /* Collapsible Section Styles */
+      .section-toggle {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-weight: 600;
+        color: var(--heading-color);
+        cursor: pointer;
+      }
+      .section-toggle:hover {
+        background-color: var(--sidebar-hover-bg);
+        color: var(--link-color);
+      }
+      .toggle-icon {
+        font-size: 0.7rem;
+        transition: transform 0.2s ease;
+        color: var(--text-muted-color);
+      }
+      .section-toggle:not(.collapsed) .toggle-icon {
+        transform: rotate(90deg);
+      }
+      .sub-nav {
+        border-left: 1px dashed var(--main-border-color);
+        margin-left: 0.5rem;
+        padding-left: 0.5rem;
+        overflow: hidden;
+        max-height: 1000px;
+        transition: max-height 0.3s ease;
+      }
+      .sub-nav.collapsed {
+        max-height: 0;
+        border-left: none;
+        margin-left: 0;
+        padding-left: 0;
+      }
+
       /* Professional Markdown / GitHub Style Injections */
       .markdown-body {
         font-size: 1.05rem;
@@ -374,5 +524,8 @@ layout: compress
         }
       }
     </style>
+
+    <!-- Bootstrap JS for Collapse -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   </body>
 </html>

@@ -1,48 +1,72 @@
-- title: 01. 启动与引导 (Bootstrap)
-  url: /docs/claude-code/01-entry-points-bootstrap/
-- title: 02. 分层架构概览
-  url: /docs/claude-code/02-layer-architecture/
-- title: 03. 通信通道设计
-  url: /docs/claude-code/03-communication-channels/
-- title: 04. 特性开关 (Feature Gates)
-  url: /docs/claude-code/04-feature-gates/
-- title: 05. 查询引擎生命周期
-  url: /docs/claude-code/05-query-engine-lifecycle/
-- title: 06. 工具调度流水线
-  url: /docs/claude-code/06-tool-dispatch-pipeline/
-- title: 07. 工具类型系统
-  url: /docs/claude-code/07-tool-type-system/
-- title: 08. 工具目录 (Catalog)
-  url: /docs/claude-code/08-tool-catalog/
-- title: 09. 命令系统实现
-  url: /docs/claude-code/09-command-system/
-- title: 10. 服务层 (Service Layer)
-  url: /docs/claude-code/10-service-layer/
-- title: 11. Bridge 桥接系统
-  url: /docs/claude-code/11-bridge-system/
-- title: 12. 状态管理 (State)
-  url: /docs/claude-code/12-state-management/
-- title: 13. Agent 系统架构
-  url: /docs/claude-code/13-agent-system/
-- title: 14. Ink UI 框架应用
-  url: /docs/claude-code/14-ink-framework/
-- title: 15. UI 组件库
-  url: /docs/claude-code/15-ui-components/
-- title: 16. Hooks 钩子架构
-  url: /docs/claude-code/16-hooks-architecture/
-- title: 17. 安全系统 (Security)
-  url: /docs/claude-code/17-security-system/
-- title: 18. 基础设施 (Infrastructure)
-  url: /docs/claude-code/18-infrastructure/
-- title: 19. 会话流转 (Conversation)
-  url: /docs/claude-code/19-conversation-flow/
-- title: 20. 系统提示词工程
-  url: /docs/claude-code/20-system-prompt/
-- title: 21. 集成点分析
-  url: /docs/claude-code/21-integration-points/
-- title: 22. 代码复杂度分析
-  url: /docs/claude-code/22-code-complexity/
-- title: 23. 架构设计模式总结
-  url: /docs/claude-code/23-patterns/
-- title: 24. 全文总结与架构图
-  url: /docs/claude-code/24-architecture-summary/
+# Claude Code 源码分析 - 文档侧边栏
+
+- title: "Phase 1: 架构地图"
+  children:
+    - title: 01. 启动与引导 (Bootstrap)
+      url: /docs/claude-code/01-entry-points-bootstrap/
+    - title: 02. 分层架构概览
+      url: /docs/claude-code/02-layer-architecture/
+    - title: 03. 通信通道设计
+      url: /docs/claude-code/03-communication-channels/
+    - title: 04. 特性开关 (Feature Gates)
+      url: /docs/claude-code/04-feature-gates/
+
+- title: "Phase 2: 核心引擎"
+  children:
+    - title: 05. 查询引擎生命周期
+      url: /docs/claude-code/05-query-engine-lifecycle/
+    - title: 06. 工具调度流水线
+      url: /docs/claude-code/06-tool-dispatch-pipeline/
+    - title: 07. 工具类型系统
+      url: /docs/claude-code/07-tool-type-system/
+    - title: 08. 工具目录 (Catalog)
+      url: /docs/claude-code/08-tool-catalog/
+
+- title: "Phase 3: 命令 / 服务 / 桥接"
+  children:
+    - title: 09. 命令系统实现
+      url: /docs/claude-code/09-command-system/
+    - title: 10. 服务层 (Service Layer)
+      url: /docs/claude-code/10-service-layer/
+    - title: 11. Bridge 桥接系统
+      url: /docs/claude-code/11-bridge-system/
+    - title: 12. 状态管理 (State)
+      url: /docs/claude-code/12-state-management/
+    - title: 13. Agent 系统架构
+      url: /docs/claude-code/13-agent-system/
+
+- title: "Phase 4: UI / 安全 / 基础设施"
+  children:
+    - title: 14. Ink UI 框架应用
+      url: /docs/claude-code/14-ink-framework/
+    - title: 15. UI 组件库
+      url: /docs/claude-code/15-ui-components/
+    - title: 16. Hooks 钩子架构
+      url: /docs/claude-code/16-hooks-architecture/
+    - title: 17. 安全系统 (Security)
+      url: /docs/claude-code/17-security-system/
+    - title: 18. 基础设施 (Infrastructure)
+      url: /docs/claude-code/18-infrastructure/
+
+- title: "Phase 5: 数据流与集成"
+  children:
+    - title: 19. 会话流转 (Conversation)
+      url: /docs/claude-code/19-conversation-flow/
+    - title: 20. 系统提示词工程
+      url: /docs/claude-code/20-system-prompt/
+    - title: 21. 集成点分析
+      url: /docs/claude-code/21-integration-points/
+
+- title: "Phase 6: 代码质量与总结"
+  children:
+    - title: 22. 代码复杂度分析
+      url: /docs/claude-code/22-code-complexity/
+    - title: 23. 架构设计模式总结
+      url: /docs/claude-code/23-patterns/
+    - title: 24. 全文总结与架构图
+      url: /docs/claude-code/24-architecture-summary/
+
+- title: 专题深度分析
+  children:
+    - title: Compact 压缩逻辑深度分析
+      url: /docs/claude-code/deep-dive-compact/
