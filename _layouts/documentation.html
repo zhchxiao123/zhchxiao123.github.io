@@ -161,11 +161,21 @@ layout: compress
         if (sidebarTrigger) sidebarTrigger.addEventListener('click', toggleSidebar);
         if (docsMask) docsMask.addEventListener('click', toggleSidebar);
 
-        // === Pure CSS/JS Collapsible Sidebar ===
-        const STORAGE_KEY = 'docs_sidebar_collapsed';
+        // === Collapsible Sidebar Logic ===
+        const STORAGE_KEY = 'docs_sidebar_collapsed_ids';
         const toggleLinks = document.querySelectorAll('.section-toggle');
 
-        // Click handler for toggle links
+        function setToggleState(toggle, target, isCollapsed) {
+          if (isCollapsed) {
+            toggle.classList.add('collapsed');
+            target.classList.add('collapsed');
+          } else {
+            toggle.classList.remove('collapsed');
+            target.classList.remove('collapsed');
+          }
+        }
+
+        // Click handler
         toggleLinks.forEach(toggle => {
           toggle.addEventListener('click', (e) => {
             e.preventDefault();
@@ -173,99 +183,58 @@ layout: compress
             const target = document.getElementById(targetId);
             if (!target) return;
 
-            const isCollapsed = toggle.classList.contains('collapsed');
-
-            if (isCollapsed) {
-              // Expand
-              toggle.classList.remove('collapsed');
-              target.classList.remove('collapsed');
-            } else {
-              // Collapse
-              toggle.classList.add('collapsed');
-              target.classList.add('collapsed');
-            }
-
-            // Save state
+            const shouldCollapse = !toggle.classList.contains('collapsed');
+            setToggleState(toggle, target, shouldCollapse);
             saveCollapsedState();
           });
         });
 
-        // Save collapsed state to localStorage
         function saveCollapsedState() {
-          try {
-            const collapsedSet = [];
-            toggleLinks.forEach(toggle => {
-              if (toggle.classList.contains('collapsed')) {
-                collapsedSet.push(toggle.getAttribute('href').substring(1));
-              }
-            });
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(collapsedSet));
-          } catch (e) {
-            console.warn('Failed to save sidebar state:', e);
-          }
+          const collapsedIds = Array.from(toggleLinks)
+            .filter(t => t.classList.contains('collapsed'))
+            .map(t => t.getAttribute('href').substring(1));
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(collapsedIds));
         }
 
-        // Restore collapsed state from localStorage
         function restoreCollapsedState() {
+          let collapsedIds = [];
           try {
             const stored = localStorage.getItem(STORAGE_KEY);
-            const collapsedSet = stored ? new Set(JSON.parse(stored)) : new Set();
-            const activeLink = document.querySelector('.docs-nav .sub-link.active');
-
-            // If there's an active link, find its parent section and don't collapse it
-            let activeSectionId = null;
-            if (activeLink) {
-              const parentSection = activeLink.closest('.docs-nav .collapse');
-              if (parentSection) {
-                activeSectionId = parentSection.id;
-              }
-            }
-
-            // Apply collapsed/expanded state
-            toggleLinks.forEach(toggle => {
-              const targetId = toggle.getAttribute('href').substring(1);
-              const target = document.getElementById(targetId);
-              if (!target) return;
-
-              // Skip the active section
-              if (targetId === activeSectionId) {
-                toggle.classList.remove('collapsed');
-                target.classList.remove('collapsed');
-                return;
-              }
-
-              // Apply stored state
-              if (collapsedSet.has(targetId)) {
-                toggle.classList.add('collapsed');
-                target.classList.add('collapsed');
-              } else {
-                toggle.classList.remove('collapsed');
-                target.classList.remove('collapsed');
-              }
-            });
-
-            // If no stored state, collapse all by default (except active)
-            if (!stored && !activeLink && toggleLinks.length > 0) {
-              toggleLinks.forEach((toggle, index) => {
-                const targetId = toggle.getAttribute('href').substring(1);
-                const target = document.getElementById(targetId);
-                if (index === 0) {
-                  // Expand first section by default
-                  toggle.classList.remove('collapsed');
-                  target.classList.remove('collapsed');
-                } else {
-                  // Collapse others
-                  toggle.classList.add('collapsed');
-                  target.classList.add('collapsed');
-                }
-              });
-            }
+            if (stored) collapsedIds = JSON.parse(stored);
           } catch (e) {
-            console.warn('Failed to restore sidebar state:', e);
+            console.warn('Sidebar state recovery failed');
           }
+
+          const activeSubLink = document.querySelector('.sub-link.active');
+          let activeSectionId = null;
+          if (activeSubLink) {
+            const parentNav = activeSubLink.closest('.sub-nav');
+            if (parentNav) activeSectionId = parentNav.id;
+          }
+
+          toggleLinks.forEach(toggle => {
+            const targetId = toggle.getAttribute('href').substring(1);
+            const target = document.getElementById(targetId);
+            if (!target) return;
+
+            // Priority 1: Mandatory expand for active section
+            if (targetId === activeSectionId) {
+              setToggleState(toggle, target, false);
+              return;
+            }
+
+            // Priority 2: Stored state
+            if (collapsedIds.length > 0) {
+              setToggleState(toggle, target, collapsedIds.includes(targetId));
+            } else {
+              // Priority 3: Default behavior (expand first, collapse others)
+              const allLinks = Array.from(toggleLinks);
+              const isFirst = allLinks.indexOf(toggle) === 0;
+              setToggleState(toggle, target, !isFirst);
+            }
+          });
         }
 
-        // Initial restore
         restoreCollapsedState();
       });
     </script>
