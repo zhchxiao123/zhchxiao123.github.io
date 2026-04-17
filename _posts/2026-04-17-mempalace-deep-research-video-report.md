@@ -1,6 +1,6 @@
 ---
 title: "视频报告：MemPalace - 革新AI记忆系统的深度研究报告"
-date: 2026-04-17 14:30:00 +0800
+date: 2026-04-17 00:00:00 +0800
 categories: [AI, 技术报告]
 tags: [AI Agent, MemPalace, 记忆系统, Local-First, 2026趋势]
 description: "深入调研 MemPalace 这款革命性 AI 记忆系统的完整报告。解读创始人故事、核心架构设计、Token 经济优势，以及它如何在48小时内获得47K GitHub Stars。附带视频演示和完整PPT。"
