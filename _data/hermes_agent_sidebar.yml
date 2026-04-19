@@ -1,0 +1,69 @@
+# Hermes Agent 源码分析 - 文档侧边栏
+
+- title: "Phase 1: 架构地图"
+  children:
+    - title: 01. 入口点与启动流程
+      url: /docs/hermes-agent/01-entry-and-startup/
+    - title: 02. 核心数据流与消息循环
+      url: /docs/hermes-agent/02-data-flow-and-message-loop/
+    - title: 03. 配置体系
+      url: /docs/hermes-agent/03-configuration-system/
+
+- title: "Phase 2: Agent 核心"
+  children:
+    - title: 04. 模型适配层
+      url: /docs/hermes-agent/04-model-adapters/
+    - title: 05. Prompt 组装与上下文管理
+      url: /docs/hermes-agent/05-prompt-and-context/
+    - title: 06. Agent 辅助模块
+      url: /docs/hermes-agent/06-agent-auxiliary/
+    - title: 07. 工具注册与调度体系
+      url: /docs/hermes-agent/07-tool-registry-and-security/
+
+- title: "Phase 3: 工具系统"
+  children:
+    - title: 08. 核心工具实现（上）
+      url: /docs/hermes-agent/08-core-tools-part1/
+    - title: 09. 核心工具实现（下）
+      url: /docs/hermes-agent/09-core-tools-part2/
+    - title: 10. 环境后端
+      url: /docs/hermes-agent/10-environment-backends/
+
+- title: "Phase 4: CLI 系统"
+  children:
+    - title: 11. CLI 主类与交互系统
+      url: /docs/hermes-agent/11-cli-interaction/
+    - title: 12. 命令系统
+      url: /docs/hermes-agent/12-command-system/
+    - title: 13. 皮肤引擎与配置子系统
+      url: /docs/hermes-agent/13-cli-skin-and-config/
+
+- title: "Phase 5: Gateway 与平台"
+  children:
+    - title: 14. Gateway 核心架构
+      url: /docs/hermes-agent/14-gateway-core/
+    - title: 15. 平台适配器
+      url: /docs/hermes-agent/15-platform-adapters/
+
+- title: "Phase 6: 外围模块"
+  children:
+    - title: 16. ACP 适配器与 Cron
+      url: /docs/hermes-agent/16-acp-and-cron/
+    - title: 17. 插件与技能系统
+      url: /docs/hermes-agent/17-plugins-and-skills/
+    - title: 18. RL 训练与批处理
+      url: /docs/hermes-agent/18-rl-and-batch/
+
+- title: "Phase 7: 质量与安全"
+  children:
+    - title: 19. 代码质量评估
+      url: /docs/hermes-agent/19-code-quality/
+    - title: 20. 安全审计
+      url: /docs/hermes-agent/20-security-audit/
+    - title: 21. 测试体系分析
+      url: /docs/hermes-agent/21-test-coverage/
+
+- title: "Phase 8: 综合汇总"
+  children:
+    - title: 22. 综合报告与改进路线图
+      url: /docs/hermes-agent/22-comprehensive-report/

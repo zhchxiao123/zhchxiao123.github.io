@@ -6,4 +6,11 @@
   sidebar_data: claude_code_sidebar
   doc_url: /docs/claude-code/01-entry-points-bootstrap/
 
+- name: Hermes Agent 源码分析
+  id: hermes-agent-source
+  description: 22 章节全面剖析 Hermes Agent 多平台 AI 智能体架构。
+  icon: fa-robot
+  sidebar_data: hermes_agent_sidebar
+  doc_url: /docs/hermes-agent/01-entry-and-startup/
+
 
