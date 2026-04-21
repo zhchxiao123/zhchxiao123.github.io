@@ -11,30 +11,27 @@ layout: default
 <div id="ai-lab-wrapper" class="ai-lab-container">
   <!-- 顶部导航：磨砂玻璃效果 -->
   <header class="lab-header">
-    <div class="header-left">
-      <div class="lab-logo">
-        <svg viewBox="0 0 100 100" class="logo-icon">
-          <defs>
-            <linearGradient id="logo-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" style="stop-color:#1677ff" />
-              <stop offset="100%" style="stop-color:#722ed1" />
-            </linearGradient>
-          </defs>
-          <circle cx="50" cy="50" r="45" fill="url(#logo-grad)" />
-          <path d="M30 50 L50 30 L70 50 L50 70 Z" fill="white" />
-        </svg>
-        <span class="logo-text">AI Agent Laboratory</span>
-        <span class="version-tag">BETA v0.4.2</span>
-      </div>
+    <div class="lab-logo">
+      <svg viewBox="0 0 100 100" class="logo-icon">
+        <defs>
+          <linearGradient id="logo-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#1677ff" />
+            <stop offset="100%" style="stop-color:#722ed1" />
+          </linearGradient>
+        </defs>
+        <circle cx="50" cy="50" r="45" fill="url(#logo-grad)" />
+        <path d="M30 50 L50 30 L70 50 L50 70 Z" fill="white" />
+      </svg>
+      <span class="logo-text">AI Agent Laboratory</span>
+      <span class="version-tag">BETA v0.4.2</span>
     </div>
-    <div class="header-right">
+    <div class="header-actions">
       <button id="sidebar-toggle" class="btn-ghost" title="Toggle Sidebar">
         <i class="fas fa-sliders-h"></i>
       </button>
       <button onclick="clearHistory()" class="btn-ghost" title="Clear History">
         <i class="fas fa-trash-alt"></i>
       </button>
-      <div class="divider-v"></div>
       <a href="{{ '/' | relative_url }}" class="btn-ghost" title="Back to Blog">
         <i class="fas fa-home"></i>
       </a>
@@ -60,22 +57,19 @@ layout: default
         </div>
       </div>
 
-      <!-- 悬浮指令输入框：胶囊设计 -->
+      <!-- 悬浮指令输入框：简洁药丸设计 -->
       <div class="command-bar-wrapper">
         <div class="command-bar">
           <div class="input-prefix">
-            <i class="fas fa-terminal"></i>
+            <i class="fas fa-plus" title="添加附件"></i>
+            <i class="fas fa-globe" title="选择模型"></i>
           </div>
-          <textarea id="lab-user-input" placeholder="输入指令或提问..." rows="1"></textarea>
+          <textarea id="lab-user-input" placeholder="Ask anything..." rows="1"></textarea>
           <div class="input-suffix">
-            <kbd>Shift + Enter 换行</kbd>
             <button id="lab-send-btn" class="send-action">
               <i class="fas fa-arrow-up"></i>
             </button>
           </div>
-        </div>
-        <div class="command-status">
-          <span class="pulse-dot"></span> Agent is ready to assist.
         </div>
       </div>
     </section>
@@ -218,6 +212,12 @@ layout: default
   .logo-text { font-weight: 600; font-size: 14px; letter-spacing: -0.02em; }
   .version-tag { font-size: 10px; background: var(--border-color); padding: 2px 6px; border-radius: 4px; color: var(--text-sec); }
 
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
   /* Buttons */
   .btn-ghost {
     background: transparent;
@@ -237,13 +237,6 @@ layout: default
   }
   .btn-ghost .fas {
     font-size: 16px;
-  }
-
-  .divider-v {
-    width: 1px;
-    height: 20px;
-    background: var(--border-color);
-    margin: 0 8px;
   }
 
   /* Main Flow */
@@ -270,9 +263,9 @@ layout: default
   }
   .messages-list::-webkit-scrollbar { display: none; }
 
-  /* Message Style */
+  /* Message Style - Clean minimalist */
   .msg-wrapper {
-    max-width: 75%;
+    max-width: 80%;
     display: flex;
     transform: translateY(12px);
     opacity: 0;
@@ -282,66 +275,94 @@ layout: default
   .msg-wrapper.user { align-self: flex-end; }
   .msg-wrapper.bot { align-self: flex-start; }
 
-  .msg-bubble {
-    padding: 16px 18px;
-    border-radius: 20px;
-    background: rgba(255, 255, 255, 0.92);
-    border: 1px solid var(--border-color);
-    box-shadow: var(--shadow-soft);
-    position: relative;
+  /* AI messages - no bubble, just text */
+  .bot .msg-bubble {
+    padding: 0;
+    background: transparent;
+    border: none;
+    box-shadow: none;
   }
 
-  [data-mode='dark'] .msg-bubble {
-    background: rgba(17, 17, 18, 0.85);
+  .bot .bubble-content {
+    font-size: 15px;
+    line-height: 1.8;
+    color: var(--text-main);
   }
 
+  .bot .bubble-meta {
+    font-size: 11px;
+    margin-top: 12px;
+    color: var(--text-sec);
+  }
+
+  /* User messages - subtle bubble */
   .user .msg-bubble {
-    background: var(--primary-grad);
-    color: white;
-    border-color: transparent;
+    padding: 14px 18px;
+    border-radius: 18px;
+    background: var(--bg-base);
+    border: 1px solid var(--border-color);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
   }
-  
-  .bubble-content { font-size: 15px; line-height: 1.6; }
-  .bubble-meta { font-size: 11px; margin-top: 8px; color: var(--text-sec); }
-  .user .bubble-meta { color: rgba(255,255,255,0.7); }
 
-  /* Floating Command Bar */
+  [data-mode='dark'] .user .msg-bubble {
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  .user .bubble-content {
+    font-size: 15px;
+    line-height: 1.6;
+    color: var(--text-main);
+  }
+
+  .user .bubble-meta {
+    font-size: 11px;
+    margin-top: 8px;
+    color: var(--text-sec);
+  }
+
+  /* Floating Command Bar - Clean pill style */
   .command-bar-wrapper {
     position: absolute;
-    bottom: 32px;
+    bottom: 40px;
     left: 64px;
     right: 64px;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
     pointer-events: none;
   }
 
   .command-bar {
     width: 100%;
-    max-width: 800px;
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(30px);
-    -webkit-backdrop-filter: blur(30px);
-    border: 1px solid var(--border-color);
-    border-radius: 24px;
-    padding: 14px 20px;
+    max-width: 720px;
+    background: #f5f5f5;
+    border: 1px solid #e0e0e0;
+    border-radius: 16px;
+    padding: 12px 16px;
     display: flex;
     align-items: center;
-    gap: 14px;
-    box-shadow: 0 20px 50px rgba(0,0,0,0.08);
+    gap: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.06);
     pointer-events: all;
     transition: border-color var(--transition-focus), box-shadow var(--transition-focus);
   }
 
-  .command-bar:focus-within {
-    border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(22, 119, 255, 0.1), 0 20px 50px rgba(0,0,0,0.08);
+  [data-mode='dark'] .command-bar {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.1);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
   }
 
-  .input-prefix { color: var(--text-sec); font-size: 18px; }
-  
+  .command-bar:focus-within {
+    border-color: var(--primary);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+  }
+
+  .input-prefix { color: var(--text-sec); display: flex; align-items: center; gap: 10px; font-size: 14px; }
+  .input-prefix i { cursor: pointer; }
+  .input-prefix i:hover { color: var(--text-main); }
+
   #lab-user-input {
     flex: 1;
     background: transparent;
@@ -349,30 +370,44 @@ layout: default
     outline: none;
     resize: none;
     color: var(--text-main);
-    font-size: 16px;
-    max-height: 160px;
+    font-size: 15px;
+    max-height: 120px;
     padding: 4px 0;
+    line-height: 1.5;
   }
 
-  .input-suffix { display: flex; align-items: center; gap: 16px; }
-  .input-suffix kbd { font-size: 10px; color: var(--text-sec); padding: 2px 4px; border: 1px solid var(--border-color); border-radius: 4px; }
+  #lab-user-input::placeholder {
+    color: var(--text-sec);
+  }
+
+  .input-suffix { display: flex; align-items: center; gap: 8px; }
 
   .send-action {
-    width: 38px;
-    height: 38px;
-    border-radius: 12px;
-    background: var(--primary-grad);
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--text-sec);
     color: white;
     border: none;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: transform var(--transition-hover);
+    transition: all var(--transition-hover);
     flex-shrink: 0;
   }
-  .send-action:hover { transform: scale(1.08); }
+  .send-action:hover {
+    background: var(--primary);
+    transform: scale(1.05);
+  }
   .send-action:active { transform: scale(0.95); }
+
+  [data-mode='dark'] .send-action {
+    background: rgba(255, 255, 255, 0.2);
+  }
+  [data-mode='dark'] .send-action:hover {
+    background: var(--primary);
+  }
 
   .command-status { font-size: 11px; color: var(--text-sec); display: flex; align-items: center; gap: 6px; }
   .pulse-dot { width: 6px; height: 6px; background: #52c41a; border-radius: 50%; animation: pulse 2s infinite; }
