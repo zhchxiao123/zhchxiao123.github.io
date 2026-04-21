@@ -1,0 +1,447 @@
+---
+layout: default
+---
+
+<!-- 视觉装饰背景 -->
+<div class="lab-bg-ornaments">
+  <div class="mesh-gradient"></div>
+  <div class="dot-grid"></div>
+</div>
+
+<div id="ai-lab-wrapper" class="ai-lab-container">
+  <!-- 顶部导航：磨砂玻璃效果 -->
+  <header class="lab-header">
+    <div class="header-left">
+      <div class="lab-logo">
+        <svg viewBox="0 0 100 100" class="logo-icon">
+          <defs>
+            <linearGradient id="logo-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" style="stop-color:#1677ff" />
+              <stop offset="100%" style="stop-color:#722ed1" />
+            </linearGradient>
+          </defs>
+          <circle cx="50" cy="50" r="45" fill="url(#logo-grad)" />
+          <path d="M30 50 L50 30 L70 50 L50 70 Z" fill="white" />
+        </svg>
+        <span class="logo-text">AI Agent Laboratory</span>
+        <span class="version-tag">BETA v0.4.2</span>
+      </div>
+    </div>
+    <div class="header-right">
+      <button id="sidebar-toggle" class="btn-ghost" title="Toggle Settings">
+        <i class="fas fa-sliders-h"></i>
+      </button>
+      <div class="divider-v"></div>
+      <button onclick="clearHistory()" class="btn-ghost" title="Clear History">
+        <i class="fas fa-trash-alt"></i>
+      </button>
+      <div class="divider-v"></div>
+      <a href="{{ '/' | relative_url }}" class="btn-ghost" title="Back to Blog">
+        <i class="fas fa-home"></i>
+      </a>
+    </div>
+  </header>
+
+  <main class="lab-content">
+    <!-- 对话主躯干 -->
+    <section class="chat-viewport">
+      <div id="lab-chat-messages" class="messages-list">
+        <!-- 初始消息 -->
+        <div class="msg-wrapper bot appear">
+          <div class="msg-bubble">
+            <div class="bubble-content">
+              欢迎进入 **AI 实验室**。这是一个专为 `by-framework` 深度交互设计的实验环境。
+              在这里，你可以探索 Agent 的底层调度能力。
+            </div>
+            <div class="bubble-meta">System · Just now</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 悬浮指令输入框：胶囊设计 -->
+      <div class="command-bar-wrapper">
+        <div class="command-bar">
+          <div class="input-prefix">
+            <i class="fas fa-terminal"></i>
+          </div>
+          <textarea id="lab-user-input" placeholder="输入指令或提问..." rows="1"></textarea>
+          <div class="input-suffix">
+            <kbd>Shift + Enter 换行</kbd>
+            <button id="lab-send-btn" class="send-action">
+              <i class="fas fa-arrow-up"></i>
+            </button>
+          </div>
+        </div>
+        <div class="command-status">
+          <span class="pulse-dot"></span> Agent is ready to assist.
+        </div>
+      </div>
+    </section>
+
+    <!-- 右侧参数面板：精细设计 -->
+    <aside class="settings-panel">
+      <div class="settings-section">
+        <h2 class="section-title"><i class="fas fa-cogs"></i> Engine Config</h2>
+        <div class="setting-card">
+          <div class="field">
+            <label>Discovery Agent</label>
+            <div class="custom-select">
+              <select id="agent-selector">
+                <option value="research">Graphify Specialist</option>
+                <option value="coding" selected>Code Architect</option>
+                <option value="creative">Creative LLM</option>
+              </select>
+            </div>
+          </div>
+          <div class="field">
+            <label>Temperature <span>0.7</span></label>
+            <input type="range" class="styled-range" min="0" max="100" value="70">
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <h2 class="section-title"><i class="fas fa-microchip"></i> Framework Status</h2>
+        <div class="status-grid">
+          <div class="status-item">
+            <span class="label">Core</span>
+            <span class="value alive">Running</span>
+          </div>
+          <div class="status-item">
+            <span class="label">Backend</span>
+            <span class="value">Rust (tokio)</span>
+          </div>
+          <div class="status-item">
+            <span class="label">Context</span>
+            <span class="value">Sliding Window</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="ad-card gradient-border">
+        <h3>Pro-tip</h3>
+        <p>Use `/help` to see all laboratory exclusive commands.</p>
+      </div>
+    </aside>
+  </main>
+</div>
+
+<style>
+  :root {
+    --primary: #1677ff;
+    --primary-grad: linear-gradient(135deg, #1677ff 0%, #722ed1 100%);
+    --bg-base: #ffffff;
+    --bg-glass: rgba(255, 255, 255, 0.7);
+    --border-color: rgba(0, 0, 0, 0.08);
+    --text-main: #1f1f1f;
+    --text-sec: #8c8c8c;
+    --shadow-soft: 0 8px 32px rgba(0, 0, 0, 0.05);
+    --transition-hover: all 0.2s ease;
+  }
+
+  [data-mode='dark'] {
+    --bg-base: #0a0a0c;
+    --bg-glass: rgba(18, 18, 22, 0.75);
+    --border-color: rgba(255, 255, 255, 0.08);
+    --text-main: #e6e6e6;
+    --text-sec: #858585;
+    --shadow-soft: 0 8px 32px rgba(0, 0, 0, 0.3);
+  }
+
+  /* 基础结构 */
+  .ai-lab-container {
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-base);
+    color: var(--text-main);
+    overflow: hidden;
+  }
+
+  /* 装饰背景 */
+  .lab-bg-ornaments {
+    position: fixed;
+    inset: 0;
+    z-index: 1999;
+    pointer-events: none;
+    overflow: hidden;
+  }
+
+  .mesh-gradient {
+    position: absolute;
+    top: -20%;
+    right: -10%;
+    width: 60vw;
+    height: 60vw;
+    background: radial-gradient(circle, rgba(22, 119, 255, 0.1) 0%, rgba(114, 46, 209, 0.05) 50%, transparent 100%);
+    filter: blur(80px);
+  }
+
+  .dot-grid {
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(var(--border-color) 1px, transparent 1px);
+    background-size: 32px 32px;
+    mask-image: radial-gradient(circle at 50% 50%, black, transparent 80%);
+  }
+
+  /* Header */
+  .lab-header {
+    height: 56px;
+    padding: 0 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border-color);
+    background: var(--bg-glass);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+  }
+
+  .lab-logo { display: flex; align-items: center; gap: 10px; }
+  .logo-icon { width: 28px; height: 28px; }
+  .logo-text { font-weight: 600; font-size: 14px; letter-spacing: -0.02em; }
+  .version-tag { font-size: 10px; background: var(--border-color); padding: 2px 6px; border-radius: 4px; color: var(--text-sec); }
+
+  .header-right { display: flex; align-items: center; gap: 4px; }
+  .divider-v { width: 1px; height: 20px; background: var(--border-color); margin: 0 8px; }
+
+  .btn-ghost {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    border: none;
+    background: transparent;
+    color: var(--text-sec);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition-hover);
+  }
+  .btn-ghost:hover {
+    background: var(--border-color);
+    color: var(--text-main);
+  }
+  .btn-ghost i { font-size: 14px; }
+
+  /* Main Flow */
+  .lab-content { flex: 1; display: flex; overflow: hidden; }
+
+  .chat-viewport {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    max-width: 1100px;
+    margin: 0 auto;
+    width: 100%;
+  }
+
+  .messages-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 40px 64px 200px; /* 为悬浮输入框留白 */
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+    scrollbar-width: none;
+  }
+  .messages-list::-webkit-scrollbar { display: none; }
+
+  /* Message Style */
+  .msg-wrapper { max-width: 85%; display: flex; transform: translateY(10px); opacity: 0; transition: 0.4s ease; }
+  .msg-wrapper.appear { transform: translateY(0); opacity: 1; }
+  .msg-wrapper.user { align-self: flex-end; }
+  .msg-wrapper.bot { align-self: flex-start; }
+
+  .msg-bubble { 
+    padding: 16px 20px;
+    border-radius: 16px;
+    background: var(--bg-glass);
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-soft);
+    position: relative;
+  }
+
+  .user .msg-bubble { background: var(--primary); color: white; border-color: var(--primary); }
+  
+  .bubble-content { font-size: 15px; line-height: 1.6; }
+  .bubble-meta { font-size: 11px; margin-top: 8px; color: var(--text-sec); }
+  .user .bubble-meta { color: rgba(255,255,255,0.7); }
+
+  /* Floating Command Bar */
+  .command-bar-wrapper {
+    position: absolute;
+    bottom: 40px;
+    left: 64px;
+    right: 64px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    pointer-events: none;
+  }
+
+  .command-bar {
+    width: 100%;
+    max-width: 800px;
+    background: var(--bg-glass);
+    backdrop-filter: blur(30px);
+    -webkit-backdrop-filter: blur(30px);
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.1);
+    pointer-events: all;
+    transition: all 0.3s ease;
+  }
+
+  .command-bar:focus-within {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 4px rgba(22, 119, 255, 0.1), 0 20px 50px rgba(0,0,0,0.1);
+  }
+
+  .input-prefix { color: var(--text-sec); font-size: 18px; }
+  
+  #lab-user-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    resize: none;
+    color: var(--text-main);
+    font-size: 16px;
+    max-height: 160px;
+    padding: 4px 0;
+  }
+
+  .input-suffix { display: flex; align-items: center; gap: 16px; }
+  .input-suffix kbd { font-size: 10px; color: var(--text-sec); padding: 2px 4px; border: 1px solid var(--border-color); border-radius: 4px; }
+
+  .send-action {
+    width: 36px;
+    height: 36px;
+    border-radius: 12px;
+    background: var(--primary-grad);
+    color: white;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: 0.2s;
+  }
+  .send-action:hover { transform: scale(1.1); }
+
+  .command-status { font-size: 11px; color: var(--text-sec); display: flex; align-items: center; gap: 6px; }
+  .pulse-dot { width: 6px; height: 6px; background: #52c41a; border-radius: 50%; animation: pulse 2s infinite; }
+
+  @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
+
+  /* Sidebar */
+  .settings-panel {
+    width: 340px;
+    padding: 32px;
+    background: var(--bg-glass);
+    backdrop-filter: blur(10px);
+    border-left: 1px solid var(--border-color);
+    overflow-y: auto;
+  }
+
+  .section-title { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-sec); margin-bottom: 20px; display: flex; align-items: center; gap: 8px; }
+  
+  .setting-card { background: var(--border-color); border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 20px; margin-bottom: 40px; }
+  
+  .field label { display: block; font-size: 12px; margin-bottom: 10px; display: flex; justify-content: space-between; }
+  .field label span { color: var(--primary); font-weight: bold; }
+
+  .custom-select select {
+    width: 100%;
+    background: var(--bg-base);
+    border: 1px solid var(--border-color);
+    padding: 10px;
+    border-radius: 8px;
+    color: var(--text-main);
+    outline: none;
+  }
+
+  .status-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
+  .status-item { padding: 12px; border-radius: 10px; border: 1px solid var(--border-color); display: flex; justify-content: space-between; font-size: 13px; }
+  .status-item .alive { color: #52c41a; font-weight: 600; }
+
+  .gradient-border {
+    margin-top: 40px;
+    padding: 2px;
+    background: var(--primary-grad);
+    border-radius: 14px;
+  }
+  .gradient-border h3 { margin: 12px 14px 4px; font-size: 14px; color: white; }
+  .gradient-border p { margin: 0 14px 12px; font-size: 12px; color: rgba(255,255,255,0.8); }
+
+  /* 隐藏默认元素补丁 */
+  #sidebar, #main-wrapper > .header, #panel-wrapper, #footer, .post-navigation { display: none !important; }
+</style>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const userInput = document.getElementById('lab-user-input');
+    const sendBtn = document.getElementById('lab-send-btn');
+    const messages = document.getElementById('lab-chat-messages');
+
+    function appendMessage(role, text) {
+      const wrapper = document.createElement('div');
+      wrapper.className = `msg-wrapper ${role}`;
+      wrapper.innerHTML = `
+        <div class="msg-bubble">
+          <div class="bubble-content">${text}</div>
+          <div class="bubble-meta">${role === 'user' ? 'You' : 'Agent'} · ${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
+        </div>
+      `;
+      messages.appendChild(wrapper);
+      
+      // 触发动画
+      setTimeout(() => wrapper.classList.add('appear'), 10);
+      messages.scrollTop = messages.scrollHeight;
+    }
+
+    function handleSend() {
+      const text = userInput.value.trim();
+      if(!text) return;
+      
+      appendMessage('user', text);
+      userInput.value = '';
+      userInput.style.height = 'auto';
+
+      // 模拟 Agent 响应
+      setTimeout(() => {
+        appendMessage('bot', "By-Framework 正在调度核心模型处理您的指令... 当前请求已进入 Rust (Tokio) 异步队列。");
+      }, 700);
+    }
+
+    sendBtn.addEventListener('click', handleSend);
+    userInput.addEventListener('keydown', (e) => {
+      if(e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        handleSend();
+      }
+    });
+
+    userInput.addEventListener('input', function() {
+      this.style.height = 'auto';
+      this.style.height = (this.scrollHeight) + 'px';
+    });
+  });
+
+  function clearHistory() {
+    if(confirm('确定要清除所有对话记录吗？')) {
+      const list = document.getElementById('lab-chat-messages');
+      list.innerHTML = '';
+    }
+  }
+</script>
