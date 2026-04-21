@@ -42,6 +42,9 @@ layout: default
   </header>
 
   <main class="lab-content">
+    <!-- 侧边栏遮罩 - 放在 main 内但在 chat-viewport 之前 -->
+    <div class="sidebar-overlay"></div>
+
     <!-- 对话主躯干 -->
     <section class="chat-viewport">
       <div id="lab-chat-messages" class="messages-list">
@@ -76,9 +79,6 @@ layout: default
         </div>
       </div>
     </section>
-
-    <!-- 侧边栏遮罩 -->
-    <div class="sidebar-overlay"></div>
 
     <!-- 右侧参数面板：精细设计 -->
     <aside class="settings-panel">
@@ -209,6 +209,8 @@ layout: default
     background: var(--bg-glass);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
+    position: relative;
+    z-index: 2002;
   }
 
   .lab-logo { display: flex; align-items: center; gap: 10px; }
@@ -408,8 +410,10 @@ layout: default
   /* 侧边栏展开时的背景遮罩 */
   .sidebar-overlay {
     position: fixed;
-    inset: 0;
     top: 56px;
+    left: 0;
+    right: 0;
+    bottom: 0;
     background: rgba(0, 0, 0, 0.1);
     opacity: 0;
     pointer-events: none;

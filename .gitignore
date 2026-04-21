@@ -27,3 +27,5 @@ _sass/vendors
 assets/js/dist
 
 .claude.worktrees/
+
+.claude/settings.local.json
