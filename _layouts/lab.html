@@ -782,17 +782,17 @@ layout: default
     localStorage.setItem('by-lab-backend', bUrl);
     localStorage.setItem('by-lab-ws', wUrl);
     
-    // 应用并重连
+    /* 应用并重连 */
     BACKEND_URL = bUrl;
     WS_URL = wUrl;
     
     appendSystemMessage(`Endpoints updated! Reconnecting...`);
-    if (socket) socket.close(); // 触发自动重连逻辑
+    if (socket) socket.close(); /* 触发自动重连逻辑 */
     fetchFrameworkStatus();
     fetchSessions();
   }
 
-  // 配置 Marked
+  /* 配置 Marked */
   marked.setOptions({
     highlight: function(code, lang) {
       const language = hljs.getLanguage(lang) ? lang : 'plaintext';
@@ -809,10 +809,10 @@ layout: default
   let latestMsgId = null;
   let pendingAttachments = []; 
   
-  // 消息内容缓存，用于支持流式 Markdown 全量重绘
+  /* 消息内容缓存，用于支持流式 Markdown 全量重绘 */
   const messageContentCache = new Map();
 
-  // 初始化 WebSocket 连接
+  /* 初始化 WebSocket 连接 */
   function initWebSocket() {
     try {
       socket = new WebSocket(WS_URL);
@@ -870,7 +870,7 @@ layout: default
     }
   }
 
-  // 轮询后端获取 Worker 和 Service 状态
+  /* 轮询后端获取 Worker 和 Service 状态 */
   async function fetchFrameworkStatus() {
     try {
       const workerResp = await fetch(`${BACKEND_URL}/api/workers`);
@@ -926,7 +926,7 @@ layout: default
     }
   }
 
-  // 获取会话历史列表
+  /* 获取会话历史列表 */
   async function fetchSessions() {
     try {
       const response = await fetch(`${BACKEND_URL}/api/sessions`);
@@ -949,7 +949,7 @@ layout: default
     }
   }
 
-  // 切换会话并拉取历史
+  /* 切换会话并拉取历史 */
   async function switchSession(sid) {
     if (sid === currentSessionId) return;
     if (!confirm('Switch to this session and load history? Current view will be cleared.')) return;
@@ -974,7 +974,7 @@ layout: default
         if (msg.role === 'user') {
           appendUserMessage(msg.content);
         } else {
-          // 历史消息的处理逻辑
+          /* 历史消息的处理逻辑 */
           const msgId = msg.id || ('hist-' + Math.random());
           const content = typeof msg.content === 'object' ? msg.content.text : msg.content;
           updateMessageContent(msgId, content, 'bot');
@@ -1020,18 +1020,18 @@ layout: default
     if (data.type === 'ping') return;
     if (data.session_id && data.session_id !== currentSessionId) return;
 
-    // 关键修正：优先使用 message_id 进行分组，而不是过于细碎的 id (event id)
-    // 这样同一 Agent 的推理 (reasoning) 和 回答 (answer) 就能在同一个缓存 key 下拼接
+    /* 关键修正：优先使用 message_id 进行分组，而不是过于细碎的 id (event id) */
+    /* 这样同一 Agent 的推理 (reasoning) 和 回答 (answer) 就能在同一个缓存 key 下拼接 */
     const agentType = data.source_agent_type || 'assistant';
     const msgId = (data.message_id || data.id || 'stream-msg') + '-' + agentType;
     
-    // 综合解析 content (处理 choices.delta, chunk, 或全量 content)
+    /* 综合解析 content (处理 choices.delta, chunk, 或全量 content) */
     let chunkContent = "";
     const choices = data.choices || (data.data && data.data.choices);
     
     if (choices && choices[0] && choices[0].delta) {
       chunkContent = choices[0].delta.content || "";
-      // 处理工具调用 (Tool Calls)
+      /* 处理工具调用 (Tool Calls) */
       if (choices[0].delta.tool_calls) {
         renderToolCalls(msgId, choices[0].delta.tool_calls);
       }
@@ -1055,7 +1055,7 @@ layout: default
     const messagesContainer = document.getElementById('lab-chat-messages');
     let msgWrapper = document.getElementById(`msg-${id}`);
     
-    // 获取或创建缓存
+    /* 获取或创建缓存 */
     let fullContent = messageContentCache.get(id) || "";
     fullContent += chunk;
     messageContentCache.set(id, fullContent);
@@ -1076,33 +1076,33 @@ layout: default
 
     const contentArea = msgWrapper.querySelector('.bubble-content-area');
     
-    // 如果是用户消息，直接显示文本（或简单 Markdown）
+    /* 如果是用户消息，直接显示文本（或简单 Markdown） */
     if (role === 'user') {
       contentArea.innerHTML = `<div class="markdown-prose">${marked.parse(fullContent)}</div>`;
       return;
     }
 
-    // Agent 消息：解析推理标签
+    /* Agent 消息：解析推理标签 */
     const parsed = parseThinkTags(fullContent);
-    contentArea.innerHTML = ''; // 清空重新渲染
+    contentArea.innerHTML = ''; /* 清空重新渲染 */
 
-    // 1. 渲染推理块
+    /* 1. 渲染推理块 */
     if (parsed.thinking) {
       contentArea.appendChild(getOrCreateThinkingBlock(id, parsed.thinking));
     }
 
-    // 2. 渲染正文
+    /* 2. 渲染正文 */
     if (parsed.body) {
       const bodyEl = document.createElement('div');
       bodyEl.className = 'markdown-prose';
       bodyEl.innerHTML = DOMPurify.sanitize(marked.parse(parsed.body));
       contentArea.appendChild(bodyEl);
     } else if (!parsed.thinking) {
-       // 防止空消息
+       /* 防止空消息 */
        contentArea.innerHTML = '<div class="pulse-dot"></div>';
     }
     
-    // 处理代码高亮
+    /* 处理代码高亮 */
     contentArea.querySelectorAll('pre code').forEach((el) => {
       hljs.highlightElement(el);
     });
@@ -1144,15 +1144,15 @@ layout: default
     }
 
     toolCalls.forEach(tc => {
-      // 1. 优先使用 Tool Call 自身的 ID 进行全局查重 (适合流式中 ID 保持不变的情况)
-      // 2. 如果没有 ID，则使用 msgId + index 组合 (适合 OpenAI 这种只有第一帧有 ID 的情况)
+      /* 1. 优先使用 Tool Call 自身的 ID 进行全局查重 (适合流式中 ID 保持不变的情况) */
+      /* 2. 如果没有 ID，则使用 msgId + index 组合 (适合 OpenAI 这种只有第一帧有 ID 的情况) */
       const tcIdx = tc.index !== undefined ? tc.index : 0;
       const tcId = tc.id ? `tc-${tc.id}` : `tc-msg-${msgId}-${tcIdx}`;
       
       let tcEl = document.getElementById(tcId);
       if (!tcEl) {
-        // 全局搜索一下，防止跨消息的 ID 重复（部分 Backend 实现可能在不同事件中传同一个 ID）
-        // 如果是全新创建
+        /* 全局搜索一下，防止跨消息的 ID 重复（部分 Backend 实现可能在不同事件中传同一个 ID） */
+        /* 如果是全新创建 */
         tcEl = document.createElement('div');
         tcEl.id = tcId;
         tcEl.className = 'tool-call-block';
@@ -1175,17 +1175,17 @@ layout: default
           nameEl.textContent = tc.function.name;
         }
         
-        // 处理参数：如果是全新的 arguments 则直接赋值，如果是 delta 则追加
-        // 部分后端在后续 chunk 中传的是全量，部分是增量。
-        // 这里做一个简单的去重：如果当前的内容已经包含了这次传过来的内容，则不追加
+        /* 处理参数：如果是全新的 arguments 则直接赋值，如果是 delta 则追加 */
+        /* 部分后端在后续 chunk 中传的是全量，部分是增量。 */
+        /* 这里做一个简单的去重：如果当前的内容已经包含了这次传过来的内容，则不追加 */
         if (tc.function.arguments) {
           const currentArgs = argsEl.textContent;
           const newArgs = tc.function.arguments;
           
-          // 如果后端传的是全量数据且已经展示过，则跳过 (简单判断)
+          /* 如果后端传的是全量数据且已经展示过，则跳过 (简单判断) */
           if (currentArgs === newArgs) return;
           
-          // 否则认为是增量补全
+          /* 否则认为是增量补全 */
           argsEl.textContent += newArgs;
         }
       }
@@ -1195,16 +1195,16 @@ layout: default
     if (!toolResponses) return;
     
     toolResponses.forEach(res => {
-      // 优先根据 tool_call_id 全局查找
+      /* 优先根据 tool_call_id 全局查找 */
       const tcId = `tc-${res.tool_call_id}`;
       let tcEl = document.getElementById(tcId);
       
-      // 如果找不到具体的 ID 块，尝试查找该消息下的最后一个工具块
+      /* 如果找不到具体的 ID 块，尝试查找该消息下的最后一个工具块 */
       if (!tcEl) {
         const msgWrapper = document.getElementById(`msg-${msgId}`);
         if (msgWrapper) {
           const blocks = msgWrapper.querySelectorAll('.tool-call-block');
-          tcEl = blocks[blocks.length - 1]; // 回退：假设是最近的一个
+          tcEl = blocks[blocks.length - 1]; /* 回退：假设是最近的一个 */
         }
       }
 
@@ -1222,7 +1222,7 @@ layout: default
         `;
         tcEl.appendChild(resContainer);
         
-        // 视觉反馈：执行成功后将头部变绿
+        /* 视觉反馈：执行成功后将头部变绿 */
         const header = tcEl.querySelector('.tool-header');
         header.style.color = '#16a34a';
         tcEl.style.borderColor = '#bbf7d0';
@@ -1230,19 +1230,19 @@ layout: default
 
       if (res.content) {
         const contentEl = resContainer.querySelector('.tool-result-content');
-        // 如果是全量内容且已展示则跳过，否则认为是增量补充（虽然 response 通常是一次性的）
+        /* 如果是全量内容且已展示则跳过，否则认为是增量补充（虽然 response 通常是一次性的） */
         if (contentEl.textContent === res.content) return;
-        contentEl.textContent = res.content; // Response 通常不采用增量，直接覆盖或设置即可
+        contentEl.textContent = res.content; /* Response 通常不采用增量，直接覆盖或设置即可 */
       }
     });
   }
 
-  // 触发文件上传
+  /* 触发文件上传 */
   async function handleFileUpload(event) {
     const file = event.target.files[0];
     if (!file) return;
 
-    // 显示上传中状态 (简单演示)
+    /* 显示上传中状态 (简单演示) */
     const originalIcon = document.querySelector('.fa-plus');
     originalIcon.className = 'fas fa-spinner fa-spin';
 
@@ -1266,7 +1266,7 @@ layout: default
       appendSystemError(`Upload error: ${err.message}`);
     } finally {
       originalIcon.className = 'fas fa-plus';
-      event.target.value = ''; // 重置
+      event.target.value = ''; /* 重置 */
     }
   }
 
@@ -1275,24 +1275,24 @@ layout: default
     const text = userInput.value.trim();
     if (!text && pendingAttachments.length === 0) return;
 
-    // 1. UI 展示消息
+    /* 1. UI 展示消息 */
     appendUserMessage(text || "[Sent an attachment]");
     userInput.value = '';
     userInput.style.height = 'auto';
 
-    // 2. 构造 Payload
+    /* 2. 构造 Payload */
     const targetAgent = document.getElementById('agent-selector').value;
     const temperature = document.querySelector('.styled-range').value / 100;
 
-    // 如果有附件，构造多模态内容或者在 metadata 中携带
+    /* 如果有附件，构造多模态内容或者在 metadata 中携带 */
     let content = text;
     if (pendingAttachments.length > 0) {
-      // 这里的协议需要与 by-framework 后端对齐，通常 content 可以是 List
+      /* 这里的协议需要与 by-framework 后端对齐，通常 content 可以是 List */
       content = [
         { type: "text", text: text || "Analyze this image" },
         ...pendingAttachments.map(attr => ({
             type: "image_url",
-            image_url: { url: attr.url || attr.path } // 兼容不同后端返回
+            image_url: { url: attr.url || attr.path } /* 兼容不同后端返回 */
         }))
       ];
     }
@@ -1306,7 +1306,7 @@ layout: default
       metadata: { temperature: temperature }
     };
 
-    // 清空待发送附件
+    /* 清空待发送附件 */
     pendingAttachments = [];
 
     try {
@@ -1359,17 +1359,17 @@ layout: default
     messages.scrollTop = messages.scrollHeight;
   }
 
-  // 页面加载逻辑
+  /* 页面加载逻辑 */
   document.addEventListener('DOMContentLoaded', () => {
     initWebSocket();
     
-    // 启动状态轮询
+    /* 启动状态轮询 */
     fetchFrameworkStatus();
     fetchSessions();
     setInterval(fetchFrameworkStatus, 10000); 
     setInterval(fetchSessions, 30000); 
 
-    // 初始化配置表单值
+    /* 初始化配置表单值 */
     document.getElementById('cfg-backend-url').value = BACKEND_URL;
     document.getElementById('cfg-ws-url').value = WS_URL;
 
@@ -1380,7 +1380,8 @@ layout: default
 
     sendBtn.addEventListener('click', handleSend);
     userInput.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' && !e.shiftKey) {
+      /* 修复中文输入法下回车选词会触发发送的问题 */
+      if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) {
         e.preventDefault();
         handleSend();
       }
@@ -1391,7 +1392,7 @@ layout: default
       this.style.height = (this.scrollHeight) + 'px';
     });
 
-    // 附件上传逻辑
+    /* 附件上传逻辑 */
     if (plusBtn) {
       plusBtn.addEventListener('click', () => fileInput.click());
     }
@@ -1399,7 +1400,7 @@ layout: default
       fileInput.addEventListener('change', handleFileUpload);
     }
 
-    // 侧边栏交互逻辑保持
+    /* 侧边栏交互逻辑保持 */
     initSidebar();
   });
 
