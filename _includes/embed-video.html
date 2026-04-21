@@ -1,0 +1,46 @@
+<!-- 视频嵌入组件 -->
+<style>
+.video-container {
+  position: relative;
+  width: 100%;
+  max-width: 960px;
+  margin: 2rem auto;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  background: #1a1a1a;
+}
+
+.video-container video {
+  width: 100%;
+  display: block;
+  border-radius: 12px;
+}
+
+.video-caption {
+  text-align: center;
+  padding: 1rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  font-size: 0.95rem;
+}
+
+.video-caption a {
+  color: #ffd700;
+  text-decoration: none;
+}
+
+.video-caption a:hover {
+  text-decoration: underline;
+}
+</style>
+
+<div class="video-container">
+  <video 
+    controls 
+    preload="metadata"
+  >
+    <source src="{{ include.src }}" type="video/mp4">
+    您的浏览器不支持 HTML5 视频播放。
+  </video>
+</div>
