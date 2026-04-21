@@ -13,4 +13,11 @@
   sidebar_data: hermes_agent_sidebar
   doc_url: /docs/hermes-agent/01-entry-and-startup/
 
+- name: Codex CLI 源码分析
+  id: codex-cli-source
+  description: 10 章节深度解构 OpenAI Codex CLI 编码代理的 Rust 架构与安全体系。
+  icon: fa-terminal
+  sidebar_data: codex_cli_sidebar
+  doc_url: /docs/codex-cli/01-project-overview/
+
 

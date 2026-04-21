@@ -2,6 +2,12 @@
 layout: default
 ---
 
+<!-- 引入渲染库 -->
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/dompurify/dist/purify.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+
 <!-- 视觉装饰背景 -->
 <div class="lab-bg-ornaments">
   <div class="mesh-gradient"></div>
@@ -65,6 +71,8 @@ layout: default
             <i class="fas fa-globe" title="选择模型"></i>
           </div>
           <textarea id="lab-user-input" placeholder="Ask anything..." rows="1"></textarea>
+          <!-- 隐藏的文件上传入口 -->
+          <input type="file" id="lab-file-input" style="display: none;" accept="image/*">
           <div class="input-suffix">
             <button id="lab-send-btn" class="send-action">
               <i class="fas fa-arrow-up"></i>
@@ -83,9 +91,7 @@ layout: default
             <label>Discovery Agent</label>
             <div class="custom-select">
               <select id="agent-selector">
-                <option value="research">Graphify Specialist</option>
-                <option value="coding" selected>Code Architect</option>
-                <option value="creative">Creative LLM</option>
+                <option value="">Discovering Agents...</option>
               </select>
             </div>
           </div>
@@ -97,27 +103,47 @@ layout: default
       </div>
 
       <div class="settings-section">
+        <h2 class="section-title"><i class="fas fa-link"></i> Endpoint Config</h2>
+        <div class="setting-card">
+          <div class="field">
+            <label>Backend API URL</label>
+            <input type="text" id="cfg-backend-url" class="styled-input" placeholder="http://localhost:8000">
+          </div>
+          <div class="field">
+            <label>WebSocket URL</label>
+            <input type="text" id="cfg-ws-url" class="styled-input" placeholder="ws://localhost:8000/ws/stream">
+          </div>
+          <button onclick="saveEndpoints()" class="btn-primary-sm" style="width: 100%; margin-top: 4px;">
+            <i class="fas fa-sync-alt"></i> Save & Reconnect
+          </button>
+        </div>
+      </div>
+
+      <div class="settings-section">
         <h2 class="section-title"><i class="fas fa-microchip"></i> Framework Status</h2>
-        <div class="status-grid">
+        <div id="status-grid" class="status-grid">
           <div class="status-item">
-            <span class="label">Core</span>
-            <span class="value alive">Running</span>
+            <span class="label">Gateway</span>
+            <span class="value gateway-status">Offline</span>
           </div>
           <div class="status-item">
-            <span class="label">Backend</span>
-            <span class="value">Rust (tokio)</span>
+            <span class="label">Workers</span>
+            <span class="value worker-count">0 Active</span>
           </div>
           <div class="status-item">
-            <span class="label">Context</span>
-            <span class="value">Sliding Window</span>
+            <span class="label">Services</span>
+            <span class="value service-count">0 Nodes</span>
           </div>
         </div>
       </div>
 
-      <div class="ad-card">
-        <h3>Pro-tip</h3>
-        <p>Use `/help` to see all laboratory exclusive commands.</p>
+      <div class="settings-section">
+        <h2 class="section-title"><i class="fas fa-history"></i> Recent Sessions</h2>
+        <div id="session-list" class="session-list">
+          <div class="session-item placeholder">No recent sessions</div>
+        </div>
       </div>
+
     </aside>
   </main>
 </div>
@@ -482,9 +508,252 @@ layout: default
     outline: none;
   }
 
+  .styled-input {
+    width: 100%;
+    background: var(--bg-base);
+    border: 1px solid var(--border-color);
+    padding: 8px 10px;
+    border-radius: 8px;
+    color: var(--text-main);
+    font-size: 12px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .styled-input:focus { border-color: var(--primary); }
+
+  .btn-primary-sm {
+    background: var(--primary);
+    color: white;
+    border: none;
+    padding: 8px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: opacity 0.2s;
+  }
+  .btn-primary-sm:hover { opacity: 0.9; }
+
   .status-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
   .status-item { padding: 12px; border-radius: 10px; border: 1px solid var(--border-color); display: flex; justify-content: space-between; font-size: 13px; }
   .status-item .alive { color: #52c41a; font-weight: 600; }
+
+  /* Session List Styles */
+  .session-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 200px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+  }
+  .session-list::-webkit-scrollbar { width: 4px; }
+  .session-list::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }
+
+  .session-item {
+    padding: 10px 12px;
+    border-radius: 8px;
+    background: var(--bg-base);
+    border: 1px solid var(--border-color);
+    font-size: 12px;
+    cursor: pointer;
+    transition: all var(--transition-hover);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--text-sec);
+  }
+  .session-item:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+  }
+  .session-item.active {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+  }
+  .session-item.placeholder {
+    border-style: dashed;
+    text-align: center;
+    cursor: default;
+  }
+  .session-item.placeholder:hover { color: var(--text-sec); border-color: var(--border-color); }
+
+  /* 增强 Markdown 渲染样式 */
+  .markdown-prose {
+    font-size: 15px;
+    line-height: 1.7;
+    word-break: break-word;
+  }
+  .markdown-prose p { margin: 0 0 12px; }
+  .markdown-prose p:last-child { margin-bottom: 0; }
+  .markdown-prose code {
+    background: var(--border-color);
+    padding: 2px 4px;
+    border-radius: 4px;
+    font-family: 'Fira Code', monospace;
+    font-size: 0.9em;
+  }
+  .markdown-prose pre {
+    background: #1e1e1e;
+    color: #d4d4d4;
+    padding: 16px;
+    border-radius: 12px;
+    overflow-x: auto;
+    margin: 16px 0;
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+  .markdown-prose pre code {
+    background: transparent;
+    padding: 0;
+    color: inherit;
+    font-size: 13px;
+  }
+  .markdown-prose ul, .markdown-prose ol { padding-left: 20px; margin-bottom: 12px; }
+  .markdown-prose blockquote {
+    border-left: 4px solid var(--primary);
+    margin: 0;
+    padding-left: 16px;
+    color: var(--text-sec);
+    background: var(--border-color);
+    padding: 8px 16px;
+    border-radius: 0 8px 8px 0;
+  }
+
+  /* 推理块样式 (ThinkingBlock) */
+  .thinking-block {
+    margin-bottom: 16px;
+    border-radius: 12px;
+    border: 1px solid #e0d9f6;
+    background: linear-gradient(135deg, #f8f5ff 0%, #f0f0ff 100%);
+    overflow: hidden;
+    transition: all 0.3s ease;
+  }
+  [data-mode='dark'] .thinking-block {
+    background: linear-gradient(135deg, #1a1625 0%, #171725 100%);
+    border-color: #312e45;
+  }
+
+  .thinking-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    cursor: pointer;
+    user-select: none;
+    font-size: 11px;
+    font-weight: 700;
+    color: #722ed1;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .thinking-header i.fa-chevron-right {
+    transition: transform 0.2s;
+    font-size: 10px;
+    opacity: 0.5;
+  }
+  .thinking-block.expanded .thinking-header i.fa-chevron-right {
+    transform: rotate(90deg);
+  }
+  .thinking-content {
+    display: none;
+    padding: 0 12px 12px;
+    font-size: 13px;
+    color: #594a7a;
+    border-top: 1px solid rgba(114, 46, 209, 0.1);
+  }
+  [data-mode='dark'] .thinking-content { color: #a59cc0; }
+  .thinking-block.expanded .thinking-content {
+    display: block;
+  }
+
+  /* 工具调用样式 (ToolCallBlock) */
+  .tool-call-block {
+    margin-bottom: 12px;
+    border-radius: 10px;
+    border: 1px solid #fde68a;
+    background: #fffef5;
+    overflow: hidden;
+  }
+  [data-mode='dark'] .tool-call-block {
+    background: #1c1a12;
+    border-color: #453c1d;
+  }
+   .tool-header {
+    padding: 8px 12px;
+    font-size: 11px;
+    font-weight: 700;
+    color: #b45309;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.2s;
+  }
+  .tool-header:hover {
+    background: rgba(180, 83, 9, 0.05);
+  }
+  .tool-header .chevron {
+    margin-left: auto;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  .tool-call-block.collapsed .tool-args,
+  .tool-call-block.collapsed .tool-result {
+    display: none;
+  }
+  .tool-call-block.collapsed .chevron {
+    transform: rotate(-90deg);
+  }
+  .tool-args {
+    padding: 8px 12px;
+    background: rgba(253, 230, 138, 0.2);
+    font-family: monospace;
+    font-size: 11px;
+    color: #92400e;
+    white-space: pre-wrap;
+    border-top: 1px solid rgba(253, 230, 138, 0.3);
+  }
+
+  /* 工具执行结果样式 (ToolResponse) */
+  .tool-result {
+    padding: 10px 12px;
+    background: rgba(22, 163, 74, 0.05);
+    border-top: 1px dashed rgba(22, 163, 74, 0.2);
+    font-size: 12px;
+    color: var(--text-main);
+  }
+  .tool-result-header {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #16a34a;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .tool-result-content {
+    font-family: 'Fira Code', monospace;
+    font-size: 11px;
+    line-height: 1.5;
+    background: rgba(255, 255, 255, 0.5);
+    padding: 8px;
+    border-radius: 6px;
+    border: 1px solid rgba(22, 163, 74, 0.1);
+    white-space: pre-wrap;
+    color: #166534;
+  }
+  [data-mode='dark'] .tool-result-content {
+    background: rgba(0, 0, 0, 0.2);
+    color: #4ade80;
+    border-color: rgba(74, 222, 128, 0.1);
+  }
 
   .ad-card {
     margin-top: 28px;
@@ -500,42 +769,618 @@ layout: default
 </style>
 
 <script>
-  document.addEventListener('DOMContentLoaded', function() {
-    const userInput = document.getElementById('lab-user-input');
-    const sendBtn = document.getElementById('lab-send-btn');
-    const messages = document.getElementById('lab-chat-messages');
+  let BACKEND_URL = localStorage.getItem('by-lab-backend') || 'http://localhost:8000';
+  let WS_URL = localStorage.getItem('by-lab-ws') || 'ws://localhost:8000/ws/stream';
+  
+  function saveEndpoints() {
+    const bUrl = document.getElementById('cfg-backend-url').value.trim();
+    const wUrl = document.getElementById('cfg-ws-url').value.trim();
+    if (!bUrl || !wUrl) {
+      alert('Please enter valid URLs');
+      return;
+    }
+    localStorage.setItem('by-lab-backend', bUrl);
+    localStorage.setItem('by-lab-ws', wUrl);
+    
+    // 应用并重连
+    BACKEND_URL = bUrl;
+    WS_URL = wUrl;
+    
+    appendSystemMessage(`Endpoints updated! Reconnecting...`);
+    if (socket) socket.close(); // 触发自动重连逻辑
+    fetchFrameworkStatus();
+    fetchSessions();
+  }
 
-    function appendMessage(role, text) {
-      const wrapper = document.createElement('div');
-      wrapper.className = `msg-wrapper ${role}`;
-      wrapper.innerHTML = `
+  // 配置 Marked
+  marked.setOptions({
+    highlight: function(code, lang) {
+      const language = hljs.getLanguage(lang) ? lang : 'plaintext';
+      return hljs.highlight(code, { language }).value;
+    },
+    langPrefix: 'hljs language-',
+    breaks: true,
+    gfm: true
+  });
+
+  let socket = null;
+  let lastConnectionState = 'Offline';
+  let currentSessionId = 'lab-session-' + Date.now();
+  let latestMsgId = null;
+  let pendingAttachments = []; 
+  
+  // 消息内容缓存，用于支持流式 Markdown 全量重绘
+  const messageContentCache = new Map();
+
+  // 初始化 WebSocket 连接
+  function initWebSocket() {
+    try {
+      socket = new WebSocket(WS_URL);
+
+      socket.onopen = () => {
+        console.log('Connected to by-framework-web gateway');
+        updateGatewayStatus('Online');
+        if (lastConnectionState !== 'Online') {
+          appendSystemMessage(`Successfully connected to Gateway: ${WS_URL}`);
+          lastConnectionState = 'Online';
+        }
+        socket.send(jsonStr({ action: 'set_session', session_id: currentSessionId }));
+      };
+
+      socket.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          handleIncomingMessage(data);
+        } catch (e) {
+          console.error('Failed to parse WS message', e);
+        }
+      };
+
+      socket.onclose = () => {
+        console.warn('WS disconnected. Retrying in 3s...');
+        updateGatewayStatus('Offline');
+        if (lastConnectionState === 'Online') {
+          appendSystemError(`Connection lost to Gateway. Retrying...`);
+          lastConnectionState = 'Offline';
+        }
+        setTimeout(initWebSocket, 3000);
+      };
+
+      socket.onerror = (err) => {
+        console.error('WS Error:', err);
+        updateGatewayStatus('Error');
+        if (lastConnectionState === 'Online') {
+          appendSystemError(`Gateway connection error occurred.`);
+          lastConnectionState = 'Error';
+        }
+      };
+    } catch (e) {
+      console.error('Failed to create WebSocket', e);
+      updateGatewayStatus('Failed');
+    }
+  }
+
+  function jsonStr(obj) { return JSON.stringify(obj); }
+
+  function updateGatewayStatus(status) {
+    const statusVal = document.querySelector('.gateway-status');
+    if (statusVal) {
+      statusVal.textContent = status;
+      statusVal.style.color = status === 'Online' ? '#52c41a' : '#ff4d4f';
+    }
+  }
+
+  // 轮询后端获取 Worker 和 Service 状态
+  async function fetchFrameworkStatus() {
+    try {
+      const workerResp = await fetch(`${BACKEND_URL}/api/workers`);
+      const workerData = await workerResp.json();
+      const workers = workerData.workers || {};
+      const workerArray = Object.values(workers);
+      const activeCount = workerArray.filter(w => w.status === 'alive').length;
+      document.querySelector('.worker-count').textContent = `${activeCount} Active`;
+
+      updateAgentSelector(workerArray);
+
+      const serviceResp = await fetch(`${BACKEND_URL}/api/services`);
+      const serviceData = await serviceResp.json();
+      const services = serviceData.services || [];
+      const totalInstances = services.reduce((acc, s) => acc + (s.instance_count || 0), 0);
+      document.querySelector('.service-count').textContent = `${totalInstances} Nodes`;
+    } catch (err) {
+      console.warn('Failed to fetch framework status', err);
+    }
+  }
+
+  function updateAgentSelector(workers) {
+    const selector = document.getElementById('agent-selector');
+    if (!selector) return;
+
+    const currentValue = selector.value;
+    
+    let agentTypes = [];
+    workers.forEach(w => {
+      if (w.status !== 'alive') return;
+      if (Array.isArray(w.agent_types)) {
+        agentTypes.push(...w.agent_types);
+      } else if (w.agent_type) {
+        agentTypes.push(w.agent_type);
+      } else if (w.name || w.worker_id) {
+        agentTypes.push(w.name || w.worker_id);
+      }
+    });
+
+    agentTypes = [...new Set(agentTypes)].filter(Boolean);
+
+    if (agentTypes.length === 0) {
+      selector.innerHTML = '<option value="">No Active Agents</option>';
+      return;
+    }
+
+    selector.innerHTML = agentTypes.map(type => `
+      <option value="${type}" ${type === currentValue ? 'selected' : ''}>${type}</option>
+    `).join('');
+    
+    if (!agentTypes.includes(currentValue) && agentTypes.length > 0) {
+      selector.value = agentTypes[0];
+    }
+  }
+
+  // 获取会话历史列表
+  async function fetchSessions() {
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/sessions`);
+      const data = await response.json();
+      const sessions = data.sessions || [];
+      const listContainer = document.getElementById('session-list');
+      
+      if (sessions.length === 0) {
+        listContainer.innerHTML = '<div class="session-item placeholder">No recent sessions</div>';
+        return;
+      }
+
+      listContainer.innerHTML = sessions.slice(0, 8).map(sid => `
+        <div class="session-item ${sid === currentSessionId ? 'active' : ''}" onclick="switchSession('${sid}')">
+          ${sid}
+        </div>
+      `).join('');
+    } catch (err) {
+      console.error('Failed to fetch sessions', err);
+    }
+  }
+
+  // 切换会话并拉取历史
+  async function switchSession(sid) {
+    if (sid === currentSessionId) return;
+    if (!confirm('Switch to this session and load history? Current view will be cleared.')) return;
+
+    currentSessionId = sid;
+    messageContentCache.clear();
+    document.getElementById('lab-chat-messages').innerHTML = '';
+    if (socket && socket.readyState === WebSocket.OPEN) {
+      socket.send(jsonStr({ action: 'set_session', session_id: currentSessionId }));
+    }
+    await fetchSessionHistory(sid);
+    fetchSessions();
+  }
+
+  async function fetchSessionHistory(sid) {
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/sessions/${sid}/history`);
+      const data = await response.json();
+      const history = data.history || [];
+      
+      history.forEach(msg => {
+        if (msg.role === 'user') {
+          appendUserMessage(msg.content);
+        } else {
+          // 历史消息的处理逻辑
+          const msgId = msg.id || ('hist-' + Math.random());
+          const content = typeof msg.content === 'object' ? msg.content.text : msg.content;
+          updateMessageContent(msgId, content, 'bot');
+        }
+      });
+    } catch (err) {
+      console.error('Failed to fetch history', err);
+    }
+  }
+
+  /* ── 核心解析逻辑 ─────────────────────────────────────────────────── */
+
+  function parseThinkTags(raw) {
+    if (!raw || !raw.includes('<think>')) return { thinking: '', body: raw };
+    
+    let thinking = '';
+    let body = '';
+    let cursor = 0;
+
+    while (cursor < raw.length) {
+      const openIdx = raw.indexOf('<think>', cursor);
+      if (openIdx === -1) {
+        body += raw.slice(cursor);
+        break;
+      }
+
+      body += raw.slice(cursor, openIdx);
+      const closeIdx = raw.indexOf('</think>', openIdx + 7);
+      
+      if (closeIdx === -1) {
+        thinking += (thinking ? '\n' : '') + raw.slice(openIdx + 7).trim();
+        break;
+      }
+
+      thinking += (thinking ? '\n' : '') + raw.slice(openIdx + 7, closeIdx).trim();
+      cursor = closeIdx + 8;
+    }
+    return { thinking: thinking.trim(), body: body.trim() };
+  }
+
+  function handleIncomingMessage(data) {
+    const messagesContainer = document.getElementById('lab-chat-messages');
+    if (data.type === 'ping') return;
+    if (data.session_id && data.session_id !== currentSessionId) return;
+
+    // 关键修正：优先使用 message_id 进行分组，而不是过于细碎的 id (event id)
+    // 这样同一 Agent 的推理 (reasoning) 和 回答 (answer) 就能在同一个缓存 key 下拼接
+    const agentType = data.source_agent_type || 'assistant';
+    const msgId = (data.message_id || data.id || 'stream-msg') + '-' + agentType;
+    
+    // 综合解析 content (处理 choices.delta, chunk, 或全量 content)
+    let chunkContent = "";
+    const choices = data.choices || (data.data && data.data.choices);
+    
+    if (choices && choices[0] && choices[0].delta) {
+      chunkContent = choices[0].delta.content || "";
+      // 处理工具调用 (Tool Calls)
+      if (choices[0].delta.tool_calls) {
+        renderToolCalls(msgId, choices[0].delta.tool_calls);
+      }
+      if (choices[0].delta.tool_responses) {
+        renderToolResponses(msgId, choices[0].delta.tool_responses);
+      }
+    } else if (data.data && data.data.chunk) {
+      chunkContent = data.data.chunk;
+    } else {
+      chunkContent = data.chunk || data.content || "";
+    }
+
+    if (chunkContent || data.id) {
+      updateMessageContent(msgId, chunkContent, 'bot');
+    }
+
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+  }
+
+  function updateMessageContent(id, chunk, role) {
+    const messagesContainer = document.getElementById('lab-chat-messages');
+    let msgWrapper = document.getElementById(`msg-${id}`);
+    
+    // 获取或创建缓存
+    let fullContent = messageContentCache.get(id) || "";
+    fullContent += chunk;
+    messageContentCache.set(id, fullContent);
+
+    if (!msgWrapper) {
+      msgWrapper = document.createElement('div');
+      msgWrapper.id = `msg-${id}`;
+      msgWrapper.className = `msg-wrapper ${role}`;
+      msgWrapper.innerHTML = `
         <div class="msg-bubble">
-          <div class="bubble-content">${text}</div>
-          <div class="bubble-meta">${role === 'user' ? 'You' : 'Agent'} · ${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
+          <div class="bubble-content-area"></div>
+          <div class="bubble-meta">${role === 'user' ? 'You' : 'Agent'} · Just now</div>
         </div>
       `;
-      messages.appendChild(wrapper);
-      
-      setTimeout(() => wrapper.classList.add('appear'), 10);
-      messages.scrollTop = messages.scrollHeight;
+      messagesContainer.appendChild(msgWrapper);
+      setTimeout(() => msgWrapper.classList.add('appear'), 10);
     }
 
-    function handleSend() {
-      const text = userInput.value.trim();
-      if(!text) return;
-      
-      appendMessage('user', text);
-      userInput.value = '';
-      userInput.style.height = 'auto';
-
-      setTimeout(() => {
-        appendMessage('bot', "By-Framework 正在调度核心模型处理您的指令... 当前请求已进入 Rust (Tokio) 异步队列。");
-      }, 700);
+    const contentArea = msgWrapper.querySelector('.bubble-content-area');
+    
+    // 如果是用户消息，直接显示文本（或简单 Markdown）
+    if (role === 'user') {
+      contentArea.innerHTML = `<div class="markdown-prose">${marked.parse(fullContent)}</div>`;
+      return;
     }
+
+    // Agent 消息：解析推理标签
+    const parsed = parseThinkTags(fullContent);
+    contentArea.innerHTML = ''; // 清空重新渲染
+
+    // 1. 渲染推理块
+    if (parsed.thinking) {
+      contentArea.appendChild(getOrCreateThinkingBlock(id, parsed.thinking));
+    }
+
+    // 2. 渲染正文
+    if (parsed.body) {
+      const bodyEl = document.createElement('div');
+      bodyEl.className = 'markdown-prose';
+      bodyEl.innerHTML = DOMPurify.sanitize(marked.parse(parsed.body));
+      contentArea.appendChild(bodyEl);
+    } else if (!parsed.thinking) {
+       // 防止空消息
+       contentArea.innerHTML = '<div class="pulse-dot"></div>';
+    }
+    
+    // 处理代码高亮
+    contentArea.querySelectorAll('pre code').forEach((el) => {
+      hljs.highlightElement(el);
+    });
+  }
+
+  function getOrCreateThinkingBlock(msgId, content) {
+    const blockId = `think-${msgId}`;
+    let block = document.getElementById(blockId);
+    if (!block) {
+      block = document.createElement('div');
+      block.id = blockId;
+      block.className = 'thinking-block expanded';
+      block.innerHTML = `
+        <div class="thinking-header" onclick="this.parentElement.classList.toggle('expanded')">
+          <i class="fas fa-brain"></i>
+          <span>思考过程</span>
+          <i class="fas fa-chevron-right ml-auto"></i>
+        </div>
+        <div class="thinking-content"></div>
+      `;
+    }
+    const contentEl = block.querySelector('.thinking-content');
+    contentEl.innerHTML = DOMPurify.sanitize(marked.parse(content));
+    return block;
+  }
+
+
+  function renderToolCalls(msgId, toolCalls) {
+    const msgWrapper = document.getElementById(`msg-${msgId}`);
+    if (!msgWrapper) return;
+    
+    const bubble = msgWrapper.querySelector('.msg-bubble');
+    let toolContainer = msgWrapper.querySelector('.tool-calls-container');
+    
+    if (!toolContainer) {
+      toolContainer = document.createElement('div');
+      toolContainer.className = 'tool-calls-container';
+      bubble.insertBefore(toolContainer, bubble.firstChild);
+    }
+
+    toolCalls.forEach(tc => {
+      // 1. 优先使用 Tool Call 自身的 ID 进行全局查重 (适合流式中 ID 保持不变的情况)
+      // 2. 如果没有 ID，则使用 msgId + index 组合 (适合 OpenAI 这种只有第一帧有 ID 的情况)
+      const tcIdx = tc.index !== undefined ? tc.index : 0;
+      const tcId = tc.id ? `tc-${tc.id}` : `tc-msg-${msgId}-${tcIdx}`;
+      
+      let tcEl = document.getElementById(tcId);
+      if (!tcEl) {
+        // 全局搜索一下，防止跨消息的 ID 重复（部分 Backend 实现可能在不同事件中传同一个 ID）
+        // 如果是全新创建
+        tcEl = document.createElement('div');
+        tcEl.id = tcId;
+        tcEl.className = 'tool-call-block';
+        tcEl.innerHTML = `
+          <div class="tool-header" onclick="this.parentElement.classList.toggle('collapsed')">
+            <i class="fas fa-wrench"></i>
+            <span class="tool-name">Initializing...</span>
+            <i class="fas fa-chevron-down chevron"></i>
+          </div>
+          <div class="tool-args"></div>
+        `;
+        toolContainer.appendChild(tcEl);
+      }
+      
+      if (tc.function) {
+        const nameEl = tcEl.querySelector('.tool-name');
+        const argsEl = tcEl.querySelector('.tool-args');
+        
+        if (tc.function.name) {
+          nameEl.textContent = tc.function.name;
+        }
+        
+        // 处理参数：如果是全新的 arguments 则直接赋值，如果是 delta 则追加
+        // 部分后端在后续 chunk 中传的是全量，部分是增量。
+        // 这里做一个简单的去重：如果当前的内容已经包含了这次传过来的内容，则不追加
+        if (tc.function.arguments) {
+          const currentArgs = argsEl.textContent;
+          const newArgs = tc.function.arguments;
+          
+          // 如果后端传的是全量数据且已经展示过，则跳过 (简单判断)
+          if (currentArgs === newArgs) return;
+          
+          // 否则认为是增量补全
+          argsEl.textContent += newArgs;
+        }
+      }
+    });
+  }
+  function renderToolResponses(msgId, toolResponses) {
+    if (!toolResponses) return;
+    
+    toolResponses.forEach(res => {
+      // 优先根据 tool_call_id 全局查找
+      const tcId = `tc-${res.tool_call_id}`;
+      let tcEl = document.getElementById(tcId);
+      
+      // 如果找不到具体的 ID 块，尝试查找该消息下的最后一个工具块
+      if (!tcEl) {
+        const msgWrapper = document.getElementById(`msg-${msgId}`);
+        if (msgWrapper) {
+          const blocks = msgWrapper.querySelectorAll('.tool-call-block');
+          tcEl = blocks[blocks.length - 1]; // 回退：假设是最近的一个
+        }
+      }
+
+      if (!tcEl) return;
+
+      let resContainer = tcEl.querySelector('.tool-result');
+      if (!resContainer) {
+        resContainer = document.createElement('div');
+        resContainer.className = 'tool-result';
+        resContainer.innerHTML = `
+          <div class="tool-result-header">
+            <i class="fas fa-check-circle"></i> Result
+          </div>
+          <div class="tool-result-content"></div>
+        `;
+        tcEl.appendChild(resContainer);
+        
+        // 视觉反馈：执行成功后将头部变绿
+        const header = tcEl.querySelector('.tool-header');
+        header.style.color = '#16a34a';
+        tcEl.style.borderColor = '#bbf7d0';
+      }
+
+      if (res.content) {
+        const contentEl = resContainer.querySelector('.tool-result-content');
+        // 如果是全量内容且已展示则跳过，否则认为是增量补充（虽然 response 通常是一次性的）
+        if (contentEl.textContent === res.content) return;
+        contentEl.textContent = res.content; // Response 通常不采用增量，直接覆盖或设置即可
+      }
+    });
+  }
+
+  // 触发文件上传
+  async function handleFileUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    // 显示上传中状态 (简单演示)
+    const originalIcon = document.querySelector('.fa-plus');
+    originalIcon.className = 'fas fa-spinner fa-spin';
+
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('session_id', currentSessionId);
+
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/uploads/images`, {
+        method: 'POST',
+        body: formData
+      });
+      const result = await response.json();
+      if (result.success) {
+        pendingAttachments.push(result.file);
+        appendSystemMessage(`Successfully uploaded: ${file.name}`);
+      } else {
+        appendSystemError(`Upload failed: ${result.error}`);
+      }
+    } catch (err) {
+      appendSystemError(`Upload error: ${err.message}`);
+    } finally {
+      originalIcon.className = 'fas fa-plus';
+      event.target.value = ''; // 重置
+    }
+  }
+
+  async function handleSend() {
+    const userInput = document.getElementById('lab-user-input');
+    const text = userInput.value.trim();
+    if (!text && pendingAttachments.length === 0) return;
+
+    // 1. UI 展示消息
+    appendUserMessage(text || "[Sent an attachment]");
+    userInput.value = '';
+    userInput.style.height = 'auto';
+
+    // 2. 构造 Payload
+    const targetAgent = document.getElementById('agent-selector').value;
+    const temperature = document.querySelector('.styled-range').value / 100;
+
+    // 如果有附件，构造多模态内容或者在 metadata 中携带
+    let content = text;
+    if (pendingAttachments.length > 0) {
+      // 这里的协议需要与 by-framework 后端对齐，通常 content 可以是 List
+      content = [
+        { type: "text", text: text || "Analyze this image" },
+        ...pendingAttachments.map(attr => ({
+            type: "image_url",
+            image_url: { url: attr.url || attr.path } // 兼容不同后端返回
+        }))
+      ];
+    }
+
+    const payload = {
+      content: content,
+      session_id: currentSessionId,
+      target_agent_type: targetAgent,
+      user_code: 'lab-user',
+      user_name: 'Lab Guest',
+      metadata: { temperature: temperature }
+    };
+
+    // 清空待发送附件
+    pendingAttachments = [];
+
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: jsonStr(payload)
+      });
+      const result = await response.json();
+      if (!result.success) {
+        appendSystemError(`Failed: ${result.error}`);
+      }
+    } catch (err) {
+      appendSystemError(`Connection error: ${err.message}`);
+    }
+  }
+
+  function appendUserMessage(text) {
+    const msgId = 'user-' + Date.now();
+    updateMessageContent(msgId, text, 'user');
+  }
+
+  function appendSystemMessage(text) {
+    const messages = document.getElementById('lab-chat-messages');
+    const wrapper = document.createElement('div');
+    wrapper.className = `msg-wrapper bot appear`;
+    wrapper.innerHTML = `
+      <div class="msg-bubble" style="background: rgba(82, 196, 26, 0.05); border-color: rgba(82, 196, 26, 0.2); border-left: 3px solid #52c41a;">
+        <div class="bubble-content-area" style="font-size: 13px; color: #52c41a; font-weight: 500;">
+          <i class="fas fa-check-circle mr-1"></i> ${text}
+        </div>
+      </div>
+    `;
+    messages.appendChild(wrapper);
+    messages.scrollTop = messages.scrollHeight;
+  }
+
+  function appendSystemError(errText) {
+    const messages = document.getElementById('lab-chat-messages');
+    const wrapper = document.createElement('div');
+    wrapper.className = `msg-wrapper bot appear`;
+    wrapper.innerHTML = `
+      <div class="msg-bubble" style="background: rgba(255, 77, 79, 0.05); border-color: rgba(255, 77, 79, 0.2); border-left: 3px solid #ff4d4f;">
+        <div class="bubble-content-area" style="font-size: 13px; color: #ff4d4f; font-weight: 500;">
+          <i class="fas fa-exclamation-circle mr-1"></i> ${errText}
+        </div>
+      </div>
+    `;
+    messages.appendChild(wrapper);
+    messages.scrollTop = messages.scrollHeight;
+  }
+
+  // 页面加载逻辑
+  document.addEventListener('DOMContentLoaded', () => {
+    initWebSocket();
+    
+    // 启动状态轮询
+    fetchFrameworkStatus();
+    fetchSessions();
+    setInterval(fetchFrameworkStatus, 10000); 
+    setInterval(fetchSessions, 30000); 
+
+    // 初始化配置表单值
+    document.getElementById('cfg-backend-url').value = BACKEND_URL;
+    document.getElementById('cfg-ws-url').value = WS_URL;
+
+    const userInput = document.getElementById('lab-user-input');
+    const sendBtn = document.getElementById('lab-send-btn');
+    const fileInput = document.getElementById('lab-file-input');
+    const plusBtn = document.querySelector('.fa-plus');
 
     sendBtn.addEventListener('click', handleSend);
     userInput.addEventListener('keydown', (e) => {
-      if(e.key === 'Enter' && !e.shiftKey) {
+      if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
         handleSend();
       }
@@ -545,16 +1390,20 @@ layout: default
       this.style.height = 'auto';
       this.style.height = (this.scrollHeight) + 'px';
     });
+
+    // 附件上传逻辑
+    if (plusBtn) {
+      plusBtn.addEventListener('click', () => fileInput.click());
+    }
+    if (fileInput) {
+      fileInput.addEventListener('change', handleFileUpload);
+    }
+
+    // 侧边栏交互逻辑保持
+    initSidebar();
   });
 
-  function clearHistory() {
-    if(confirm('确定要清除所有对话记录吗？')) {
-      const list = document.getElementById('lab-chat-messages');
-      list.innerHTML = '';
-    }
-  }
-
-  document.addEventListener('DOMContentLoaded', function() {
+  function initSidebar() {
     let sidebarOpen = false;
     const sidebar = document.querySelector('.settings-panel');
     const overlay = document.querySelector('.sidebar-overlay');
@@ -573,7 +1422,17 @@ layout: default
       }
     }
 
-    sidebarToggle.addEventListener('click', toggleSidebar);
-    overlay.addEventListener('click', toggleSidebar);
-  });
+    if (sidebarToggle) sidebarToggle.addEventListener('click', toggleSidebar);
+    if (overlay) overlay.addEventListener('click', toggleSidebar);
+  }
+
+  function clearHistory() {
+    if (confirm('确定要清除所有对话记录吗？')) {
+      document.getElementById('lab-chat-messages').innerHTML = '';
+      currentSessionId = 'lab-session-' + Date.now();
+      if (socket && socket.readyState === WebSocket.OPEN) {
+        socket.send(jsonStr({ action: 'set_session', session_id: currentSessionId }));
+      }
+    }
+  }
 </script>

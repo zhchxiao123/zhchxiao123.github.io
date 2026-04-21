@@ -1,0 +1,39 @@
+# Codex CLI 源码分析 - 文档侧边栏
+
+- title: "Phase 1: 架构地图"
+  children:
+    - title: 01. 项目概览与顶层架构
+      url: /docs/codex-cli/01-project-overview/
+    - title: 02. 构建系统与工具链
+      url: /docs/codex-cli/02-build-system/
+
+- title: "Phase 2: 核心引擎"
+  children:
+    - title: 03. 核心逻辑层 (codex-core)
+      url: /docs/codex-cli/03-core-logic/
+    - title: 04. TUI 交互层
+      url: /docs/codex-cli/04-tui-layer/
+
+- title: "Phase 3: 工具与安全"
+  children:
+    - title: 05. 工具系统
+      url: /docs/codex-cli/05-tools-system/
+    - title: 06. 沙箱与安全系统
+      url: /docs/codex-cli/06-sandbox-security/
+
+- title: "Phase 4: 协议与通信"
+  children:
+    - title: 07. 协议与通信层
+      url: /docs/codex-cli/07-protocol-communication/
+
+- title: "Phase 5: 质量与分发"
+  children:
+    - title: 08. 测试体系
+      url: /docs/codex-cli/08-testing-infrastructure/
+    - title: 09. SDK 与 CLI 分发
+      url: /docs/codex-cli/09-sdk-cli-distribution/
+
+- title: "Phase 6: 综合汇总"
+  children:
+    - title: 10. 架构总览 —— 最终综合文档
+      url: /docs/codex-cli/10-comprehensive-report/
