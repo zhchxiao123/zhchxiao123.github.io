@@ -136,6 +136,7 @@ layout: default
     --transition-msg: 400ms ease-out;
     --transition-focus: 200ms ease-out;
     --transition-hover: 150ms ease-out;
+    --content-width: 800px; /* 定义统一内容中轴线 */
   }
 
   [data-mode='dark'] {
@@ -149,6 +150,8 @@ layout: default
   }
 
   /* 基础结构 */
+  * { box-sizing: border-box; } /* 确保所有排版计算一致 */
+
   .ai-lab-container {
     position: fixed;
     inset: 0;
@@ -247,7 +250,7 @@ layout: default
     display: flex;
     flex-direction: column;
     position: relative;
-    max-width: 1100px;
+    max-width: var(--content-width); 
     margin: 0 auto;
     width: 100%;
   }
@@ -255,25 +258,25 @@ layout: default
   .messages-list {
     flex: 1;
     overflow-y: auto;
-    padding: 40px 64px 200px;
+    padding: 40px 0 200px;
     display: flex;
     flex-direction: column;
     gap: 32px;
     scrollbar-width: none;
+    width: 100%;
   }
   .messages-list::-webkit-scrollbar { display: none; }
 
   /* Message Style - Clean minimalist */
   .msg-wrapper {
-    max-width: 80%;
     display: flex;
     transform: translateY(12px);
     opacity: 0;
     transition: var(--transition-msg);
   }
   .msg-wrapper.appear { transform: translateY(0); opacity: 1; }
-  .msg-wrapper.user { align-self: flex-end; }
-  .msg-wrapper.bot { align-self: flex-start; }
+  .msg-wrapper.user { align-self: flex-end; width: auto; max-width: 85%; }
+  .msg-wrapper.bot { align-self: flex-start; width: 100%; }
 
   /* AI messages - no bubble, just text */
   .bot .msg-bubble {
@@ -322,7 +325,6 @@ layout: default
     color: var(--text-sec);
   }
 
-  /* Floating Command Bar - Clean pill style */
   .command-bar-wrapper {
     position: absolute;
     bottom: 40px;
@@ -332,14 +334,14 @@ layout: default
     flex-direction: column;
     align-items: center;
     gap: 12px;
-    padding: 0 64px;
+    padding: 0; 
     pointer-events: none;
-    max-width: 1100px;
-    margin: 0 auto;
+    width: 100%;
   }
 
   .command-bar {
     width: 100%;
+    max-width: var(--content-width);
     background: #f5f5f5;
     border: 1px solid #e0e0e0;
     border-radius: 16px;
