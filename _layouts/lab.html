@@ -28,14 +28,14 @@ layout: default
       </div>
     </div>
     <div class="header-right">
-      <button id="sidebar-toggle" class="btn-ghost icon-only" title="Toggle Sidebar">
+      <button id="sidebar-toggle" class="btn-ghost" title="Toggle Sidebar">
         <i class="fas fa-sliders-h"></i>
       </button>
-      <button onclick="clearHistory()" class="btn-ghost icon-only" title="Clear History">
+      <button onclick="clearHistory()" class="btn-ghost" title="Clear History">
         <i class="fas fa-trash-alt"></i>
       </button>
       <div class="divider-v"></div>
-      <a href="{{ '/' | relative_url }}" class="btn-ghost icon-only" title="Back to Blog">
+      <a href="{{ '/' | relative_url }}" class="btn-ghost" title="Back to Blog">
         <i class="fas fa-home"></i>
       </a>
     </div>
@@ -223,7 +223,7 @@ layout: default
     background: transparent;
     border: none;
     cursor: pointer;
-    color: var(--text-sec);
+    color: var(--text-main);
     border-radius: 8px;
     padding: 8px;
     display: flex;
@@ -233,12 +233,10 @@ layout: default
   }
   .btn-ghost:hover {
     background: var(--border-color);
-    color: var(--text-main);
+    color: var(--primary);
   }
-  .btn-ghost.icon-only {
-    width: 36px;
-    height: 36px;
-    padding: 0;
+  .btn-ghost .fas {
+    font-size: 16px;
   }
 
   .divider-v {
@@ -477,7 +475,6 @@ layout: default
       `;
       messages.appendChild(wrapper);
       
-      // 触发动画
       setTimeout(() => wrapper.classList.add('appear'), 10);
       messages.scrollTop = messages.scrollHeight;
     }
@@ -490,7 +487,6 @@ layout: default
       userInput.value = '';
       userInput.style.height = 'auto';
 
-      // 模拟 Agent 响应
       setTimeout(() => {
         appendMessage('bot', "By-Framework 正在调度核心模型处理您的指令... 当前请求已进入 Rust (Tokio) 异步队列。");
       }, 700);
@@ -517,7 +513,6 @@ layout: default
     }
   }
 
-  // 侧边栏状态管理
   document.addEventListener('DOMContentLoaded', function() {
     let sidebarOpen = false;
     const sidebar = document.querySelector('.settings-panel');
