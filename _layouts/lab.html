@@ -300,36 +300,36 @@ layout: default
   /* Floating Command Bar */
   .command-bar-wrapper {
     position: absolute;
-    bottom: 40px;
+    bottom: 32px;
     left: 64px;
     right: 64px;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
     pointer-events: none;
   }
 
   .command-bar {
     width: 100%;
     max-width: 800px;
-    background: var(--bg-glass);
+    background: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(30px);
     -webkit-backdrop-filter: blur(30px);
     border: 1px solid var(--border-color);
-    border-radius: 20px;
-    padding: 12px 20px;
+    border-radius: 24px;
+    padding: 14px 20px;
     display: flex;
     align-items: center;
-    gap: 16px;
-    box-shadow: 0 20px 50px rgba(0,0,0,0.1);
+    gap: 14px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.08);
     pointer-events: all;
-    transition: all 0.3s ease;
+    transition: border-color var(--transition-focus), box-shadow var(--transition-focus);
   }
 
   .command-bar:focus-within {
     border-color: var(--primary);
-    box-shadow: 0 0 0 4px rgba(22, 119, 255, 0.1), 0 20px 50px rgba(0,0,0,0.1);
+    box-shadow: 0 0 0 3px rgba(22, 119, 255, 0.1), 0 20px 50px rgba(0,0,0,0.08);
   }
 
   .input-prefix { color: var(--text-sec); font-size: 18px; }
@@ -350,8 +350,8 @@ layout: default
   .input-suffix kbd { font-size: 10px; color: var(--text-sec); padding: 2px 4px; border: 1px solid var(--border-color); border-radius: 4px; }
 
   .send-action {
-    width: 36px;
-    height: 36px;
+    width: 38px;
+    height: 38px;
     border-radius: 12px;
     background: var(--primary-grad);
     color: white;
@@ -360,9 +360,11 @@ layout: default
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: 0.2s;
+    transition: transform var(--transition-hover);
+    flex-shrink: 0;
   }
-  .send-action:hover { transform: scale(1.1); }
+  .send-action:hover { transform: scale(1.08); }
+  .send-action:active { transform: scale(0.95); }
 
   .command-status { font-size: 11px; color: var(--text-sec); display: flex; align-items: center; gap: 6px; }
   .pulse-dot { width: 6px; height: 6px; background: #52c41a; border-radius: 50%; animation: pulse 2s infinite; }
