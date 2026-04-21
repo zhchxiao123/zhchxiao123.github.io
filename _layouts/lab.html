@@ -375,14 +375,26 @@ layout: default
   .status-item { padding: 12px; border-radius: 10px; border: 1px solid var(--border-color); display: flex; justify-content: space-between; font-size: 13px; }
   .status-item .alive { color: #52c41a; font-weight: 600; }
 
-  .gradient-border {
-    margin-top: 40px;
+  .ad-card {
+    margin-top: 28px;
     padding: 2px;
-    background: var(--primary-grad);
     border-radius: 14px;
+    background: linear-gradient(135deg, rgba(22, 119, 255, 0.2), rgba(114, 46, 209, 0.2));
   }
-  .gradient-border h3 { margin: 12px 14px 4px; font-size: 14px; color: white; }
-  .gradient-border p { margin: 0 14px 12px; font-size: 12px; color: rgba(255,255,255,0.8); }
+
+  .ad-card h3 {
+    margin: 14px 16px 6px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--primary);
+  }
+
+  .ad-card p {
+    margin: 0 16px 14px;
+    font-size: 12px;
+    color: var(--text-sec);
+    line-height: 1.5;
+  }
 
   /* 隐藏默认元素补丁 */
   #sidebar, #main-wrapper > .header, #panel-wrapper, #footer, .post-navigation { display: none !important; }
