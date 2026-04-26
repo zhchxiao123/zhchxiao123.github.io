@@ -7,7 +7,6 @@ permalink: /docs/codex-cli/01-project-overview/
 # OpenAI Codex CLI — 项目概览与顶层架构
 
 > 分析日期：2026-04-21
-> 项目路径：`/Users/xiaozhongcheng/data/xiaozhongcheng2022/code/codex`
 
 ---
 

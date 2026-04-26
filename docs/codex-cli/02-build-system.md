@@ -7,7 +7,6 @@ permalink: /docs/codex-cli/02-build-system/
 # OpenAI Codex CLI — 构建系统与工具链分析
 
 > 分析日期：2026-04-21
-> 项目路径：`/Users/xiaozhongcheng/data/xiaozhongcheng2022/code/codex`
 
 ---
 
