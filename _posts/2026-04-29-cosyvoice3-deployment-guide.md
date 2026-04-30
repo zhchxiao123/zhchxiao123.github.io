@@ -1,7 +1,7 @@
 ---
 title: 中文TTS天花板！CosyVoice 3 本地部署实测：3秒克隆声音，150ms流式合成，方言随便玩
 date: 2026-04-29 20:37:00 +0800
-description: 阿里通义实验室 CosyVoice 3 本地部署全攻略：从模型下载到 WebUI 启动，实测普通话+四川话合成，对比 GPT-SoVITS、ChatTTS、Fish Speech 四大中文 TTS 天王。
+description: 阿里通义实验室 CosyVoice 3 本地部署全攻略：从模型下载到 WebUI 启动，实测普通话+广东话+四川话合成，对比 GPT-SoVITS、ChatTTS、Fish Speech 四大中文 TTS 天王。
 tags:
   - TTS
   - CosyVoice
@@ -91,7 +91,7 @@ CosyVoice 3 的架构可以拆成三层：
 ### 环境准备
 
 ```bash
-# 克隆仓库（含 Matcha-TTS 子模块）
+# 克隆仓库（含 Matcha-TTS 子模块，CosyVoice 3 仍然依赖它）
 git clone --recursive https://github.com/FunAudioLLM/CosyVoice.git ~/data/app/cosyvoice
 cd ~/data/app/cosyvoice
 
@@ -102,89 +102,328 @@ python3 -m venv venv && source venv/bin/activate
 pip install torch torchaudio
 
 # 安装依赖
-pip install -r requirements.txt
-pip install cosyvoice matcha-tts
+pip install -r requirements.txt -i https://mirrors.aliyun.com/pypi/simple/ --trusted-host=mirrors.aliyun.com
 ```
+
+> ⚠️ 如果遇到 sox 兼容问题（macOS 一般不会）：
+> ```bash
+> brew install sox
+> ```
 
 ### 模型下载
 
-CosyVoice 提供多个版本，俺老猪下了两个：
+CosyVoice 3 目前只有一个版本——**Fun-CosyVoice3-0.5B-2512**（约 3.7GB），包含 base 和 RL 两个变体：
 
 ```python
 from modelscope import snapshot_download
 
-# CosyVoice-300M（基础版，~2.5GB）
-snapshot_download('iic/CosyVoice-300M', local_dir='pretrained_models/CosyVoice-300M')
-
-# CosyVoice2-0.5B（增强版，支持 instruct，~3.7GB）
-snapshot_download('iic/CosyVoice2-0.5B', local_dir='pretrained_models/CosyVoice2-0.5B')
+# Fun-CosyVoice3-0.5B（基础版 + RL 版，~3.7GB）
+snapshot_download('FunAudioLLM/Fun-CosyVoice3-0.5B-2512',
+                  local_dir='pretrained_models/Fun-CosyVoice3-0.5B')
 ```
 
 > ⚠️ ModelScope 下载大文件容易断，换 HuggingFace 镜像更稳：
 > ```bash
 > HF_ENDPOINT=https://hf-mirror.com huggingface-cli download \
->   FunAudioLLM/CosyVoice2-0.5B --local-dir pretrained_models/CosyVoice2-0.5B
+>   FunAudioLLM/Fun-CosyVoice3-0.5B-2512 --local-dir pretrained_models/Fun-CosyVoice3-0.5B
 > ```
 
 ### 实测 1：普通话 zero-shot 合成
 
-用 CosyVoice-300M 做零样本合成，只需要 3 秒参考音频：
+CosyVoice 3 的 zero-shot 调用和旧版有个关键区别：**prompt_text 不再是随便写一句话**，而是固定格式 `'You are a helpful assistant.<|endofprompt|>你的参考文本'`。
 
 ```python
-import sys, torch
-sys.path.insert(0, 'third_party/Matcha-TTS')
+import sys
+sys.path.append('third_party/Matcha-TTS')
 from cosyvoice.cli.cosyvoice import AutoModel
+import torchaudio
 
-model = AutoModel(model_dir='pretrained_models/CosyVoice-300M')
+# 加载 CosyVoice 3 模型
+cosyvoice = AutoModel(model_dir='pretrained_models/Fun-CosyVoice3-0.5B')
 
-output = model.inference_zero_shot(
-    tts_text='你好世界！欢迎来到 CosyVoice 的语音合成世界。',
-    prompt_text='随便说点啥',
-    prompt_wav='reference.wav',  # 你的3秒音频
-    stream=True
-)
-
-chunks = [c['tts_speech'] for c in output]
-audio = torch.cat(chunks, dim=-1)
-
-# 保存
-torchaudio.save('output.wav', audio, 22050)
+# zero-shot：3 秒参考音频即可克隆声音
+for i, j in enumerate(cosyvoice.inference_zero_shot(
+    '八百标兵奔北坡，北坡炮兵并排跑，炮兵怕把标兵碰，标兵怕碰炮兵炮。',
+    'You are a helpful assistant.<|endofprompt|>希望你以后能够做的比我还好呦。',
+    './asset/zero_shot_prompt.wav',
+    stream=False
+)):
+    torchaudio.save(f'zero_shot_{i}.wav', j['tts_speech'], cosyvoice.sample_rate)
 ```
 
 | 实测指标 | 数据 |
 |------|------|
-| 合成文本 | 你好世界！欢迎来到 CosyVoice 的语音合成世界 |
-| 音频时长 | **9.6 秒** |
-| 采样数 | 211,200 samples |
-| 文件大小 | 825 KB |
-| 流式块数 | 5 chunks |
+| 合成文本 | 八百标兵奔北坡，北坡炮兵并排跑... |
+| 音频时长 | **10.7 秒** |
+| 采样率 | **24000 Hz**（`cosyvoice.sample_rate`） |
+| 文件大小 | **1005 KB** |
+| 推理耗时 | **21 秒**（M3 Max / MPS） |
+| 声音克隆 | ✅ 3 秒音频零样本 |
 
-### 实测 2：四川话 instruct 合成
+> 🎵 听听效果：<audio controls src="/assets/audio/cosyvoice3/zero_shot_0.wav"></audio>
 
-换 CosyVoice2-0.5B，用自然语言控制方言和情感：
+### 实测 2：instruct 控制（方言/情感/语速）
+
+CosyVoice 3 的 instruct 用法和 CosyVoice 2 一样用 `inference_instruct2()`，但指令格式也是固定模板：
 
 ```python
-model2 = AutoModel(model_dir='pretrained_models/CosyVoice2-0.5B')
+# 广东话
+for i, j in enumerate(cosyvoice.inference_instruct2(
+    '好少咯，一般系放嗰啲国庆啊，中秋嗰啲可能会咯。',
+    'You are a helpful assistant. 请用广东话表达。<|endofprompt|>',
+    './asset/zero_shot_prompt.wav',
+    stream=False
+)):
+    torchaudio.save(f'instruct_yue_{i}.wav', j['tts_speech'], cosyvoice.sample_rate)
 
-output = model2.inference_instruct2(
-    tts_text='今天天气真不错，出去耍一哈嘛！',
-    instruct_text='用四川话，开心活泼的语气',
-    prompt_wav='reference.wav',
-    stream=True
-)
-
-chunks = [c['tts_speech'] for c in output]
-audio = torch.cat(chunks, dim=-1)
+# 快速语速
+for i, j in enumerate(cosyvoice.inference_instruct2(
+    '收到好友从远方寄来的生日礼物，那份意外的惊喜与深深的祝福让我心中充满了甜蜜的快乐，笑容如花儿般绽放。',
+    'You are a helpful assistant. 请用尽可能快地语速说一句话。<|endofprompt|>',
+    './asset/zero_shot_prompt.wav',
+    stream=False
+)):
+    torchaudio.save(f'instruct_fast_{i}.wav', j['tts_speech'], cosyvoice.sample_rate)
 ```
 
 | 实测指标 | 数据 |
 |------|------|
-| 合成文本 | 今天天气真不错，出去耍一哈嘛！ |
-| 指令 | 用四川话，开心活泼的语气 |
-| 音频时长 | **9.7 秒** |
-| 文件大小 | 833 KB |
+| 方言支持 | 广东话、四川话、上海话等 18 种 |
+| 控制维度 | 语言、方言、情感、语速、音量 |
+| 指令格式 | `'You are a helpful assistant. <自然语言指令>.<|endofprompt|>'` |
+| 广东话实测 | 6.4 秒音频，596 KB，耗时 12 秒 |
 
-**效果非常自然**，四川话的语调、语气词都到位了，完全听不出是机器合成的。
+> 🎵 听听广东话：<audio controls src="/assets/audio/cosyvoice3/instruct_yue_0.wav"></audio>
+
+> 🎵 听听快速语速：<audio controls src="/assets/audio/cosyvoice3/instruct_fast_0.wav"></audio>
+
+### 实测 3：hotfix 发音纠正
+
+CosyVoice 3 支持用 `[j][ǐ]` 这样的注音格式纠正多音字发音：
+
+```python
+# hotfix 发音纠正：[j][ǐ] 强制指定「给」的读音
+for i, j in enumerate(cosyvoice.inference_zero_shot(
+    '高管也通过电话、短信、微信等方式对报道[j][ǐ]予好评。',
+    'You are a helpful assistant.<|endofprompt|>希望你以后能够做的比我还好呦。',
+    './asset/zero_shot_prompt.wav',
+    stream=False
+)):
+    torchaudio.save(f'hotfix_{i}.wav', j['tts_speech'], cosyvoice.sample_rate)
+```
+
+| 实测指标 | 数据 |
+|------|------|
+| 合成文本 | 高管也通过电话...对报道[j][ǐ]予好评 |
+| 音频时长 | **5.5 秒** |
+| 文件大小 | **518 KB** |
+| 发音纠正 | ✅ `[j][ǐ]` 注音格式生效 |
+
+> 🎵 听听 hotfix 效果：<audio controls src="/assets/audio/cosyvoice3/hotfix_0.wav"></audio>
+
+### 实测 4：精细控制（呼吸、笑声）
+
+CosyVoice 3 支持在文本中插入特殊标记来控制副语言行为：
+
+```python
+# [breath] 插入呼吸停顿
+for i, j in enumerate(cosyvoice.inference_cross_lingual(
+    'You are a helpful assistant.<|endofprompt|>[breath]因为他们那一辈人[breath]在乡里面住的要习惯一点，[breath]邻居都很活络，[breath]嗯，都很熟悉。[breath]',
+    './asset/zero_shot_prompt.wav',
+    stream=False
+)):
+    torchaudio.save(f'breath_{i}.wav', j['tts_speech'], cosyvoice.sample_rate)
+```
+
+| 实测指标 | 数据 |
+|------|------|
+| 音频时长 | **10.0 秒** |
+| 文件大小 | **941 KB** |
+| 控制标记 | `[breath]` 呼吸停顿 |
+| 推理耗时 | **17.7 秒** |
+
+> 🎵 听听呼吸停顿：<audio controls src="/assets/audio/cosyvoice3/breath_0.wav"></audio>
+
+> 支持的控制标记：`[breath]`（呼吸）、`[laughter]`（笑声）、`<strong>文本</strong>`（重读）等。
+
+### 实测 5：流式双向合成（Bi-Streaming）
+
+CosyVoice 3 的核心卖点——**文本流式输入 + 音频流式输出**，首包延迟 150ms：
+
+```python
+# 用 generator 模拟 LLM 逐句输出
+def text_generator():
+    yield '收到好友从远方寄来的生日礼物，'
+    yield '那份意外的惊喜与深深的祝福'
+    yield '让我心中充满了甜蜜的快乐，'
+    yield '笑容如花儿般绽放。'
+
+for i, j in enumerate(cosyvoice.inference_zero_shot(
+    text_generator(),
+    'You are a helpful assistant.<|endofprompt|>希望你以后能够做的比我还好呦。',
+    './asset/zero_shot_prompt.wav',
+    stream=False  # 改为 stream=True 实现真正的流式
+)):
+    torchaudio.save(f'bistream_{i}.wav', j['tts_speech'], cosyvoice.sample_rate)
+```
+
+| 实测指标 | 数据 |
+|------|------|
+| 音频时长 | **10.9 秒** |
+| 文件大小 | **1020 KB** |
+| 推理耗时 | **20.4 秒** |
+| 首包延迟 | **~150ms**（官方数据） |
+| 流式方式 | 文本 generator → 音频 chunk 输出 |
+| 适用场景 | 实时对话、语音助手 |
+
+> 🎵 听听流式合成：<audio controls src="/assets/audio/cosyvoice3/bistream_0.wav"></audio>
+
+### 实测汇总
+
+在 M3 Max（36GB / MPS 后端）上，5 项实测全部通过 ✅：
+
+| 实测 | 功能 | 音频时长 | 文件大小 | 推理耗时 |
+|------|------|:---:|:---:|:---:|
+| zero-shot | 普通话克隆 | 10.7s | 1005 KB | 21s |
+| instruct | 广东话合成 | 6.4s | 596 KB | 12s |
+| hotfix | 发音纠正 | 5.5s | 518 KB | 12s |
+| [breath] | 呼吸控制 | 10.0s | 941 KB | 18s |
+| Bi-Stream | 流式合成 | 10.9s | 1020 KB | 20s |
+
+> 📐 所有音频：24000 Hz / 单声道 / Float32
+
+### 🎨 更多玩法（非官方示例）
+
+除了官方 example.py 里的 5 个基础用法，俺老猪还帮你测了这些场景：
+
+#### 四川话（instruct 方言控制）
+
+```python
+for i, j in enumerate(cosyvoice.inference_instruct2(
+    '老板儿，来一碗担担面，多放点海椒，莫放葱花哈！',
+    'You are a helpful assistant. 请用四川话表达，语气要热情豪爽。<|endofprompt|>',
+    './asset/zero_shot_prompt.wav',
+    stream=False
+)):
+    torchaudio.save(f'sichuan_{i}.wav', j['tts_speech'], cosyvoice.sample_rate)
+```
+
+| 实测指标 | 数据 |
+|------|------|
+| 音频时长 | **4.0 秒** |
+| 文件大小 | **379 KB** |
+| 推理耗时 | **9 秒** |
+| 方言 | 四川话 ✅ |
+
+> 🎵 听听四川话：<audio controls src="/assets/audio/cosyvoice3/sichuan_0.wav"></audio>
+
+#### 悲伤情感（instruct 情感控制）
+
+```python
+for i, j in enumerate(cosyvoice.inference_instruct2(
+    '窗外的雨下了一整夜，桌上的咖啡早已凉透，我翻开那本泛黄的相册，眼泪止不住地往下掉。',
+    'You are a helpful assistant. 请用悲伤、低沉、缓慢的语气表达。<|endofprompt|>',
+    './asset/zero_shot_prompt.wav',
+    stream=False
+)):
+    torchaudio.save(f'sad_{i}.wav', j['tts_speech'], cosyvoice.sample_rate)
+```
+
+| 实测指标 | 数据 |
+|------|------|
+| 音频时长 | **12.1 秒** |
+| 文件大小 | **1.1 MB** |
+| 推理耗时 | **21 秒** |
+| 情感 | 悲伤低沉 ✅ |
+
+> 🎵 听听悲伤情感：<audio controls src="/assets/audio/cosyvoice3/sad_0.wav"></audio>
+
+#### 上海话（吴语方言）
+
+```python
+for i, j in enumerate(cosyvoice.inference_instruct2(
+    '今朝天气老好额，阿拉一道去外滩兜兜，夜到再去城隍庙吃小笼馒头，侬讲好伐？',
+    'You are a helpful assistant. 请用上海话表达，语气要亲切自然。<|endofprompt|>',
+    './asset/zero_shot_prompt.wav',
+    stream=False
+)):
+    torchaudio.save(f'shanghai_{i}.wav', j['tts_speech'], cosyvoice.sample_rate)
+```
+
+| 实测指标 | 数据 |
+|------|------|
+| 音频时长 | **8.5 秒** |
+| 文件大小 | **799 KB** |
+| 推理耗时 | **17 秒** |
+| 方言 | 上海话 ✅ |
+
+> 🎵 听听上海话：<audio controls src="/assets/audio/cosyvoice3/shanghai_0.wav"></audio>
+
+#### 长文本（150+ 字稳定性测试）
+
+```python
+long_text = (
+    '春天来了，万物复苏，大地披上了绿色的新装。远处的山峦连绵起伏，'
+    '近处的溪水潺潺流淌，鸟儿在枝头欢快地歌唱，蝴蝶在花丛中翩翩起舞。'
+    '孩子们在草地上追逐嬉戏，老人们在树荫下悠闲地下着象棋，'
+    '年轻的情侣手牵着手漫步在林间小道上。这是一个充满生机与希望的季节，'
+    '每一缕阳光都温暖着人们的心房，每一阵微风都带来了花香与泥土的气息。'
+)
+for i, j in enumerate(cosyvoice.inference_zero_shot(
+    long_text,
+    'You are a helpful assistant.<|endofprompt|>希望你以后能够做的比我还好呦。',
+    './asset/zero_shot_prompt.wav',
+    stream=False
+)):
+    torchaudio.save(f'longtext_{i}.wav', j['tts_speech'], cosyvoice.sample_rate)
+# 输出 2 个 chunk（longtext_0.wav + longtext_1.wav），合并后约 35 秒
+```
+
+| 实测指标 | 数据 |
+|------|------|
+| 音频时长 | **35.0 秒**（2 个 chunk 合并） |
+| 文件大小 | **3.3 MB** |
+| 推理耗时 | **63 秒**（chunk 1: 26s + chunk 2: 37s） |
+| 文本长度 | **150+ 字** |
+| 稳定性 | ✅ 无卡顿、无跳字 |
+
+> 🎵 听听长文本：<audio controls src="/assets/audio/cosyvoice3/longtext.wav"></audio>
+
+#### 中英混合（code-switch）
+
+```python
+for i, j in enumerate(cosyvoice.inference_zero_shot(
+    '我们的 AI product 采用了最新的 transformer architecture，在 benchmark 上取得了 state-of-the-art 的成绩，欢迎大家来 GitHub 给我们点个 star！',
+    'You are a helpful assistant.<|endofprompt|>希望你以后能够做的比我还好呦。',
+    './asset/zero_shot_prompt.wav',
+    stream=False
+)):
+    torchaudio.save(f'codeswitch_{i}.wav', j['tts_speech'], cosyvoice.sample_rate)
+```
+
+| 实测指标 | 数据 |
+|------|------|
+| 音频时长 | **11.6 秒** |
+| 文件大小 | **1.1 MB** |
+| 推理耗时 | **27 秒** |
+| 中英切换 | ✅ 自然流畅 |
+
+> 🎵 听听中英混合：<audio controls src="/assets/audio/cosyvoice3/codeswitch_0.wav"></audio>
+
+### 完整实测汇总（10 项）
+
+| 实测 | 功能 | 音频时长 | 文件大小 | 推理耗时 |
+|------|------|:---:|:---:|:---:|
+| zero-shot | 普通话克隆 | 10.7s | 1005 KB | 21s |
+| instruct | 广东话合成 | 6.4s | 596 KB | 12s |
+| hotfix | 发音纠正 | 5.5s | 518 KB | 12s |
+| [breath] | 呼吸控制 | 10.0s | 941 KB | 18s |
+| Bi-Stream | 流式合成 | 10.9s | 1020 KB | 20s |
+| 🎵 四川话 | 方言控制 | 4.0s | 379 KB | 9s |
+| 😢 悲伤情感 | 情感控制 | 12.1s | 1.1 MB | 21s |
+| 🏙️ 上海话 | 吴语方言 | 8.5s | 799 KB | 17s |
+| 📜 长文本 | 150+ 字 | 35.0s | 3.3 MB | 63s |
+| 🌐 中英混合 | code-switch | 11.6s | 1.1 MB | 27s |
 
 ### 启动 WebUI
 
@@ -192,7 +431,7 @@ audio = torch.cat(chunks, dim=-1)
 
 ```bash
 cd ~/data/app/cosyvoice && source venv/bin/activate
-python webui.py --port 8000 --model_dir pretrained_models/CosyVoice2-0.5B
+python webui.py --port 8000 --model_dir pretrained_models/Fun-CosyVoice3-0.5B
 ```
 
 浏览器打开 `http://localhost:8000`，上传参考音频 → 输入文本 → 选方言/情感 → 点生成，几秒出结果。
@@ -201,11 +440,12 @@ python webui.py --port 8000 --model_dir pretrained_models/CosyVoice2-0.5B
 
 | 问题 | 解决方案 |
 |------|---------|
-| `ModuleNotFoundError: matcha` | `sys.path.insert(0, 'third_party/Matcha-TTS')` |
+| `ModuleNotFoundError: matcha` | `sys.path.append('third_party/Matcha-TTS')`（CosyVoice 3 仍然需要） |
 | NumPy 2.x 不兼容 | 降级 `pip install 'numpy<2'` |
 | ModelScope 下载断连 | 换 HuggingFace 镜像 `HF_ENDPOINT=https://hf-mirror.com` |
-| `inference_instruct2` 报参数错误 | 去掉 `prompt_text` 参数，只需要 `tts_text` + `instruct_text` + `prompt_wav` |
+| instruct 指令不生效 | 格式必须是 `'You are a helpful assistant. <指令>.<|endofprompt|>'` |
 | MPS 部分算子报错 | 加环境变量 `PYTORCH_ENABLE_MPS_FALLBACK=1` |
+| 日语合成发音不准 | 需要先将文本转成片假名（katakana）再输入 |
 
 ---
 
@@ -227,7 +467,7 @@ python webui.py --port 8000 --model_dir pretrained_models/CosyVoice2-0.5B
 
 CosyVoice 3 是当前中文开源 TTS 的**综合最强**，没有之一。0.81% 的中文 CER、150ms 流式首包、3 秒零样本克隆、18 种方言支持——这些数据放在一起，就是「六边形战士」的定义。
 
-而且 M3 Max 就能流畅跑，不需要 GPU 服务器，不需要付费 API。本地部署完，你的 Agent 就能开口说四川话了 🐷
+而且 M3 Max 就能流畅跑，不需要 GPU 服务器，不需要付费 API。本地部署完，你的 Agent 就能开口说广东话了 🐷
 
 ---
 
