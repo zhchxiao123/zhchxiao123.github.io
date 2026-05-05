@@ -89,20 +89,29 @@ HF_ENDPOINT=https://hf-mirror.com hf download openai/privacy-filter \
 pip install onnxruntime tokenizers
 ```
 
-核心推理逻辑不到 50 行：
+核心推理逻辑：
 
 ```python
+import os, json
 import numpy as np
 import onnxruntime as ort
 from tokenizers import Tokenizer
 
-# 加载
-tokenizer = Tokenizer.from_file("model/tokenizer.json")
-session = ort.InferenceSession("model/onnx/model_q4f16.onnx",
-                                providers=["CPUExecutionProvider"])
+# ============ 路径配置 ============
+MODEL_DIR = os.path.join(os.path.dirname(__file__), "model")
+ONNX_PATH = os.path.join(MODEL_DIR, "onnx/model_q4f16.onnx")
+TOKENIZER_PATH = os.path.join(MODEL_DIR, "tokenizer.json")
+CONFIG_PATH = os.path.join(MODEL_DIR, "config.json")
 
-# 推理
-def predict(text: str):
+# ============ 加载 ============
+tokenizer = Tokenizer.from_file(TOKENIZER_PATH)
+with open(CONFIG_PATH) as f:
+    id2label = json.load(f)["id2label"]
+session = ort.InferenceSession(ONNX_PATH, providers=["CPUExecutionProvider"])
+
+# ============ 推理 ============
+def predict(text: str) -> list[dict]:
+    """对输入文本进行隐私实体识别"""
     encoding = tokenizer.encode(text)
     input_ids = np.array([encoding.ids], dtype=np.int64)
     attention_mask = np.array([encoding.attention_mask], dtype=np.int64)
@@ -110,10 +119,49 @@ def predict(text: str):
         "input_ids": input_ids,
         "attention_mask": attention_mask
     })
-    logits = outputs[0]  # (1, seq_len, 33)
+    logits = outputs[0]  # shape: (1, seq_len, num_labels)
     predictions = np.argmax(logits, axis=-1)[0]
-    # 解析 BIOES 标签 → 实体列表
-    return parse_entities(predictions, encoding)
+
+    # 解析 BIOES 标签
+    tokens = encoding.tokens
+    entities = []
+    current_entity = None
+
+    for i, (token, pred_id) in enumerate(zip(tokens, predictions)):
+        label = id2label.get(str(pred_id), "O")
+        if label == "O":
+            if current_entity:
+                current_entity["end"] = i
+                entities.append(current_entity)
+                current_entity = None
+            continue
+
+        bio_tag, entity_type = label.split("-", 1)
+        if bio_tag == "B" or bio_tag == "S":
+            if current_entity:
+                current_entity["end"] = i
+                entities.append(current_entity)
+            current_entity = {
+                "type": entity_type,
+                "start": i,
+                "end": i + 1,
+                "tokens": [token],
+            }
+        elif bio_tag == "I" or bio_tag == "E":
+            if current_entity and current_entity["type"] == entity_type:
+                current_entity["tokens"].append(token)
+                current_entity["end"] = i + 1
+
+    if current_entity:
+        current_entity["end"] = len(tokens)
+        entities.append(current_entity)
+
+    # 还原文本片段
+    for ent in entities:
+        ent["text"] = tokenizer.decode(
+            encoding.ids[ent["start"] : ent["end"]]
+        )
+    return entities
 ```
 
 完整 Demo 脚本见文末。
@@ -307,7 +355,8 @@ OpenAI Privacy Filter - ONNX 本地部署 Demo
 使用 model_q4f16 (INT4量化+FP16，772MB) 模型
 """
 
-import os, json
+import os
+import json
 import numpy as np
 import onnxruntime as ort
 from tokenizers import Tokenizer
@@ -317,14 +366,22 @@ MODEL_DIR = os.path.join(os.path.dirname(__file__), "model")
 ONNX_PATH = os.path.join(MODEL_DIR, "onnx/model_q4f16.onnx")
 TOKENIZER_PATH = os.path.join(MODEL_DIR, "tokenizer.json")
 CONFIG_PATH = os.path.join(MODEL_DIR, "config.json")
+CALIB_PATH = os.path.join(MODEL_DIR, "viterbi_calibration.json")
 
-# ============ 加载 ============
+# ============ 加载模型和配置 ============
+print("🐷 正在加载模型...")
 tokenizer = Tokenizer.from_file(TOKENIZER_PATH)
-with open(CONFIG_PATH) as f:
-    id2label = json.load(f)["id2label"]
-session = ort.InferenceSession(ONNX_PATH, providers=["CPUExecutionProvider"])
 
-# ============ 标签映射 ============
+with open(CONFIG_PATH) as f:
+    config = json.load(f)
+
+id2label = config["id2label"]
+
+# 加载 ONNX Runtime session
+session = ort.InferenceSession(ONNX_PATH, providers=["CPUExecutionProvider"])
+print(f"✅ 模型加载完成！输入: {[i.name for i in session.get_inputs()]}")
+
+# ============ 标签归类 ============
 LABEL_CATEGORIES = {
     "private_person": "👤 私人姓名",
     "private_address": "📍 私人地址",
@@ -336,46 +393,159 @@ LABEL_CATEGORIES = {
     "secret": "🔑 密钥/密码",
 }
 
+
 def predict(text: str) -> list[dict]:
+    """对输入文本进行隐私实体识别"""
     encoding = tokenizer.encode(text)
     input_ids = np.array([encoding.ids], dtype=np.int64)
     attention_mask = np.array([encoding.attention_mask], dtype=np.int64)
-    outputs = session.run(None, {"input_ids": input_ids, "attention_mask": attention_mask})
-    predictions = np.argmax(outputs[0], axis=-1)[0]
 
+    outputs = session.run(None, {"input_ids": input_ids, "attention_mask": attention_mask})
+    logits = outputs[0]  # shape: (1, seq_len, num_labels)
+    predictions = np.argmax(logits, axis=-1)[0]
+
+    # 解析 BIOES 标签
     tokens = encoding.tokens
     entities = []
-    current = None
+    current_entity = None
 
     for i, (token, pred_id) in enumerate(zip(tokens, predictions)):
         label = id2label.get(str(pred_id), "O")
         if label == "O":
-            if current:
-                current["end"] = i
-                entities.append(current)
-                current = None
+            if current_entity:
+                current_entity["end"] = i
+                entities.append(current_entity)
+                current_entity = None
             continue
 
         bio_tag, entity_type = label.split("-", 1)
-        if bio_tag in ("B", "S"):
-            if current:
-                current["end"] = i
-                entities.append(current)
-            current = {"type": entity_type, "start": i, "end": i + 1, "tokens": [token]}
-        elif bio_tag in ("I", "E"):
-            if current and current["type"] == entity_type:
-                current["tokens"].append(token)
-                current["end"] = i + 1
 
-    if current:
-        current["end"] = len(tokens)
-        entities.append(current)
+        if bio_tag == "B" or bio_tag == "S":
+            if current_entity:
+                current_entity["end"] = i
+                entities.append(current_entity)
+            current_entity = {
+                "type": entity_type,
+                "start": i,
+                "end": i + 1,
+                "tokens": [token],
+            }
+        elif bio_tag == "I" or bio_tag == "E":
+            if current_entity and current_entity["type"] == entity_type:
+                current_entity["tokens"].append(token)
+                current_entity["end"] = i + 1
 
+    if current_entity:
+        current_entity["end"] = len(tokens)
+        entities.append(current_entity)
+
+    # 还原文本片段
     for ent in entities:
-        ent["text"] = tokenizer.decode(encoding.ids[ent["start"]:ent["end"]])
+        ent["text"] = tokenizer.decode(encoding.ids[ent["start"] : ent["end"]])
+
     return entities
 
-# 然后调用 predict() 即可，完整测试用例见 GitHub
+
+def redact_text(text: str, entities: list[dict]) -> str:
+    """用 [REDACTED] 替换识别出的隐私实体"""
+    result = text
+    # 按位置从后往前替换，避免偏移
+    for ent in sorted(entities, key=lambda e: e["start"], reverse=True):
+        result = result[: ent["start_char"]] + f"[{ent['type'].upper()}]" + result[ent["end_char"] :]
+    return result
+
+
+def analyze_text(text: str):
+    """完整分析一段文本"""
+    print(f"\n{'='*60}")
+    print(f"📝 原文: {text}")
+    print(f"{'='*60}")
+
+    # 先获取原始文本的字符级位置
+    encoding = tokenizer.encode(text)
+    # 构建 token -> char 映射
+    offsets = encoding.offsets  # list of (start_char, end_char)
+
+    entities = predict(text)
+
+    # 补充字符级位置
+    for ent in entities:
+        if ent["start"] < len(offsets) and ent["end"] <= len(offsets):
+            ent["start_char"] = offsets[ent["start"]][0]
+            ent["end_char"] = offsets[ent["end"] - 1][1] if ent["end"] > 0 else offsets[ent["start"]][1]
+
+    if not entities:
+        print("✅ 未检测到隐私信息！")
+        return
+
+    print(f"\n🔍 检测到 {len(entities)} 个隐私实体:\n")
+    for i, ent in enumerate(entities, 1):
+        cat = LABEL_CATEGORIES.get(ent["type"], ent["type"])
+        print(f"  {i}. {cat}")
+        print(f"     内容: \"{ent['text']}\"")
+        print()
+
+    # 脱敏后的文本
+    redacted = redact_text(text, entities)
+    print(f"🛡️  脱敏结果: {redacted}")
+
+
+# ============ 全面测试用例 ============
+if __name__ == "__main__":
+    test_cases = [
+        # === 基础英文测试 ===
+        ("基础英文个人信息", "My name is John Smith, I live at 123 Main Street, San Francisco. You can reach me at john.smith@email.com or call me at 555-123-4567."),
+        
+        # === 公众人物上下文感知 ===
+        ("公众人物-Obama", "Barack Obama visited the White House yesterday. His email is public."),
+        ("公众人物-Elon Musk", "Elon Musk tweeted about Tesla from his office in Austin, Texas."),
+        ("混合-公众+私人", "Barack Obama and my neighbor John Smith both attended the event at 456 Oak Avenue."),
+        
+        # === 中文测试 ===
+        ("中文地址电话", "请将包裹寄到北京市朝阳区建国路88号，收件人张三，电话13800138000。"),
+        ("中文邮箱姓名", "我的名字是李四，邮箱是 lisi@example.com，家住上海市浦东新区张江路100号。"),
+        ("中文日期银行卡", "我的生日是1990年5月20日，银行卡号是6222021234567890。"),
+        
+        # === 密钥密码测试 ===
+        ("API密钥+密码", "API key is sk-abc123def456, and the database password is SuperSecret123!"),
+        ("AWS凭证", "AWS access key: AKIAIOSFODNN7EXAMPLE, secret: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"),
+        ("数据库连接串", "mysql://admin:MyP@ssw0rd!@192.168.1.100:3306/production"),
+        
+        # === URL测试 ===
+        ("私人社交链接", "Check out my personal blog at https://john-smith.blogspot.com and my LinkedIn at https://linkedin.com/in/johnsmith"),
+        ("公开URL", "The documentation is available at https://docs.python.org and https://github.com/openai"),
+        
+        # === 边界情况 ===
+        ("纯公开信息", "The Eiffel Tower is located in Paris, France. The tour costs 25 euros."),
+        ("空字符串", ""),
+        ("纯数字", "My phone is 123-456-7890 and my zip code is 94105."),
+        ("英文日期", "My date of birth is January 15, 1985 and the meeting is on 2024-12-25."),
+        
+        # === 混合场景 ===
+        ("客服对话", "Hi, my name is Sarah Jones, my account number is 4111-1111-1111-1111. I need to change my address from 789 Pine Street, Boston to 321 Elm Street, Chicago. My email is sarah.j@personal.com."),
+        ("代码片段", "const apiKey = 'ghp_abc123def456'; const user = { name: 'Tom Wilson', email: 'tom@company.com' };"),
+    ]
+
+    total_detected = 0
+    total_tests = 0
+    for label, text in test_cases:
+        if not text or not text.strip():
+            print(f"\n{'='*60}")
+            print(f"📝 [{label}] 原文: (空字符串)")
+            print(f"{'='*60}")
+            print("⏭️  跳过空字符串")
+            continue
+        total_tests += 1
+        analyze_text(text)
+        entities = predict(text)
+        total_detected += len(entities)
+
+    print(f"\n{'='*60}")
+    print(f"🐷 全面测试完成！")
+    print(f"   测试用例: {len(test_cases)} 个")
+    print(f"   有效测试: {total_tests} 个")
+    print(f"   检测实体: {total_detected} 个")
+    print(f"   平均每用例: {total_detected/total_tests:.1f} 个实体")
 ```
 
 完整脚本和测试用例已开源在我的工具集里，感兴趣的朋友可以直接拿去跑。
