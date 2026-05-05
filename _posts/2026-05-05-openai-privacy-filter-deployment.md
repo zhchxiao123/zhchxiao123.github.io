@@ -102,6 +102,7 @@ MODEL_DIR = os.path.join(os.path.dirname(__file__), "model")
 ONNX_PATH = os.path.join(MODEL_DIR, "onnx/model_q4f16.onnx")
 TOKENIZER_PATH = os.path.join(MODEL_DIR, "tokenizer.json")
 CONFIG_PATH = os.path.join(MODEL_DIR, "config.json")
+CALIB_PATH = os.path.join(MODEL_DIR, "viterbi_calibration.json")
 
 # ============ 加载 ============
 tokenizer = Tokenizer.from_file(TOKENIZER_PATH)
@@ -548,8 +549,6 @@ if __name__ == "__main__":
     print(f"   平均每用例: {total_detected/total_tests:.1f} 个实体")
 ```
 
-完整脚本和测试用例已开源在我的工具集里，感兴趣的朋友可以直接拿去跑。
-
 ---
 
 ## 八、总结
@@ -558,11 +557,6 @@ OpenAI Privacy Filter 是一个**实用价值很高的工具型模型**。它不
 
 772MB 的量化版在 Mac 上就能跑，推理速度毫秒级，完全可以嵌入到数据管道、日志脱敏系统、代码审查工具里默默干活。
 
-**推荐指数：🐷🐷🐷🐷（4/5）**
-
-扣一分是因为中文人名识别还不够稳，以及日期类的上下文感知有待加强。但瑕不掩瑜，值得部署。
-
 ---
 
-> 📦 完整代码 & 测试用例：[GitHub](https://github.com/xiaozhongcheng/timelog/tree/main/data/app/privacy-filter)
 > 🤗 HuggingFace 模型：[openai/privacy-filter](https://huggingface.co/openai/privacy-filter)
