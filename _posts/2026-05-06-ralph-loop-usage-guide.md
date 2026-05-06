@@ -480,4 +480,3 @@ Ralph 方式：你写 PRD → 去喝咖啡 → 回来看结果 ☕
 
 ---
 
-*延伸阅读：[Ralph Loop 深度源码分析](/2026/05/06/ralph-loop-deep-analysis/) — 16 个 Bash 模块的完整代码解读*
