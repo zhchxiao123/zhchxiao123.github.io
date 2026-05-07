@@ -65,6 +65,7 @@ layout: default
 
       <!-- 悬浮指令输入框：简洁药丸设计 -->
       <div class="command-bar-wrapper">
+        <div id="upload-preview-area" class="upload-preview-container"></div>
         <div class="command-bar">
           <div class="input-prefix">
             <i class="fas fa-plus" title="添加附件"></i>
@@ -93,6 +94,15 @@ layout: default
               <select id="agent-selector">
                 <option value="">Discovering Agents...</option>
               </select>
+            </div>
+          </div>
+          <div class="field">
+            <label>Session ID</label>
+            <div style="display: flex; gap: 8px;">
+              <input type="text" id="cfg-session-id" class="styled-input" placeholder="Session ID">
+              <button onclick="applyManualSession()" class="btn-primary-sm" style="padding: 0 12px; height: 34px;">
+                <i class="fas fa-sync"></i>
+              </button>
             </div>
           </div>
           <div class="field">
@@ -638,6 +648,57 @@ layout: default
     border-color: #312e45;
   }
 
+  /* 上传预览样式 */
+  .upload-preview-container {
+    width: 100%;
+    max-width: var(--content-width);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 0 4px;
+    margin-bottom: 8px;
+  }
+  .preview-item {
+    position: relative;
+    width: 80px;
+    height: 80px;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 2px solid var(--primary);
+    box-shadow: var(--shadow-soft);
+    animation: previewAppear 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+  }
+  @keyframes previewAppear {
+    from { opacity: 0; transform: scale(0.5); }
+    to { opacity: 1; transform: scale(1); }
+  }
+  .preview-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .preview-item .remove-btn {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 18px;
+    height: 18px;
+    background: rgba(0,0,0,0.6);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    cursor: pointer;
+    border: none;
+    backdrop-filter: blur(4px);
+    transition: background 0.2s;
+  }
+  .preview-item .remove-btn:hover {
+    background: #ff4d4f;
+  }
+
   .thinking-header {
     display: flex;
     align-items: center;
@@ -805,7 +866,11 @@ layout: default
 
   let socket = null;
   let lastConnectionState = 'Offline';
-  let currentSessionId = 'lab-session-' + Date.now();
+  
+  /* 优先从存储中恢复 Session ID */
+  let currentSessionId = localStorage.getItem('by-lab-session-id') || ('lab-session-' + Date.now());
+  localStorage.setItem('by-lab-session-id', currentSessionId);
+
   let latestMsgId = null;
   let pendingAttachments = []; 
   
@@ -954,12 +1019,36 @@ layout: default
     if (sid === currentSessionId) return;
     if (!confirm('Switch to this session and load history? Current view will be cleared.')) return;
 
+    forceSwitchSession(sid);
+  }
+
+  async function applyManualSession() {
+    const input = document.getElementById('cfg-session-id');
+    const newSid = input.value.trim();
+    if (!newSid) {
+      alert('Please enter a valid session ID');
+      return;
+    }
+    if (newSid === currentSessionId) return;
+    
+    forceSwitchSession(newSid);
+  }
+
+  async function forceSwitchSession(sid) {
     currentSessionId = sid;
+    localStorage.setItem('by-lab-session-id', sid);
+    
+    /* 同步输入框内容 */
+    const input = document.getElementById('cfg-session-id');
+    if (input) input.value = sid;
+
     messageContentCache.clear();
     document.getElementById('lab-chat-messages').innerHTML = '';
+    
     if (socket && socket.readyState === WebSocket.OPEN) {
       socket.send(jsonStr({ action: 'set_session', session_id: currentSessionId }));
     }
+    
     await fetchSessionHistory(sid);
     fetchSessions();
   }
@@ -1242,9 +1331,10 @@ layout: default
     const file = event.target.files[0];
     if (!file) return;
 
-    /* 显示上传中状态 (简单演示) */
-    const originalIcon = document.querySelector('.fa-plus');
-    originalIcon.className = 'fas fa-spinner fa-spin';
+    /* 显示上传中状态 */
+    const plusBtn = document.querySelector('.fa-plus');
+    const originalClassName = plusBtn.className;
+    plusBtn.className = 'fas fa-spinner fa-spin';
 
     const formData = new FormData();
     formData.append('file', file);
@@ -1257,17 +1347,52 @@ layout: default
       });
       const result = await response.json();
       if (result.success) {
+        /* 使用返回的数据：result.file.fileUrl 等 */
         pendingAttachments.push(result.file);
-        appendSystemMessage(`Successfully uploaded: ${file.name}`);
+        renderUploadPreview(result.file);
       } else {
         appendSystemError(`Upload failed: ${result.error}`);
       }
     } catch (err) {
       appendSystemError(`Upload error: ${err.message}`);
     } finally {
-      originalIcon.className = 'fas fa-plus';
+      plusBtn.className = originalClassName;
       event.target.value = ''; /* 重置 */
     }
+  }
+
+  function renderUploadPreview(fileData) {
+    const previewArea = document.getElementById('upload-preview-area');
+    const item = document.createElement('div');
+    item.className = 'preview-item';
+    item.dataset.fileId = fileData.fileId;
+
+    /* 构建完整的绝对 URL */
+    let displayUrl = fileData.fileUrl;
+    if (!displayUrl.includes('://')) {
+        const base = BACKEND_URL.includes('://') ? BACKEND_URL : 'http://' + BACKEND_URL;
+        displayUrl = new URL(displayUrl, base).href;
+    }
+
+    /* 使用 DOM API 而非 innerHTML 模板字符串，避免浏览器对 URL 的自动规范化 */
+    const img = document.createElement('img');
+    img.src = displayUrl;
+    img.alt = fileData.fileName;
+    const removeBtn = document.createElement('button');
+    removeBtn.className = 'remove-btn';
+    removeBtn.innerHTML = '<i class="fas fa-times"></i>';
+    removeBtn.onclick = () => removeAttachment(fileData.fileId);
+    item.appendChild(img);
+    item.appendChild(removeBtn);
+    previewArea.appendChild(item);
+  }
+
+  function removeAttachment(fileId) {
+    /* 从数组中移除 */
+    pendingAttachments = pendingAttachments.filter(a => String(a.fileId) !== String(fileId));
+    /* 从 UI 中移除 */
+    const item = document.querySelector(`.preview-item[data-file-id="${fileId}"]`);
+    if (item) item.remove();
   }
 
   async function handleSend() {
@@ -1287,13 +1412,29 @@ layout: default
     /* 如果有附件，构造多模态内容或者在 metadata 中携带 */
     let content = text;
     if (pendingAttachments.length > 0) {
-      /* 这里的协议需要与 by-framework 后端对齐，通常 content 可以是 List */
+      /* 这里的协议需要与 by-framework 后端对齐 */
       content = [
         { type: "text", text: text || "Analyze this image" },
-        ...pendingAttachments.map(attr => ({
-            type: "image_url",
-            image_url: { url: attr.url || attr.path } /* 兼容不同后端返回 */
-        }))
+        ...pendingAttachments.map(attr => {
+            let path = attr.fileUrl || attr.url || attr.path;
+            let finalUrl = path;
+            try {
+                /* 如果已经是绝对 URL，直接使用；否则拼接 base */
+                if (path && path.includes('://')) {
+                    finalUrl = path;
+                } else {
+                    let base = BACKEND_URL;
+                    if (base && !base.includes('://')) base = 'http://' + base;
+                    finalUrl = new URL(path, base).href;
+                }
+            } catch (e) {
+                console.error("URL construct error in send:", e);
+            }
+            return {
+                type: "image_url",
+                image_url: { url: finalUrl }
+            };
+        })
       ];
     }
 
@@ -1306,8 +1447,9 @@ layout: default
       metadata: { temperature: temperature }
     };
 
-    /* 清空待发送附件 */
+    /* 清空待发送附件与预览 */
     pendingAttachments = [];
+    document.getElementById('upload-preview-area').innerHTML = '';
 
     try {
       const response = await fetch(`${BACKEND_URL}/api/chat`, {
@@ -1372,6 +1514,7 @@ layout: default
     /* 初始化配置表单值 */
     document.getElementById('cfg-backend-url').value = BACKEND_URL;
     document.getElementById('cfg-ws-url').value = WS_URL;
+    document.getElementById('cfg-session-id').value = currentSessionId;
 
     const userInput = document.getElementById('lab-user-input');
     const sendBtn = document.getElementById('lab-send-btn');
