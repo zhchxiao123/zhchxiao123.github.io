@@ -270,14 +270,14 @@
         <span class="chip"><b>要求</b> v2.1.32+ · Opus 4.6</span>
       </div>
       <div class="toc">
-        <a data-go="1"><span class="num">01</span>架构拆解</a>
-        <a data-go="2"><span class="num">02</span>vs Subagent</a>
-        <a data-go="3"><span class="num">03</span>对照速查表</a>
-        <a data-go="4"><span class="num">04</span>决策框架</a>
-        <a data-go="5"><span class="num">05</span>成本经济学</a>
-        <a data-go="6"><span class="num">06</span>套到你的 pipeline</a>
-        <a data-go="7"><span class="num">07</span>启用与习惯</a>
-        <a data-go="8"><span class="num">08</span>核心结论</a>
+        <a href="#" data-go="1"><span class="num">01</span>架构拆解</a>
+        <a href="#" data-go="2"><span class="num">02</span>vs Subagent</a>
+        <a href="#" data-go="3"><span class="num">03</span>对照速查表</a>
+        <a href="#" data-go="4"><span class="num">04</span>决策框架</a>
+        <a href="#" data-go="5"><span class="num">05</span>成本经济学</a>
+        <a href="#" data-go="6"><span class="num">06</span>套到你的 pipeline</a>
+        <a href="#" data-go="7"><span class="num">07</span>启用与习惯</a>
+        <a href="#" data-go="8"><span class="num">08</span>核心结论</a>
       </div>
     </div>
   </section>
@@ -553,7 +553,7 @@ claude <span class="k">--version</span>
     if(e.key==='ArrowLeft'||e.key==='PageUp'){go(i-1)}
     if(e.key==='Home')go(0);if(e.key==='End')go(pages.length-1);
   });
-  document.querySelectorAll('[data-go]').forEach(a=>a.addEventListener('click',()=>go(+a.dataset.go)));
+  document.querySelectorAll('[data-go]').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();go(+a.dataset.go)}));
 
   // touch swipe
   let tx=0;
