@@ -1,10 +1,10 @@
 ---
 layout: post
 title: "Claude Code Agent Teams：架构与决策报告"
-date: 2026-06-29 12:45:00 +0800
-categories: [AI, 技术报告, Claude Code]
-tags: [Claude Code, Agent Teams, Subagent, Multi-Agent, AI Agent]
-description: 一份 9 页深度演示报告：拆解 Claude Code Agent Teams 架构、与 Subagent 逐项对比、给出绿/黄/红决策框架，并落到内容 pipeline 的真实场景。
+date: 2026-06-29 22:45:00 +0800
+categories: ["AI", "技术报告", "Claude Code"]
+tags: ["Claude Code", "Agent Teams", "Subagent", "Multi_Agent", "AI Agent"]
+description: "一份 9 页深度演示报告：拆解 Claude Code Agent Teams 架构、与 Subagent 逐项对比、给出绿黄红决策框架，并落到内容 pipeline 的真实场景。"
 ---
 
 ## 📊 报告介绍
