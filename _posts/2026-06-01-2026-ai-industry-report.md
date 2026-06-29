@@ -2,7 +2,7 @@
 title: "2026 AI 技术全景深度分析报告"
 date: 2026-06-01 18:02:32 +0800
 categories: [AI]
-tags: [AI产业, GPT-5.5, Claude, Gemini, 推理基础设施, Agent, 监管, 2026]
+tags: [AI产业, GPT-5.5, Claude, Gemini, 推理基础设施, Agent, 监管, "2026"]
 description: "2026上半年AI产业深度分析：模型迭代、推理基础设施战争、Agent生态、监管框架四大核心趋势全景解读。"
 pin: false
 ---
