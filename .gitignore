@@ -29,3 +29,5 @@ assets/js/dist
 .claude.worktrees/
 
 .claude/settings.local.json
+
+.coderfleet-*
