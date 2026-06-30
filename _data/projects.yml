@@ -20,4 +20,11 @@
   sidebar_data: codex_cli_sidebar
   doc_url: /docs/codex-cli/01-project-overview/
 
+- name: AI 时代程序员方法论
+  id: ai-dev-methodology
+  description: 思考手册 + 9 岗位完整版 + 岗位最佳实践手册：从“为什么”到“做什么”到“怎么做”的 AI 时代开发方法论三段式专题。
+  icon: fa-layer-group
+  sidebar_data: ai_dev_methodology_sidebar
+  doc_url: /docs/ai-dev-methodology/01-thinking-handbook/
+
 
