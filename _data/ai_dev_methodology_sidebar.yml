@@ -14,3 +14,13 @@
   children:
     - title: "岗位最佳实践手册：从验证正确到设计更容易正确的工作方式"
       url: /docs/ai-dev-methodology/03-best-practices/
+
+- title: "04. 工程实践：把方法论落地为 Agent Skills"
+  children:
+    - title: "工程实践：把方法论落地为 Agent Skills"
+      url: /docs/ai-dev-methodology/04-agent-skills/
+
+- title: "05. 总结：方法论 → 技能库 路线图"
+  children:
+    - title: "总结：方法论→技能库 路线图"
+      url: /docs/ai-dev-methodology/05-roadmap/
