@@ -75,6 +75,8 @@ layout: compress
       {% include_cached notification.html lang=lang %}
     {% endif %}
 
+    {% include hypothesis.html %}
+
     <!-- Embedded scripts -->
 
     {% for _include in layout.script_includes %}
