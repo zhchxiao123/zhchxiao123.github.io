@@ -2,9 +2,10 @@
 {% if page.layout == 'post' or layout.layout == 'post' %}
 <style>
   #ai-chat-widget-root {
-    --ai-chat-z-sidebar: 1010;
-    --ai-chat-z-toggle: 1011;
-    --ai-chat-z-float-btn: 1009;
+    /* Hypothesis client uses 2147483646/2147483647; keep AI elements on top */
+    --ai-chat-z-sidebar: 2147483647;
+    --ai-chat-z-toggle: 2147483647;
+    --ai-chat-z-float-btn: 2147483647;
     --ai-chat-sidebar-width: 380px;
     --ai-chat-sidebar-max-width: calc(100vw - 2rem);
     --ai-chat-primary: var(--link-color, #0056b2);
@@ -321,7 +322,7 @@
 
   /* Floating ask button */
   #ai-chat-float-btn {
-    position: absolute;
+    position: fixed;
     display: none;
     align-items: center;
     gap: 0.35rem;
@@ -382,8 +383,8 @@
       max-width: 100vw;
       top: auto;
       bottom: 0;
-      height: 85vh;
-      max-height: 600px;
+      height: 90vh;
+      max-height: none;
       border-radius: 1rem 1rem 0 0;
       border-left: none;
       transform: translateY(110%);
@@ -404,6 +405,18 @@
     #ai-chat-float-btn {
       padding: 0.4rem 0.7rem;
       font-size: 0.8rem;
+    }
+
+    #ai-chat-header {
+      padding: 0.875rem 1rem;
+    }
+
+    #ai-chat-messages {
+      padding: 0.875rem 1rem;
+    }
+
+    #ai-chat-input-area {
+      padding: 0.875rem 1rem 1rem;
     }
   }
 
@@ -482,6 +495,97 @@
   let selectedParagraph = '';
   let sessionHistory = [];
   let isStreaming = false;
+  let indexCache = null;
+  let indexPromise = null;
+
+  const AI_CHAT_ENDPOINT = '{{ site.ai_chat_endpoint | default: "https://ai-chat.zhchxiao123.workers.dev/api/chat" }}';
+  const AI_CHAT_INDEX_URL = '{{ "/assets/js/data/ai-chat-index.json" | relative_url }}';
+
+  // Load static RAG index
+  async function loadIndex() {
+    if (indexCache) return indexCache;
+    if (indexPromise) return indexPromise;
+
+    indexPromise = fetch(AI_CHAT_INDEX_URL)
+      .then((res) => {
+        if (!res.ok) throw new Error('Index load failed: ' + res.status);
+        return res.json();
+      })
+      .then((data) => {
+        indexCache = data;
+        return data;
+      })
+      .catch((err) => {
+        console.warn('[AI Chat] Failed to load index:', err);
+        indexCache = { chunks: [] };
+        return indexCache;
+      });
+
+    return indexPromise;
+  }
+
+  // Find relevant chunks by simple keyword overlap (MVP, no embeddings)
+  function findRelevantChunks(query, currentUrl, maxChunks = 3) {
+    if (!indexCache || !indexCache.chunks || indexCache.chunks.length === 0) return [];
+
+    const stopWords = new Set([
+      '的', '了', '是', '在', '和', '与', '或', '一个', '这个', '那个',
+      '什么', '怎么', '为什么', '如何', '请', '你', '我', '它', '我们',
+      'the', 'is', 'are', 'was', 'were', 'be', 'been', 'being', 'have', 'has',
+      'had', 'do', 'does', 'did', 'a', 'an', 'the', 'this', 'that', 'these',
+      'those', 'of', 'to', 'in', 'for', 'on', 'with', 'at', 'from', 'as',
+      'and', 'or', 'but', 'not', 'no', 'yes'
+    ]);
+
+    const extractTokens = (text) => {
+      if (!text) return [];
+      const tokens = [];
+      // CJK chars
+      const cjk = text.match(/[一-鿿]/g) || [];
+      tokens.push(...cjk);
+      // Latin words
+      const words = text.toLowerCase().match(/[a-z0-9]+/g) || [];
+      tokens.push(...words.filter((w) => w.length > 2 && !stopWords.has(w)));
+      return tokens;
+    };
+
+    const queryTokens = new Set(extractTokens(query));
+    const selectedTokens = new Set(extractTokens(selectedText));
+    const paraTokens = new Set(extractTokens(selectedParagraph));
+
+    // Prefer chunks from the current article
+    const samePageChunks = indexCache.chunks.filter((c) => c.url === currentUrl);
+    const otherChunks = indexCache.chunks.filter((c) => c.url !== currentUrl);
+
+    const scoreChunk = (chunk) => {
+      const chunkTokens = new Set(extractTokens(chunk.text + ' ' + (chunk.heading || '')));
+      let score = 0;
+      for (const t of queryTokens) if (chunkTokens.has(t)) score += 3;
+      for (const t of selectedTokens) if (chunkTokens.has(t)) score += 5;
+      for (const t of paraTokens) if (chunkTokens.has(t)) score += 2;
+      // Small boost for current page
+      if (chunk.url === currentUrl) score *= 1.2;
+      return score;
+    };
+
+    const scoredSame = samePageChunks.map((c) => ({ chunk: c, score: scoreChunk(c) }));
+    const scoredOther = otherChunks.map((c) => ({ chunk: c, score: scoreChunk(c) }));
+
+    scoredSame.sort((a, b) => b.score - a.score);
+    scoredOther.sort((a, b) => b.score - a.score);
+
+    const result = [];
+    for (const { chunk, score } of scoredSame) {
+      if (score <= 0 || result.length >= maxChunks) break;
+      result.push({ ...chunk, _score: score });
+    }
+    for (const { chunk, score } of scoredOther) {
+      if (score <= 0 || result.length >= maxChunks) break;
+      result.push({ ...chunk, _score: score });
+    }
+
+    return result;
+  }
 
   // Toggle sidebar
   function openSidebar() {
@@ -506,21 +610,27 @@
   function getSelectedInfo() {
     const sel = window.getSelection();
     const text = sel.toString().trim();
-    if (!text || text.length < 2) return null;
+    if (!text || text.length < 2 || text.length > 1200) return null;
+
+    // Avoid showing inside the chat widget itself
+    let node = sel.anchorNode;
+    if (node && node.nodeType === Node.TEXT_NODE) node = node.parentElement;
+    if (node && node.closest('#ai-chat-widget-root')) return null;
 
     let paragraph = '';
     const range = sel.getRangeAt(0);
-    let node = range.commonAncestorContainer;
-    if (node.nodeType === Node.TEXT_NODE) node = node.parentElement;
+    let commonNode = range.commonAncestorContainer;
+    if (commonNode.nodeType === Node.TEXT_NODE) commonNode = commonNode.parentElement;
 
     // Walk up to find paragraph-ish container inside article
-    const article = node.closest('article');
-    const block = node.closest('p, li, td, blockquote, h1, h2, h3, h4, h5, h6');
+    const article = commonNode.closest('article');
+    const block = commonNode.closest('p, li, td, blockquote, h1, h2, h3, h4, h5, h6');
     if (block && article && article.contains(block)) {
       paragraph = block.textContent.trim();
     }
 
     const rect = range.getBoundingClientRect();
+    if (rect.width === 0 && rect.height === 0) return null;
     return { text, paragraph, rect };
   }
 
@@ -535,12 +645,20 @@
     selectedText = text;
     selectedParagraph = paragraph;
 
-    // Position near top-right of selection
-    const top = rect.top + window.scrollY - 40;
-    const left = rect.right + window.scrollX + 8;
+    // Position near top-right of selection, with viewport clamping
+    // Coordinates are viewport-relative because the float button is position:fixed.
+    let top = rect.top - 42;
+    let left = rect.right + 8;
 
-    floatBtn.style.top = Math.max(8, top) + 'px';
-    floatBtn.style.left = Math.min(left, window.innerWidth - 100) + 'px';
+    const btnWidth = 90;
+    if (left + btnWidth > window.innerWidth) {
+      left = rect.left - btnWidth - 8;
+    }
+    if (left < 4) left = 4;
+    if (top < 4) top = rect.bottom + 8;
+
+    floatBtn.style.top = top + 'px';
+    floatBtn.style.left = left + 'px';
     floatBtn.style.display = 'flex';
   }
 
@@ -552,9 +670,20 @@
 
   document.addEventListener('mousedown', (e) => {
     if (e.target.closest('#ai-chat-float-btn')) return;
-    // hide on click elsewhere; selectionchange will re-show if still selected
+    // Hide on click elsewhere; selectionchange will re-show if still selected
     floatBtn.style.display = 'none';
   });
+
+  // Hide float button on scroll (user probably moved on)
+  let scrollTimeout;
+  window.addEventListener('scroll', () => {
+    clearTimeout(scrollTimeout);
+    scrollTimeout = setTimeout(() => {
+      if (floatBtn.style.display !== 'none') {
+        updateFloatButton();
+      }
+    }, 100);
+  }, { passive: true });
 
   // Float button click: open sidebar and prefill context
   floatBtn.addEventListener('click', () => {
@@ -594,9 +723,9 @@
     // Escape HTML first
     let html = escapeHtml(md);
 
-    // Code blocks
+    // Code blocks (fenced with optional language)
     html = html.replace(/```(\w*)\n([\s\S]*?)```/g, (match, lang, code) => {
-      return `<pre><code class="language-${lang || 'plaintext'}">${code}</code></pre>`;
+      return `<pre><code class="language-${lang || 'plaintext'}">${code.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</code></pre>`;
     });
 
     // Inline code
@@ -604,31 +733,44 @@
 
     // Bold
     html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-    html = html.replace(/__([^_]+)__/g, '<strong>$1</strong>');
 
-    // Italic
-    html = html.replace(/\*([^*]+)\*/g, '<em>$1</em>');
-    html = html.replace(/_([^_]+)_/g, '<em>$1</em>');
+    // Italic (single asterisks/underscores, avoid matching bold markers)
+    html = html.replace(/(^|[\s(])\*([^*]+)\*([\s).,;!?]|$)/g, '$1<em>$2</em>$3');
+    html = html.replace(/(^|[\s(])_([^_]+)_([\s).,;!?]|$)/g, '$1<em>$2</em>$3');
 
     // Links [text](url)
     html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
 
     // Lists (simple unordered)
-    html = html.replace(/^\s*-\s+(.+)$/gm, '<li>$1</li>');
-    html = html.replace(/^\s*\d+\.\s+(.+)$/gm, '<li>$1</li>');
+    const listItems = [];
+    html = html.replace(/^\s*[-*]\s+(.+)$/gm, (match, item) => {
+      const marker = `__LI_${listItems.length}__`;
+      listItems.push(`<li>${item}</li>`);
+      return marker;
+    });
 
-    // Group consecutive li into ul
-    html = html.replace(/(<li>.*<\/li>\n?)+/g, (match) => {
-      return '<ul>' + match + '</ul>';
+    // Numbered lists
+    html = html.replace(/^\s*\d+\.\s+(.+)$/gm, (match, item) => {
+      const marker = `__LI_${listItems.length}__`;
+      listItems.push(`<li>${item}</li>`);
+      return marker;
     });
 
     // Paragraphs
     html = html.split(/\n\n+/).map(p => {
       p = p.trim();
       if (!p) return '';
-      if (p.startsWith('<') && (p.startsWith('<pre') || p.startsWith('<ul') || p.startsWith('<li'))) return p;
+      if (p.startsWith('<')) return p;
       return `<p>${p}</p>`;
     }).join('\n');
+
+    // Restore list items wrapped in ul
+    listItems.forEach((item, i) => {
+      html = html.replace(`<p>__LI_${i}__</p>`, item);
+    });
+
+    // Wrap consecutive li into ul
+    html = html.replace(/(<li>.*?<\/li>)(\s*<li>.*?<\/li>)*/g, (match) => `<ul>${match}</ul>`);
 
     return html;
   }
@@ -686,13 +828,23 @@
   }
 
   // Build context payload
-  function buildContext() {
+  async function buildContext() {
+    const index = await loadIndex();
+    const currentUrl = new URL(window.location.href).pathname.replace(/\/$/, '') + '/';
+    const relevantChunks = findRelevantChunks(inputEl.value.trim(), currentUrl);
+
     return {
       pageTitle: document.title,
       pageUrl: window.location.href,
       selectedText: selectedText,
       surroundingParagraph: selectedParagraph,
-      relevantChunks: []
+      relevantChunks: relevantChunks.map((c) => ({
+        id: c.id,
+        url: c.url,
+        title: c.title,
+        heading: c.heading,
+        text: c.text,
+      }))
     };
   }
 
@@ -708,11 +860,11 @@
     isStreaming = true;
     addLoading();
 
-    const context = buildContext();
+    const context = await buildContext();
     const historyForApi = sessionHistory.slice(-6); // keep last 6 exchanges
 
     try {
-      const response = await fetch('{{ site.ai_chat_endpoint | default: "https://ai-chat.zhchxiao123.workers.dev/api/chat" }}', {
+      const response = await fetch(AI_CHAT_ENDPOINT, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
