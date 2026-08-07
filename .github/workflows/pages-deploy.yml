@@ -50,6 +50,14 @@ jobs:
         env:
           JEKYLL_ENV: "production"
 
+      - name: Build AI chat index
+        run: python3 scripts/build-ai-chat-index.py
+
+      - name: Copy AI chat index to site
+        run: |
+          mkdir -p "_site${{ steps.pages.outputs.base_path }}/assets/js/data"
+          cp assets/js/data/ai-chat-index.json "_site${{ steps.pages.outputs.base_path }}/assets/js/data/ai-chat-index.json"
+
       - name: Test site
         run: |
           bundle exec htmlproofer _site \

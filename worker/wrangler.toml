@@ -1,0 +1,19 @@
+name = "ai-chat-zhchxiao123"
+main = "ai-chat-worker.js"
+compatibility_date = "2026-08-06"
+
+# Usage with wrangler secret put ANTHROPIC_API_KEY (or OPENAI_API_KEY / GROQ_API_KEY)
+[vars]
+# Model provider to use. Supported: "anthropic", "openai", "groq"
+MODEL_PROVIDER = "groq"
+# Model name depends on provider:
+# - Groq: llama-3.3-70b-versatile, llama-3.1-8b-instant, etc.
+# - Anthropic: claude-3-5-haiku-20241022, claude-3-5-sonnet-20241022, etc.
+# - OpenAI: gpt-4o-mini, gpt-4o, etc.
+MODEL_NAME = "llama-3.3-70b-versatile"
+# Comma-separated allowed origins for CORS. Use "*" for any (not recommended for production).
+ALLOWED_ORIGINS = "https://zhchxiao123.github.io,http://localhost:4000"
+# Max requests per IP per hour (rough in-memory limit).
+RATE_LIMIT_PER_HOUR = "30"
+# Max message length (characters).
+MAX_MESSAGE_LENGTH = "2000"
