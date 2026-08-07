@@ -587,6 +587,25 @@
     return result;
   }
 
+  // Keep AI widget as the last child of body so third-party overlays
+  // (e.g. Hypothesis client) don't render above it at the same z-index.
+  function keepAiWidgetOnTop() {
+    if (root.parentElement && root.parentElement.lastElementChild !== root) {
+      root.parentElement.appendChild(root);
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', keepAiWidgetOnTop);
+  } else {
+    keepAiWidgetOnTop();
+  }
+  window.addEventListener('load', () => {
+    keepAiWidgetOnTop();
+    // Hypothesis injects asynchronously; re-check after a short delay.
+    setTimeout(keepAiWidgetOnTop, 500);
+  });
+
   // Toggle sidebar
   function openSidebar() {
     isOpen = true;
