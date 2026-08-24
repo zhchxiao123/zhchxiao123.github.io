@@ -141,17 +141,17 @@ pre code { background: transparent; color: inherit; padding: 0; border-radius: 0
 
 /* pager */
 .pager { display: flex; justify-content: space-between; gap: 16px; margin-top: 8px; }
-.pager a {
+.pager a, .pager .disabled {
   flex: 1; display: flex; flex-direction: column; gap: 4px;
   padding: 16px 20px; border-radius: var(--radius); text-decoration: none;
   background: var(--panel); border: 1px solid var(--border); box-shadow: var(--shadow);
   transition: transform 0.15s, border-color 0.15s;
 }
 .pager a:hover { transform: translateY(-2px); border-color: var(--primary); }
-.pager a .dir { font-size: 12px; color: var(--text-dim); }
-.pager a .ttl { font-size: 14.5px; font-weight: 700; color: var(--text); }
+.pager a .dir, .pager .disabled .dir { font-size: 12px; color: var(--text-dim); }
+.pager a .ttl, .pager .disabled .ttl { font-size: 14.5px; font-weight: 700; color: var(--text); }
 .pager a.next { text-align: right; }
-.pager a.disabled { opacity: 0.4; pointer-events: none; }
+.pager .disabled { opacity: 0.4; pointer-events: none; }
 
 footer { text-align: center; color: var(--text-dim); font-size: 13px; padding: 20px 0 40px; }
 footer a { color: var(--text-dim); }
@@ -519,7 +519,7 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 <li>用你自己的数据尝试这些示例</li>
 <li>尝试不同的过滤器</li>
 <li>构建一个多用户应用</li>
-<li>探索<a href="../introduction/13-vector-store.html">入门 notebook</a>以了解更多基础知识</li>
+<li>探索<a href="13-vector-store.html">入门 notebook</a>以了解更多基础知识</li>
 </ul>
 <p><strong>需要帮助？</strong> 查看我们的<a href="https://semantica.readthedocs.io">文档</a>或在 <a href="https://github.com/Hawksight-AI/semantica">GitHub</a> 上提问。</p></section>
     <nav class="pager"><a class="prev" href="14-datalog-style-reasoning.html"><span class="dir">← 上一篇</span><span class="ttl">Datalog 风格推理</span></a><a class="next" href="01-agno-decision-intelligence.html"><span class="dir">→ 下一篇</span><span class="ttl">Agno 决策智能</span></a></nav>

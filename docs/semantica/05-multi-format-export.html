@@ -141,17 +141,17 @@ pre code { background: transparent; color: inherit; padding: 0; border-radius: 0
 
 /* pager */
 .pager { display: flex; justify-content: space-between; gap: 16px; margin-top: 8px; }
-.pager a {
+.pager a, .pager .disabled {
   flex: 1; display: flex; flex-direction: column; gap: 4px;
   padding: 16px 20px; border-radius: var(--radius); text-decoration: none;
   background: var(--panel); border: 1px solid var(--border); box-shadow: var(--shadow);
   transition: transform 0.15s, border-color 0.15s;
 }
 .pager a:hover { transform: translateY(-2px); border-color: var(--primary); }
-.pager a .dir { font-size: 12px; color: var(--text-dim); }
-.pager a .ttl { font-size: 14.5px; font-weight: 700; color: var(--text); }
+.pager a .dir, .pager .disabled .dir { font-size: 12px; color: var(--text-dim); }
+.pager a .ttl, .pager .disabled .ttl { font-size: 14.5px; font-weight: 700; color: var(--text); }
 .pager a.next { text-align: right; }
-.pager a.disabled { opacity: 0.4; pointer-events: none; }
+.pager .disabled { opacity: 0.4; pointer-events: none; }
 
 footer { text-align: center; color: var(--text-dim); font-size: 13px; padding: 20px 0 40px; }
 footer a { color: var(--text-dim); }
@@ -557,7 +557,7 @@ pip<span class="w"> </span>install<span class="w"> </span>semantica<span class="
 <span class="n">report_generator</span><span class="o">.</span><span class="n">generate_report</span><span class="p">(</span><span class="n">report_data</span><span class="p">,</span> <span class="s2">"exports/report.html"</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">"html"</span><span class="p">)</span>
 
 <span class="c1"># 生成 Markdown 报告</span>
-<span class="n">report_generator</span><span class="o">.</span><span class="n">generate_report</span><span class="p">(</span><span class="n">report_data</span><span class="p">,</span> <span class="s2">"exports/report.md"</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">"markdown"</span><span class="p">)</span>
+<span class="n">report_generator</span><span class="o">.</span><span class="n">generate_report</span><span class="p">(</span><span class="n">report_data</span><span class="p">,</span> <span class="s2">"https://github.com/semantica-agi/semantica"</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">"markdown"</span><span class="p">)</span>
 
 <span class="c1"># 生成 JSON 报告</span>
 <span class="n">report_generator</span><span class="o">.</span><span class="n">generate_report</span><span class="p">(</span><span class="n">report_data</span><span class="p">,</span> <span class="s2">"exports/report.json"</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">"json"</span><span class="p">)</span>
@@ -648,7 +648,7 @@ pip<span class="w"> </span>install<span class="w"> </span>semantica<span class="
     <span class="s2">"exports/output_network.yaml"</span><span class="p">,</span>
     <span class="s2">"exports/output_schema.yaml"</span><span class="p">,</span>
     <span class="s2">"exports/report.html"</span><span class="p">,</span>
-    <span class="s2">"exports/report.md"</span><span class="p">,</span>
+    <span class="s2">"https://github.com/semantica-agi/semantica"</span><span class="p">,</span>
     <span class="s2">"exports/report.json"</span><span class="p">,</span>
     <span class="s2">"exports/report.txt"</span>
 <span class="p">]</span>

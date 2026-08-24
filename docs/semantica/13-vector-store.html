@@ -141,17 +141,17 @@ pre code { background: transparent; color: inherit; padding: 0; border-radius: 0
 
 /* pager */
 .pager { display: flex; justify-content: space-between; gap: 16px; margin-top: 8px; }
-.pager a {
+.pager a, .pager .disabled {
   flex: 1; display: flex; flex-direction: column; gap: 4px;
   padding: 16px 20px; border-radius: var(--radius); text-decoration: none;
   background: var(--panel); border: 1px solid var(--border); box-shadow: var(--shadow);
   transition: transform 0.15s, border-color 0.15s;
 }
 .pager a:hover { transform: translateY(-2px); border-color: var(--primary); }
-.pager a .dir { font-size: 12px; color: var(--text-dim); }
-.pager a .ttl { font-size: 14.5px; font-weight: 700; color: var(--text); }
+.pager a .dir, .pager .disabled .dir { font-size: 12px; color: var(--text-dim); }
+.pager a .ttl, .pager .disabled .ttl { font-size: 14.5px; font-weight: 700; color: var(--text); }
 .pager a.next { text-align: right; }
-.pager a.disabled { opacity: 0.4; pointer-events: none; }
+.pager .disabled { opacity: 0.4; pointer-events: none; }
 
 footer { text-align: center; color: var(--text-dim); font-size: 13px; padding: 20px 0 40px; }
 footer a { color: var(--text-dim); }
@@ -673,7 +673,7 @@ pip<span class="w"> </span>install<span class="w"> </span>semantica<span class="
 <h3>下一步</h3>
 <p><strong>延伸阅读</strong>：
 - <a href="https://semantica.readthedocs.io/reference/vector_store/">Vector Store API Reference</a>
-- <a href="../advanced/15-advanced-vector-store-and-search.html">Advanced Vector Store Notebook</a>
+- <a href="15-advanced-vector-store-and-search.html">Advanced Vector Store Notebook</a>
 - <a href="12-embedding-generation.html">Embedding Generation</a></p>
 <hr />
 <p><strong>有问题或疑问？</strong> 查看我们的 <a href="https://github.com/Hawksight-AI/semantica">GitHub repository</a> 或 <a href="https://semantica.readthedocs.io">documentation</a>。</p></section>
