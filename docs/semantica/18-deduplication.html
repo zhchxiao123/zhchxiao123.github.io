@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Semantica 中的去重 · Semantica Cookbook</title>
+<style>
+
+:root {
+  --bg: #0b0e17;
+  --bg-soft: #10141f;
+  --panel: #ffffff;
+  --panel-alt: #f6f7fb;
+  --border: #e6e8f0;
+  --text: #1a1d29;
+  --text-dim: #5a5f72;
+  --primary: #6366f1;
+  --primary-dark: #4338ca;
+  --accent: #14b8a6;
+  --accent-2: #f59e0b;
+  --code-bg: #0f172a;
+  --code-text: #e2e8f0;
+  --radius: 14px;
+  --shadow: 0 10px 30px -12px rgba(30, 41, 59, 0.18);
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif;
+  color: var(--text);
+  background: var(--panel-alt);
+  line-height: 1.75;
+}
+a { color: var(--primary-dark); }
+
+/* ---------- HERO ---------- */
+.hero {
+  background: radial-gradient(1200px 600px at 15% -10%, rgba(99,102,241,0.55), transparent 60%),
+              radial-gradient(900px 500px at 90% 10%, rgba(20,184,166,0.35), transparent 55%),
+              linear-gradient(180deg, var(--bg) 0%, var(--bg-soft) 100%);
+  color: #f4f5fb;
+  padding: 64px 24px 88px;
+  position: relative;
+  overflow: hidden;
+}
+.hero-inner { max-width: 1080px; margin: 0 auto; }
+.eyebrow {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-size: 12.5px; letter-spacing: 0.12em; text-transform: uppercase;
+  color: #a5b4fc; background: rgba(99,102,241,0.15);
+  border: 1px solid rgba(165,180,252,0.35);
+  padding: 6px 14px; border-radius: 999px; margin-bottom: 22px;
+}
+.hero h1 { font-size: 40px; line-height: 1.2; margin: 0 0 16px; font-weight: 800; letter-spacing: -0.01em; }
+.hero p.lead { font-size: 17px; color: #cbd0e6; max-width: 720px; margin: 0 0 28px; }
+.hero-badges { display: flex; flex-wrap: wrap; gap: 10px; }
+.badge {
+  font-size: 13px; background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.14); color: #e2e4f5;
+  padding: 6px 12px; border-radius: 999px;
+}
+.hero a.home-link {
+  display: inline-flex; align-items: center; gap: 6px;
+  color: #a5b4fc; text-decoration: none; font-size: 13.5px; margin-bottom: 20px;
+}
+.hero a.home-link:hover { color: #fff; }
+
+/* ---------- LAYOUT ---------- */
+.layout {
+  max-width: 1200px; margin: -48px auto 0; padding: 0 24px 60px;
+  display: grid; grid-template-columns: 240px 1fr; gap: 32px; position: relative;
+}
+.toc {
+  position: sticky; top: 24px; align-self: start;
+  background: var(--panel); border: 1px solid var(--border);
+  border-radius: var(--radius); box-shadow: var(--shadow);
+  padding: 18px 16px; font-size: 13.5px;
+  max-height: calc(100vh - 48px); overflow-y: auto;
+}
+.toc h4 { margin: 0 0 10px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-dim); }
+.toc a { display: block; padding: 6px 8px; border-radius: 8px; color: var(--text-dim); text-decoration: none; margin-bottom: 2px; }
+.toc a:hover { background: var(--panel-alt); color: var(--text); }
+.toc a.active { background: var(--panel-alt); color: var(--primary-dark); font-weight: 600; }
+
+main { min-width: 0; }
+
+section {
+  background: var(--panel); border: 1px solid var(--border);
+  border-radius: var(--radius); box-shadow: var(--shadow);
+  padding: 34px 40px; margin-bottom: 24px; scroll-margin-top: 20px;
+}
+section h2 { font-size: 23px; margin: 0 0 16px; display: flex; align-items: center; gap: 10px; }
+section h2 .pill-num {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 30px; height: 30px; border-radius: 9px; flex-shrink: 0;
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  color: #fff; font-size: 14px; font-weight: 700;
+}
+h3 { font-size: 17px; margin: 26px 0 10px; }
+h4 { font-size: 15px; margin: 20px 0 8px; }
+p { margin: 0 0 14px; }
+ul, ol { margin: 0 0 16px; padding-left: 22px; }
+li { margin-bottom: 6px; }
+li > ul, li > ol { margin-top: 6px; }
+strong { color: var(--text); }
+blockquote {
+  margin: 0 0 16px; padding: 12px 18px;
+  border-left: 4px solid var(--accent); background: var(--panel-alt);
+  border-radius: 0 8px 8px 0; color: var(--text-dim);
+}
+blockquote p { margin: 0; }
+
+/* tables */
+table { width: 100%; border-collapse: collapse; font-size: 13.8px; margin: 8px 0 18px; }
+th {
+  text-align: left; font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em;
+  color: var(--text-dim); border-bottom: 1px solid var(--border); padding: 8px 10px;
+}
+td { padding: 10px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+tr:last-child td { border-bottom: none; }
+
+/* inline code */
+code {
+  background: #eef0fb; color: var(--primary-dark);
+  padding: 2px 7px; border-radius: 6px;
+  font-family: "SFMono-Regular", Menlo, Consolas, monospace; font-size: 13px;
+}
+
+/* code blocks */
+pre {
+  background: var(--code-bg); color: var(--code-text);
+  padding: 16px 18px; border-radius: 10px; overflow-x: auto;
+  font-size: 13px; line-height: 1.6;
+  font-family: "SFMono-Regular", Menlo, Consolas, monospace;
+  margin: 10px 0 18px;
+}
+pre code { background: transparent; color: inherit; padding: 0; border-radius: 0; font-size: 13px; }
+.codehilite { background: var(--code-bg); border-radius: 10px; overflow-x: auto; margin: 10px 0 18px; }
+.codehilite pre { margin: 0; padding: 16px 18px; background: transparent; }
+
+/* pager */
+.pager { display: flex; justify-content: space-between; gap: 16px; margin-top: 8px; }
+.pager a {
+  flex: 1; display: flex; flex-direction: column; gap: 4px;
+  padding: 16px 20px; border-radius: var(--radius); text-decoration: none;
+  background: var(--panel); border: 1px solid var(--border); box-shadow: var(--shadow);
+  transition: transform 0.15s, border-color 0.15s;
+}
+.pager a:hover { transform: translateY(-2px); border-color: var(--primary); }
+.pager a .dir { font-size: 12px; color: var(--text-dim); }
+.pager a .ttl { font-size: 14.5px; font-weight: 700; color: var(--text); }
+.pager a.next { text-align: right; }
+.pager a.disabled { opacity: 0.4; pointer-events: none; }
+
+footer { text-align: center; color: var(--text-dim); font-size: 13px; padding: 20px 0 40px; }
+footer a { color: var(--text-dim); }
+
+@media (max-width: 900px) {
+  .layout { grid-template-columns: 1fr; }
+  .toc { position: static; max-height: none; }
+  section { padding: 26px 22px; }
+  .hero h1 { font-size: 30px; }
+  .pager { flex-direction: column; }
+}
+
+pre { line-height: 125%; }
+td.linenos .normal { color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px; }
+span.linenos { color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px; }
+td.linenos .special { color: #000000; background-color: #ffffc0; padding-left: 5px; padding-right: 5px; }
+span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 5px; padding-right: 5px; }
+.codehilite .hll { background-color: #49483e }
+.codehilite { background: #272822; color: #F8F8F2 }
+.codehilite .c { color: #959077 } /* Comment */
+.codehilite .err { color: #ED007E; background-color: #1E0010 } /* Error */
+.codehilite .esc { color: #F8F8F2 } /* Escape */
+.codehilite .g { color: #F8F8F2 } /* Generic */
+.codehilite .k { color: #66D9EF } /* Keyword */
+.codehilite .l { color: #AE81FF } /* Literal */
+.codehilite .n { color: #F8F8F2 } /* Name */
+.codehilite .o { color: #FF4689 } /* Operator */
+.codehilite .x { color: #F8F8F2 } /* Other */
+.codehilite .p { color: #F8F8F2 } /* Punctuation */
+.codehilite .ch { color: #959077 } /* Comment.Hashbang */
+.codehilite .cm { color: #959077 } /* Comment.Multiline */
+.codehilite .cp { color: #959077 } /* Comment.Preproc */
+.codehilite .cpf { color: #959077 } /* Comment.PreprocFile */
+.codehilite .c1 { color: #959077 } /* Comment.Single */
+.codehilite .cs { color: #959077 } /* Comment.Special */
+.codehilite .gd { color: #FF4689 } /* Generic.Deleted */
+.codehilite .ge { color: #F8F8F2; font-style: italic } /* Generic.Emph */
+.codehilite .ges { color: #F8F8F2; font-weight: bold; font-style: italic } /* Generic.EmphStrong */
+.codehilite .gr { color: #FF4689 } /* Generic.Error */
+.codehilite .gh { color: #F8F8F2 } /* Generic.Heading */
+.codehilite .gi { color: #A6E22E } /* Generic.Inserted */
+.codehilite .go { color: #66D9EF } /* Generic.Output */
+.codehilite .gp { color: #FF4689; font-weight: bold } /* Generic.Prompt */
+.codehilite .gs { color: #F8F8F2; font-weight: bold } /* Generic.Strong */
+.codehilite .gu { color: #959077 } /* Generic.Subheading */
+.codehilite .gt { color: #66D9EF } /* Generic.Traceback */
+.codehilite .kc { color: #66D9EF } /* Keyword.Constant */
+.codehilite .kd { color: #66D9EF } /* Keyword.Declaration */
+.codehilite .kn { color: #FF4689 } /* Keyword.Namespace */
+.codehilite .kp { color: #66D9EF } /* Keyword.Pseudo */
+.codehilite .kr { color: #66D9EF } /* Keyword.Reserved */
+.codehilite .kt { color: #66D9EF } /* Keyword.Type */
+.codehilite .ld { color: #E6DB74 } /* Literal.Date */
+.codehilite .m { color: #AE81FF } /* Literal.Number */
+.codehilite .s { color: #E6DB74 } /* Literal.String */
+.codehilite .na { color: #A6E22E } /* Name.Attribute */
+.codehilite .nb { color: #A6E22E } /* Name.Builtin */
+.codehilite .nc { color: #A6E22E } /* Name.Class */
+.codehilite .no { color: #66D9EF } /* Name.Constant */
+.codehilite .nd { color: #A6E22E } /* Name.Decorator */
+.codehilite .ni { color: #F8F8F2 } /* Name.Entity */
+.codehilite .ne { color: #A6E22E } /* Name.Exception */
+.codehilite .nf { color: #A6E22E } /* Name.Function */
+.codehilite .nl { color: #F8F8F2 } /* Name.Label */
+.codehilite .nn { color: #F8F8F2 } /* Name.Namespace */
+.codehilite .nx { color: #A6E22E } /* Name.Other */
+.codehilite .py { color: #F8F8F2 } /* Name.Property */
+.codehilite .nt { color: #FF4689 } /* Name.Tag */
+.codehilite .nv { color: #F8F8F2 } /* Name.Variable */
+.codehilite .ow { color: #FF4689 } /* Operator.Word */
+.codehilite .pm { color: #F8F8F2 } /* Punctuation.Marker */
+.codehilite .w { color: #F8F8F2 } /* Text.Whitespace */
+.codehilite .mb { color: #AE81FF } /* Literal.Number.Bin */
+.codehilite .mf { color: #AE81FF } /* Literal.Number.Float */
+.codehilite .mh { color: #AE81FF } /* Literal.Number.Hex */
+.codehilite .mi { color: #AE81FF } /* Literal.Number.Integer */
+.codehilite .mo { color: #AE81FF } /* Literal.Number.Oct */
+.codehilite .sa { color: #E6DB74 } /* Literal.String.Affix */
+.codehilite .sb { color: #E6DB74 } /* Literal.String.Backtick */
+.codehilite .sc { color: #E6DB74 } /* Literal.String.Char */
+.codehilite .dl { color: #E6DB74 } /* Literal.String.Delimiter */
+.codehilite .sd { color: #E6DB74 } /* Literal.String.Doc */
+.codehilite .s2 { color: #E6DB74 } /* Literal.String.Double */
+.codehilite .se { color: #AE81FF } /* Literal.String.Escape */
+.codehilite .sh { color: #E6DB74 } /* Literal.String.Heredoc */
+.codehilite .si { color: #E6DB74 } /* Literal.String.Interpol */
+.codehilite .sx { color: #E6DB74 } /* Literal.String.Other */
+.codehilite .sr { color: #E6DB74 } /* Literal.String.Regex */
+.codehilite .s1 { color: #E6DB74 } /* Literal.String.Single */
+.codehilite .ss { color: #E6DB74 } /* Literal.String.Symbol */
+.codehilite .bp { color: #A6E22E } /* Name.Builtin.Pseudo */
+.codehilite .fm { color: #A6E22E } /* Name.Function.Magic */
+.codehilite .vc { color: #F8F8F2 } /* Name.Variable.Class */
+.codehilite .vg { color: #F8F8F2 } /* Name.Variable.Global */
+.codehilite .vi { color: #F8F8F2 } /* Name.Variable.Instance */
+.codehilite .vm { color: #F8F8F2 } /* Name.Variable.Magic */
+.codehilite .il { color: #AE81FF } /* Literal.Number.Integer.Long */
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="hero-inner">
+    <a class="home-link" href="index.html">← 返回 Semantica 专题首页</a>
+    <span class="eyebrow">🌱 SEMANTICA · COOKBOOK · 入门系列</span>
+    <h1>Semantica 中的去重</h1>
+    <p class="lead">Semantica 官方 Cookbook 中文翻译 · 第 18 / 37 篇</p>
+    <div class="hero-badges">
+      <span class="badge">📦 semantica</span>
+      <span class="badge">🕸️ 知识图谱</span>
+      <span class="badge">🔎 GraphRAG</span>
+    </div>
+  </div>
+</header>
+
+<div class="layout">
+  <nav class="toc">
+    <h4>目录</h4>
+    <a href="#sec-1">1. 准备示例数据</a>
+<a href="#sec-2">2. 相似度计算</a>
+<a href="#sec-3">3. 重复检测</a>
+<a href="#sec-4">4. 聚类</a>
+<a href="#sec-5">5. 实体合并</a>
+<a href="#sec-6">6. 完整工作流</a>
+<a href="#sec-7">小结</a>
+  </nav>
+
+  <main>
+    <section id="overview"><div class="intro"><p>欢迎来到<strong>去重</strong>演练！在任何知识图谱中，数据往往来自多个来源，导致出现重复实体（例如 "Apple Inc." 与 "Apple Inc"）。</p>
+<p>Semantica 提供了健壮的<strong>去重模块</strong>来帮助你：
+1. <strong>计算相似度</strong>：使用字符串、属性和嵌入来比较实体。
+2. <strong>检测重复</strong>：找出代表同一现实世界对象的一对或一组实体。
+3. <strong>聚类实体</strong>：将相似实体分组。
+4. <strong>合并实体</strong>：将重复项合并为单个规范化实体，同时消解冲突。</p>
+<p>本 notebook 将通过清晰的示例引导你完成每一步。</p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 安装 Semantica</span>
+<span class="err">!</span><span class="n">pip</span> <span class="n">install</span> <span class="o">-</span><span class="n">q</span> <span class="n">semantica</span>
+</code></pre></div></div></section>
+<section id="sec-1"><h2><span class="pill-num">1</span>1. 准备示例数据</h2><p>让我们创建一个带有一些刻意重复项的数据集。我们将模拟来自不同来源（例如 CRM 和公共数据库）的数据。</p>
+<p><strong>我们的实体：</strong>
+- <strong>Apple</strong>：诸如 "Apple Inc."、"Apple Inc" 和仅 "Apple" 的变体。
+- <strong>Microsoft</strong>：诸如 "Microsoft Corp" 和 "Microsoft" 的变体。
+- <strong>Google</strong>：一个用于对照的唯一实体。</p>
+<div class="codehilite"><pre><span></span><code><span class="n">entities</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="c1"># Apple 变体</span>
+    <span class="p">{</span>
+        <span class="s2">"id"</span><span class="p">:</span> <span class="s2">"e1"</span><span class="p">,</span>
+        <span class="s2">"name"</span><span class="p">:</span> <span class="s2">"Apple Inc."</span><span class="p">,</span>
+        <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"Company"</span><span class="p">,</span>
+        <span class="s2">"properties"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"industry"</span><span class="p">:</span> <span class="s2">"Technology"</span><span class="p">,</span> <span class="s2">"hq"</span><span class="p">:</span> <span class="s2">"Cupertino"</span><span class="p">,</span> <span class="s2">"founded"</span><span class="p">:</span> <span class="mi">1976</span><span class="p">},</span>
+        <span class="s2">"relationships"</span><span class="p">:</span> <span class="p">[{</span><span class="s2">"predicate"</span><span class="p">:</span> <span class="s2">"founded_by"</span><span class="p">,</span> <span class="s2">"object"</span><span class="p">:</span> <span class="s2">"Steve Jobs"</span><span class="p">}]</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s2">"id"</span><span class="p">:</span> <span class="s2">"e2"</span><span class="p">,</span>
+        <span class="s2">"name"</span><span class="p">:</span> <span class="s2">"Apple Inc"</span><span class="p">,</span>
+        <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"Company"</span><span class="p">,</span>
+        <span class="s2">"properties"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"industry"</span><span class="p">:</span> <span class="s2">"Tech"</span><span class="p">,</span> <span class="s2">"hq"</span><span class="p">:</span> <span class="s2">"Cupertino, CA"</span><span class="p">},</span> <span class="c1"># 属性略有不同</span>
+        <span class="s2">"relationships"</span><span class="p">:</span> <span class="p">[]</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s2">"id"</span><span class="p">:</span> <span class="s2">"e3"</span><span class="p">,</span>
+        <span class="s2">"name"</span><span class="p">:</span> <span class="s2">"Apple"</span><span class="p">,</span>
+        <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"Company"</span><span class="p">,</span>
+        <span class="s2">"properties"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"industry"</span><span class="p">:</span> <span class="s2">"Consumer Electronics"</span><span class="p">},</span> 
+        <span class="s2">"relationships"</span><span class="p">:</span> <span class="p">[{</span><span class="s2">"predicate"</span><span class="p">:</span> <span class="s2">"ceo"</span><span class="p">,</span> <span class="s2">"object"</span><span class="p">:</span> <span class="s2">"Tim Cook"</span><span class="p">}]</span>
+    <span class="p">},</span>
+
+    <span class="c1"># Microsoft 变体</span>
+    <span class="p">{</span>
+        <span class="s2">"id"</span><span class="p">:</span> <span class="s2">"e4"</span><span class="p">,</span>
+        <span class="s2">"name"</span><span class="p">:</span> <span class="s2">"Microsoft Corp"</span><span class="p">,</span>
+        <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"Company"</span><span class="p">,</span>
+        <span class="s2">"properties"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"industry"</span><span class="p">:</span> <span class="s2">"Software"</span><span class="p">,</span> <span class="s2">"hq"</span><span class="p">:</span> <span class="s2">"Redmond"</span><span class="p">}</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s2">"id"</span><span class="p">:</span> <span class="s2">"e5"</span><span class="p">,</span>
+        <span class="s2">"name"</span><span class="p">:</span> <span class="s2">"Microsoft"</span><span class="p">,</span>
+        <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"Company"</span><span class="p">,</span>
+        <span class="s2">"properties"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"industry"</span><span class="p">:</span> <span class="s2">"Tech"</span><span class="p">,</span> <span class="s2">"hq"</span><span class="p">:</span> <span class="s2">"Redmond, WA"</span><span class="p">}</span>
+    <span class="p">},</span>
+
+    <span class="c1"># 唯一实体</span>
+    <span class="p">{</span>
+        <span class="s2">"id"</span><span class="p">:</span> <span class="s2">"e6"</span><span class="p">,</span>
+        <span class="s2">"name"</span><span class="p">:</span> <span class="s2">"Google LLC"</span><span class="p">,</span>
+        <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"Company"</span><span class="p">,</span>
+        <span class="s2">"properties"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"industry"</span><span class="p">:</span> <span class="s2">"Internet"</span><span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">]</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Created </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">entities</span><span class="p">)</span><span class="si">}</span><span class="s2"> sample entities."</span><span class="p">)</span>
+</code></pre></div></section>
+<section id="sec-2"><h2><span class="pill-num">2</span>2. 相似度计算</h2><p><code>SimilarityCalculator</code> 是核心引擎。它比较两个实体并返回一个介于 0 和 1 之间的分数。它考察：
+- <strong>字符串相似度</strong>：名称和文本字段。
+- <strong>属性相似度</strong>：键值对的重叠。
+- <strong>关系相似度</strong>：与其他实体的连接。
+- <strong>嵌入</strong>：语义向量相似度（如果可用）。</p>
+<p>你可以自定义每个因素的权重。</p>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">semantica.deduplication</span><span class="w"> </span><span class="kn">import</span> <span class="n">SimilarityCalculator</span><span class="p">,</span> <span class="n">SimilarityResult</span>
+<span class="c1"># 使用自定义权重初始化计算器</span>
+<span class="n">calculator</span> <span class="o">=</span> <span class="n">SimilarityCalculator</span><span class="p">(</span>
+    <span class="n">string_weight</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>      <span class="c1"># 名称权重高</span>
+    <span class="n">property_weight</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span>    <span class="c1"># 属性权重中等</span>
+    <span class="n">relationship_weight</span><span class="o">=</span><span class="mf">0.2</span> <span class="c1"># 关系权重较低</span>
+<span class="p">)</span>
+
+<span class="c1"># 比较 "Apple Inc." (e1) 与 "Apple Inc" (e2)</span>
+<span class="n">score_e1_e2</span> <span class="o">=</span> <span class="n">calculator</span><span class="o">.</span><span class="n">calculate_similarity</span><span class="p">(</span><span class="n">entities</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">entities</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Similarity between '</span><span class="si">{</span><span class="n">entities</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s1">'name'</span><span class="p">]</span><span class="si">}</span><span class="s2">' and '</span><span class="si">{</span><span class="n">entities</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="s1">'name'</span><span class="p">]</span><span class="si">}</span><span class="s2">':"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  Total Score: </span><span class="si">{</span><span class="n">score_e1_e2</span><span class="o">.</span><span class="n">score</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  Breakdown:   </span><span class="si">{</span><span class="n">score_e1_e2</span><span class="o">.</span><span class="n">components</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+<span class="c1"># 比较 "Apple Inc." (e1) 与 "Microsoft" (e5)</span>
+<span class="n">score_e1_e5</span> <span class="o">=</span> <span class="n">calculator</span><span class="o">.</span><span class="n">calculate_similarity</span><span class="p">(</span><span class="n">entities</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">entities</span><span class="p">[</span><span class="mi">4</span><span class="p">])</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Similarity between '</span><span class="si">{</span><span class="n">entities</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s1">'name'</span><span class="p">]</span><span class="si">}</span><span class="s2">' and '</span><span class="si">{</span><span class="n">entities</span><span class="p">[</span><span class="mi">4</span><span class="p">][</span><span class="s1">'name'</span><span class="p">]</span><span class="si">}</span><span class="s2">':"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  Total Score: </span><span class="si">{</span><span class="n">score_e1_e5</span><span class="o">.</span><span class="n">score</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</code></pre></div></section>
+<section id="sec-3"><h2><span class="pill-num">3</span>3. 重复检测</h2><p><code>DuplicateDetector</code> 使用相似度计算器扫描你的数据集以查找重复项。它可以找到：
+- <strong>对</strong>：简单的 A 匹配 B。
+- <strong>组</strong>：A 匹配 B，且 B 匹配 C。</p>
+<p>它使用 <code>similarity_threshold</code> 来决定什么算作匹配。</p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 导入用于重复检测的特定类</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">semantica.deduplication</span><span class="w"> </span><span class="kn">import</span> <span class="n">DuplicateDetector</span><span class="p">,</span> <span class="n">DuplicateCandidate</span><span class="p">,</span> <span class="n">DuplicateGroup</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">semantica.deduplication</span><span class="w"> </span><span class="kn">import</span> <span class="n">DeduplicationConfig</span>
+
+<span class="n">detector</span> <span class="o">=</span> <span class="n">DuplicateDetector</span><span class="p">(</span>
+    <span class="n">similarity_threshold</span><span class="o">=</span><span class="mf">0.7</span><span class="p">,</span> 
+    <span class="n">confidence_threshold</span><span class="o">=</span><span class="mf">0.6</span>  
+<span class="p">)</span>
+
+<span class="c1"># 检测对</span>
+<span class="n">candidates</span> <span class="o">=</span> <span class="n">detector</span><span class="o">.</span><span class="n">detect_duplicates</span><span class="p">(</span><span class="n">entities</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Found </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">candidates</span><span class="p">)</span><span class="si">}</span><span class="s2"> duplicate pairs:"</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">candidates</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  - </span><span class="si">{</span><span class="n">c</span><span class="o">.</span><span class="n">entity1</span><span class="p">[</span><span class="s1">'name'</span><span class="p">]</span><span class="si">}</span><span class="s2"> &lt;==&gt; </span><span class="si">{</span><span class="n">c</span><span class="o">.</span><span class="n">entity2</span><span class="p">[</span><span class="s1">'name'</span><span class="p">]</span><span class="si">}</span><span class="s2"> (Score: </span><span class="si">{</span><span class="n">c</span><span class="o">.</span><span class="n">similarity_score</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">)"</span><span class="p">)</span>
+</code></pre></div>
+
+<h3>增量检测</h3>
+<p>如果你已有数据库并摄取新数据，你不想重新比较所有内容。使用 <code>incremental_detect</code>。</p>
+<div class="codehilite"><pre><span></span><code><span class="n">existing_db</span> <span class="o">=</span> <span class="n">entities</span><span class="p">[:</span><span class="mi">3</span><span class="p">]</span> <span class="c1"># Apple 实体</span>
+<span class="n">new_data</span> <span class="o">=</span> <span class="p">[</span><span class="n">entities</span><span class="p">[</span><span class="mi">4</span><span class="p">]]</span>   <span class="c1"># Microsoft</span>
+<span class="c1"># 检查新数据是否与现有数据库中的任何内容匹配</span>
+<span class="n">inc_candidates</span> <span class="o">=</span> <span class="n">detector</span><span class="o">.</span><span class="n">incremental_detect</span><span class="p">(</span><span class="n">new_data</span><span class="p">,</span> <span class="n">existing_db</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"New matches found: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">inc_candidates</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="c1"># 预期：0，因为 Microsoft 不是 Apple。</span>
+</code></pre></div></section>
+<section id="sec-4"><h2><span class="pill-num">4</span>4. 聚类</h2><p>有时仅靠"对"是不够的。<code>ClusterBuilder</code> 将相关实体分组为簇。这对于理解重复实体的完整范围很有用。</p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 导入用于聚类的特定类</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">semantica.deduplication</span><span class="w"> </span><span class="kn">import</span> <span class="n">ClusterBuilder</span><span class="p">,</span> <span class="n">Cluster</span><span class="p">,</span> <span class="n">ClusterResult</span>
+<span class="n">cluster_builder</span> <span class="o">=</span> <span class="n">ClusterBuilder</span><span class="p">(</span><span class="n">threshold</span><span class="o">=</span><span class="mf">0.7</span><span class="p">)</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">cluster_builder</span><span class="o">.</span><span class="n">build_clusters</span><span class="p">(</span><span class="n">entities</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Found </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">clusters</span><span class="p">)</span><span class="si">}</span><span class="s2"> clusters:"</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">cluster</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">clusters</span><span class="p">):</span>
+    <span class="n">names</span> <span class="o">=</span> <span class="p">[</span><span class="n">e</span><span class="p">[</span><span class="s1">'name'</span><span class="p">]</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">cluster</span><span class="o">.</span><span class="n">entities</span><span class="p">]</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  Cluster </span><span class="si">{</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">names</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+<span class="n">cluster_builder</span> <span class="o">=</span> <span class="n">ClusterBuilder</span><span class="p">(</span><span class="n">threshold</span><span class="o">=</span><span class="mf">0.7</span><span class="p">)</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">cluster_builder</span><span class="o">.</span><span class="n">build_clusters</span><span class="p">(</span><span class="n">entities</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Found </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">clusters</span><span class="p">)</span><span class="si">}</span><span class="s2"> clusters:"</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">cluster</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">clusters</span><span class="p">):</span>
+    <span class="n">names</span> <span class="o">=</span> <span class="p">[</span><span class="n">e</span><span class="p">[</span><span class="s1">'name'</span><span class="p">]</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">cluster</span><span class="o">.</span><span class="n">entities</span><span class="p">]</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  Cluster </span><span class="si">{</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">names</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</code></pre></div></section>
+<section id="sec-5"><h2><span class="pill-num">5</span>5. 实体合并</h2><p>一旦找到重复项，<code>EntityMerger</code> 就会合并它们。你需要选择一个<strong>合并策略</strong>：</p>
+<ul>
+<li><code>KEEP_FIRST</code> / <code>KEEP_LAST</code>：基于顺序。</li>
+<li><code>KEEP_MOST_COMPLETE</code>：保留数据最多（属性 + 关系）的实体。</li>
+<li><code>KEEP_HIGHEST_CONFIDENCE</code>：使用内部置信度分数。</li>
+<li><code>MERGE_ALL</code>：合并所有内容（数组被拼接，冲突通过投票消解）。</li>
+</ul>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 导入用于实体合并的特定类</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">semantica.deduplication</span><span class="w"> </span><span class="kn">import</span> <span class="n">EntityMerger</span><span class="p">,</span> <span class="n">MergeStrategy</span><span class="p">,</span> <span class="n">MergeStrategyManager</span><span class="p">,</span> <span class="n">MergeOperation</span><span class="p">,</span> <span class="n">MergeResult</span>
+</code></pre></div>
+
+<div class="codehilite"><pre><span></span><code><span class="n">merger</span> <span class="o">=</span> <span class="n">EntityMerger</span><span class="p">()</span>
+
+<span class="c1"># 我们将使用 'KEEP_MOST_COMPLETE' 策略</span>
+<span class="c1"># 这确保我们不会丢失来自更丰富实体的有价值信息</span>
+<span class="n">merge_ops</span> <span class="o">=</span> <span class="n">merger</span><span class="o">.</span><span class="n">merge_duplicates</span><span class="p">(</span>
+    <span class="n">entities</span><span class="p">,</span> 
+    <span class="n">strategy</span><span class="o">=</span><span class="n">MergeStrategy</span><span class="o">.</span><span class="n">KEEP_MOST_COMPLETE</span>
+<span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Performed </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">merge_ops</span><span class="p">)</span><span class="si">}</span><span class="s2"> merge operations."</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">--- Merged Results ---"</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">op</span> <span class="ow">in</span> <span class="n">merge_ops</span><span class="p">:</span>
+    <span class="n">final_ent</span> <span class="o">=</span> <span class="n">op</span><span class="o">.</span><span class="n">merged_entity</span>
+    <span class="n">original_count</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">op</span><span class="o">.</span><span class="n">source_entities</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Merged </span><span class="si">{</span><span class="n">original_count</span><span class="si">}</span><span class="s2"> entities into: '</span><span class="si">{</span><span class="n">final_ent</span><span class="p">[</span><span class="s1">'name'</span><span class="p">]</span><span class="si">}</span><span class="s2">'"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  - Final Properties: </span><span class="si">{</span><span class="n">final_ent</span><span class="p">[</span><span class="s1">'properties'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  - Final Relationships: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">final_ent</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'relationships'</span><span class="p">,</span><span class="w"> </span><span class="p">[]))</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</code></pre></div></section>
+<section id="sec-6"><h2><span class="pill-num">6</span>6. 完整工作流</h2><p>让我们将其封装为一个干净的函数，接收脏数据并返回干净数据。</p>
+<div class="codehilite"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">deduplicate_dataset</span><span class="p">(</span><span class="n">raw_entities</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"1. Detecting duplicates..."</span><span class="p">)</span>
+    <span class="c1"># 步骤 1：检测</span>
+    <span class="n">detector</span> <span class="o">=</span> <span class="n">DuplicateDetector</span><span class="p">(</span><span class="n">similarity_threshold</span><span class="o">=</span><span class="mf">0.75</span><span class="p">)</span>
+    <span class="c1"># 如果我们只想合并，可以跳过显式的检测调用，</span>
+    <span class="c1"># 因为 EntityMerger 内部会调用检测，但手动执行可以进行检查。</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"2. Merging entities..."</span><span class="p">)</span>
+    <span class="c1"># 步骤 2：合并</span>
+    <span class="n">merger</span> <span class="o">=</span> <span class="n">EntityMerger</span><span class="p">()</span>
+    <span class="n">ops</span> <span class="o">=</span> <span class="n">merger</span><span class="o">.</span><span class="n">merge_duplicates</span><span class="p">(</span><span class="n">raw_entities</span><span class="p">,</span> <span class="n">strategy</span><span class="o">=</span><span class="n">MergeStrategy</span><span class="o">.</span><span class="n">KEEP_MOST_COMPLETE</span><span class="p">)</span>
+
+    <span class="c1"># 收集所有最终 ID 以查看剩余内容</span>
+    <span class="n">merged_entities</span> <span class="o">=</span> <span class="p">[</span><span class="n">op</span><span class="o">.</span><span class="n">merged_entity</span> <span class="k">for</span> <span class="n">op</span> <span class="ow">in</span> <span class="n">ops</span><span class="p">]</span>
+
+    <span class="c1"># 找出未参与任何合并的实体（单例）</span>
+    <span class="n">merged_ids</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">op</span> <span class="ow">in</span> <span class="n">ops</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">source</span> <span class="ow">in</span> <span class="n">op</span><span class="o">.</span><span class="n">source_entities</span><span class="p">:</span>
+            <span class="n">merged_ids</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">source</span><span class="p">[</span><span class="s1">'id'</span><span class="p">])</span>
+
+    <span class="n">singletons</span> <span class="o">=</span> <span class="p">[</span><span class="n">e</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">raw_entities</span> <span class="k">if</span> <span class="n">e</span><span class="p">[</span><span class="s1">'id'</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">merged_ids</span><span class="p">]</span>
+
+    <span class="n">final_dataset</span> <span class="o">=</span> <span class="n">merged_entities</span> <span class="o">+</span> <span class="n">singletons</span>
+    <span class="k">return</span> <span class="n">final_dataset</span>
+
+<span class="c1"># 运行工作流</span>
+<span class="n">clean_data</span> <span class="o">=</span> <span class="n">deduplicate_dataset</span><span class="p">(</span><span class="n">entities</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Original Size: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">entities</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Cleaned Size:  </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">clean_data</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Final Entity Names:"</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">clean_data</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  - </span><span class="si">{</span><span class="n">e</span><span class="p">[</span><span class="s1">'name'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</code></pre></div></section>
+<section id="sec-7"><h2><span class="pill-num">7</span>小结</h2><p>你已经学习了如何：
+1. <strong>导入</strong>必要的去重类。
+2. <strong>计算</strong>实体之间的相似度。
+3. 使用可配置阈值<strong>检测重复</strong>。
+4. <strong>聚类</strong>相似实体。
+5. <strong>合并</strong>重复项，得到干净、规范化的数据集。</p>
+<p>该模块对于维护高质量的知识图谱至关重要，尤其是在从多个可能混乱的来源摄取数据时。</p></section>
+    <nav class="pager"><a class="prev" href="17-conflict-detection-and-resolution.html"><span class="dir">← 上一篇</span><span class="ttl">冲突检测与消解</span></a><a class="next" href="19-context-module.html"><span class="dir">→ 下一篇</span><span class="ttl">上下文模块</span></a></nav>
+  </main>
+</div>
+
+<footer>由 Semantica 官方 Cookbook 生成的中文说明页 · <a href="https://github.com/semantica-agi/semantica">semantica-agi/semantica</a></footer>
+
+</body>
+</html>

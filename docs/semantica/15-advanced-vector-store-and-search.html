@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>高级向量存储——轻松上手 · Semantica Cookbook</title>
+<style>
+
+:root {
+  --bg: #0b0e17;
+  --bg-soft: #10141f;
+  --panel: #ffffff;
+  --panel-alt: #f6f7fb;
+  --border: #e6e8f0;
+  --text: #1a1d29;
+  --text-dim: #5a5f72;
+  --primary: #6366f1;
+  --primary-dark: #4338ca;
+  --accent: #14b8a6;
+  --accent-2: #f59e0b;
+  --code-bg: #0f172a;
+  --code-text: #e2e8f0;
+  --radius: 14px;
+  --shadow: 0 10px 30px -12px rgba(30, 41, 59, 0.18);
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif;
+  color: var(--text);
+  background: var(--panel-alt);
+  line-height: 1.75;
+}
+a { color: var(--primary-dark); }
+
+/* ---------- HERO ---------- */
+.hero {
+  background: radial-gradient(1200px 600px at 15% -10%, rgba(99,102,241,0.55), transparent 60%),
+              radial-gradient(900px 500px at 90% 10%, rgba(20,184,166,0.35), transparent 55%),
+              linear-gradient(180deg, var(--bg) 0%, var(--bg-soft) 100%);
+  color: #f4f5fb;
+  padding: 64px 24px 88px;
+  position: relative;
+  overflow: hidden;
+}
+.hero-inner { max-width: 1080px; margin: 0 auto; }
+.eyebrow {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-size: 12.5px; letter-spacing: 0.12em; text-transform: uppercase;
+  color: #a5b4fc; background: rgba(99,102,241,0.15);
+  border: 1px solid rgba(165,180,252,0.35);
+  padding: 6px 14px; border-radius: 999px; margin-bottom: 22px;
+}
+.hero h1 { font-size: 40px; line-height: 1.2; margin: 0 0 16px; font-weight: 800; letter-spacing: -0.01em; }
+.hero p.lead { font-size: 17px; color: #cbd0e6; max-width: 720px; margin: 0 0 28px; }
+.hero-badges { display: flex; flex-wrap: wrap; gap: 10px; }
+.badge {
+  font-size: 13px; background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.14); color: #e2e4f5;
+  padding: 6px 12px; border-radius: 999px;
+}
+.hero a.home-link {
+  display: inline-flex; align-items: center; gap: 6px;
+  color: #a5b4fc; text-decoration: none; font-size: 13.5px; margin-bottom: 20px;
+}
+.hero a.home-link:hover { color: #fff; }
+
+/* ---------- LAYOUT ---------- */
+.layout {
+  max-width: 1200px; margin: -48px auto 0; padding: 0 24px 60px;
+  display: grid; grid-template-columns: 240px 1fr; gap: 32px; position: relative;
+}
+.toc {
+  position: sticky; top: 24px; align-self: start;
+  background: var(--panel); border: 1px solid var(--border);
+  border-radius: var(--radius); box-shadow: var(--shadow);
+  padding: 18px 16px; font-size: 13.5px;
+  max-height: calc(100vh - 48px); overflow-y: auto;
+}
+.toc h4 { margin: 0 0 10px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-dim); }
+.toc a { display: block; padding: 6px 8px; border-radius: 8px; color: var(--text-dim); text-decoration: none; margin-bottom: 2px; }
+.toc a:hover { background: var(--panel-alt); color: var(--text); }
+.toc a.active { background: var(--panel-alt); color: var(--primary-dark); font-weight: 600; }
+
+main { min-width: 0; }
+
+section {
+  background: var(--panel); border: 1px solid var(--border);
+  border-radius: var(--radius); box-shadow: var(--shadow);
+  padding: 34px 40px; margin-bottom: 24px; scroll-margin-top: 20px;
+}
+section h2 { font-size: 23px; margin: 0 0 16px; display: flex; align-items: center; gap: 10px; }
+section h2 .pill-num {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 30px; height: 30px; border-radius: 9px; flex-shrink: 0;
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  color: #fff; font-size: 14px; font-weight: 700;
+}
+h3 { font-size: 17px; margin: 26px 0 10px; }
+h4 { font-size: 15px; margin: 20px 0 8px; }
+p { margin: 0 0 14px; }
+ul, ol { margin: 0 0 16px; padding-left: 22px; }
+li { margin-bottom: 6px; }
+li > ul, li > ol { margin-top: 6px; }
+strong { color: var(--text); }
+blockquote {
+  margin: 0 0 16px; padding: 12px 18px;
+  border-left: 4px solid var(--accent); background: var(--panel-alt);
+  border-radius: 0 8px 8px 0; color: var(--text-dim);
+}
+blockquote p { margin: 0; }
+
+/* tables */
+table { width: 100%; border-collapse: collapse; font-size: 13.8px; margin: 8px 0 18px; }
+th {
+  text-align: left; font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em;
+  color: var(--text-dim); border-bottom: 1px solid var(--border); padding: 8px 10px;
+}
+td { padding: 10px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+tr:last-child td { border-bottom: none; }
+
+/* inline code */
+code {
+  background: #eef0fb; color: var(--primary-dark);
+  padding: 2px 7px; border-radius: 6px;
+  font-family: "SFMono-Regular", Menlo, Consolas, monospace; font-size: 13px;
+}
+
+/* code blocks */
+pre {
+  background: var(--code-bg); color: var(--code-text);
+  padding: 16px 18px; border-radius: 10px; overflow-x: auto;
+  font-size: 13px; line-height: 1.6;
+  font-family: "SFMono-Regular", Menlo, Consolas, monospace;
+  margin: 10px 0 18px;
+}
+pre code { background: transparent; color: inherit; padding: 0; border-radius: 0; font-size: 13px; }
+.codehilite { background: var(--code-bg); border-radius: 10px; overflow-x: auto; margin: 10px 0 18px; }
+.codehilite pre { margin: 0; padding: 16px 18px; background: transparent; }
+
+/* pager */
+.pager { display: flex; justify-content: space-between; gap: 16px; margin-top: 8px; }
+.pager a {
+  flex: 1; display: flex; flex-direction: column; gap: 4px;
+  padding: 16px 20px; border-radius: var(--radius); text-decoration: none;
+  background: var(--panel); border: 1px solid var(--border); box-shadow: var(--shadow);
+  transition: transform 0.15s, border-color 0.15s;
+}
+.pager a:hover { transform: translateY(-2px); border-color: var(--primary); }
+.pager a .dir { font-size: 12px; color: var(--text-dim); }
+.pager a .ttl { font-size: 14.5px; font-weight: 700; color: var(--text); }
+.pager a.next { text-align: right; }
+.pager a.disabled { opacity: 0.4; pointer-events: none; }
+
+footer { text-align: center; color: var(--text-dim); font-size: 13px; padding: 20px 0 40px; }
+footer a { color: var(--text-dim); }
+
+@media (max-width: 900px) {
+  .layout { grid-template-columns: 1fr; }
+  .toc { position: static; max-height: none; }
+  section { padding: 26px 22px; }
+  .hero h1 { font-size: 30px; }
+  .pager { flex-direction: column; }
+}
+
+pre { line-height: 125%; }
+td.linenos .normal { color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px; }
+span.linenos { color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px; }
+td.linenos .special { color: #000000; background-color: #ffffc0; padding-left: 5px; padding-right: 5px; }
+span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 5px; padding-right: 5px; }
+.codehilite .hll { background-color: #49483e }
+.codehilite { background: #272822; color: #F8F8F2 }
+.codehilite .c { color: #959077 } /* Comment */
+.codehilite .err { color: #ED007E; background-color: #1E0010 } /* Error */
+.codehilite .esc { color: #F8F8F2 } /* Escape */
+.codehilite .g { color: #F8F8F2 } /* Generic */
+.codehilite .k { color: #66D9EF } /* Keyword */
+.codehilite .l { color: #AE81FF } /* Literal */
+.codehilite .n { color: #F8F8F2 } /* Name */
+.codehilite .o { color: #FF4689 } /* Operator */
+.codehilite .x { color: #F8F8F2 } /* Other */
+.codehilite .p { color: #F8F8F2 } /* Punctuation */
+.codehilite .ch { color: #959077 } /* Comment.Hashbang */
+.codehilite .cm { color: #959077 } /* Comment.Multiline */
+.codehilite .cp { color: #959077 } /* Comment.Preproc */
+.codehilite .cpf { color: #959077 } /* Comment.PreprocFile */
+.codehilite .c1 { color: #959077 } /* Comment.Single */
+.codehilite .cs { color: #959077 } /* Comment.Special */
+.codehilite .gd { color: #FF4689 } /* Generic.Deleted */
+.codehilite .ge { color: #F8F8F2; font-style: italic } /* Generic.Emph */
+.codehilite .ges { color: #F8F8F2; font-weight: bold; font-style: italic } /* Generic.EmphStrong */
+.codehilite .gr { color: #FF4689 } /* Generic.Error */
+.codehilite .gh { color: #F8F8F2 } /* Generic.Heading */
+.codehilite .gi { color: #A6E22E } /* Generic.Inserted */
+.codehilite .go { color: #66D9EF } /* Generic.Output */
+.codehilite .gp { color: #FF4689; font-weight: bold } /* Generic.Prompt */
+.codehilite .gs { color: #F8F8F2; font-weight: bold } /* Generic.Strong */
+.codehilite .gu { color: #959077 } /* Generic.Subheading */
+.codehilite .gt { color: #66D9EF } /* Generic.Traceback */
+.codehilite .kc { color: #66D9EF } /* Keyword.Constant */
+.codehilite .kd { color: #66D9EF } /* Keyword.Declaration */
+.codehilite .kn { color: #FF4689 } /* Keyword.Namespace */
+.codehilite .kp { color: #66D9EF } /* Keyword.Pseudo */
+.codehilite .kr { color: #66D9EF } /* Keyword.Reserved */
+.codehilite .kt { color: #66D9EF } /* Keyword.Type */
+.codehilite .ld { color: #E6DB74 } /* Literal.Date */
+.codehilite .m { color: #AE81FF } /* Literal.Number */
+.codehilite .s { color: #E6DB74 } /* Literal.String */
+.codehilite .na { color: #A6E22E } /* Name.Attribute */
+.codehilite .nb { color: #A6E22E } /* Name.Builtin */
+.codehilite .nc { color: #A6E22E } /* Name.Class */
+.codehilite .no { color: #66D9EF } /* Name.Constant */
+.codehilite .nd { color: #A6E22E } /* Name.Decorator */
+.codehilite .ni { color: #F8F8F2 } /* Name.Entity */
+.codehilite .ne { color: #A6E22E } /* Name.Exception */
+.codehilite .nf { color: #A6E22E } /* Name.Function */
+.codehilite .nl { color: #F8F8F2 } /* Name.Label */
+.codehilite .nn { color: #F8F8F2 } /* Name.Namespace */
+.codehilite .nx { color: #A6E22E } /* Name.Other */
+.codehilite .py { color: #F8F8F2 } /* Name.Property */
+.codehilite .nt { color: #FF4689 } /* Name.Tag */
+.codehilite .nv { color: #F8F8F2 } /* Name.Variable */
+.codehilite .ow { color: #FF4689 } /* Operator.Word */
+.codehilite .pm { color: #F8F8F2 } /* Punctuation.Marker */
+.codehilite .w { color: #F8F8F2 } /* Text.Whitespace */
+.codehilite .mb { color: #AE81FF } /* Literal.Number.Bin */
+.codehilite .mf { color: #AE81FF } /* Literal.Number.Float */
+.codehilite .mh { color: #AE81FF } /* Literal.Number.Hex */
+.codehilite .mi { color: #AE81FF } /* Literal.Number.Integer */
+.codehilite .mo { color: #AE81FF } /* Literal.Number.Oct */
+.codehilite .sa { color: #E6DB74 } /* Literal.String.Affix */
+.codehilite .sb { color: #E6DB74 } /* Literal.String.Backtick */
+.codehilite .sc { color: #E6DB74 } /* Literal.String.Char */
+.codehilite .dl { color: #E6DB74 } /* Literal.String.Delimiter */
+.codehilite .sd { color: #E6DB74 } /* Literal.String.Doc */
+.codehilite .s2 { color: #E6DB74 } /* Literal.String.Double */
+.codehilite .se { color: #AE81FF } /* Literal.String.Escape */
+.codehilite .sh { color: #E6DB74 } /* Literal.String.Heredoc */
+.codehilite .si { color: #E6DB74 } /* Literal.String.Interpol */
+.codehilite .sx { color: #E6DB74 } /* Literal.String.Other */
+.codehilite .sr { color: #E6DB74 } /* Literal.String.Regex */
+.codehilite .s1 { color: #E6DB74 } /* Literal.String.Single */
+.codehilite .ss { color: #E6DB74 } /* Literal.String.Symbol */
+.codehilite .bp { color: #A6E22E } /* Name.Builtin.Pseudo */
+.codehilite .fm { color: #A6E22E } /* Name.Function.Magic */
+.codehilite .vc { color: #F8F8F2 } /* Name.Variable.Class */
+.codehilite .vg { color: #F8F8F2 } /* Name.Variable.Global */
+.codehilite .vi { color: #F8F8F2 } /* Name.Variable.Instance */
+.codehilite .vm { color: #F8F8F2 } /* Name.Variable.Magic */
+.codehilite .il { color: #AE81FF } /* Literal.Number.Integer.Long */
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="hero-inner">
+    <a class="home-link" href="index.html">← 返回 Semantica 专题首页</a>
+    <span class="eyebrow">🚀 SEMANTICA · COOKBOOK · 进阶系列</span>
+    <h1>高级向量存储——轻松上手</h1>
+    <p class="lead">Semantica 官方 Cookbook 中文翻译 · 第 34 / 37 篇</p>
+    <div class="hero-badges">
+      <span class="badge">📦 semantica</span>
+      <span class="badge">🕸️ 知识图谱</span>
+      <span class="badge">🔎 GraphRAG</span>
+    </div>
+  </div>
+</header>
+
+<div class="layout">
+  <nav class="toc">
+    <h4>目录</h4>
+    <a href="#sec-1">你将学到什么</a>
+<a href="#sec-2">第 0 部分：设置嵌入</a>
+<a href="#sec-3">第 1 部分：选择合适的索引</a>
+<a href="#sec-4">第 2 部分：使用元数据进行智能过滤</a>
+<a href="#sec-5">第 3 部分：合并搜索结果</a>
+<a href="#sec-6">第 4 部分：将用户数据分开</a>
+<a href="#sec-7">快速参考指南</a>
+<a href="#sec-8">小结</a>
+  </nav>
+
+  <main>
+    <section id="sec-1"><h2><span class="pill-num">1</span>你将学到什么</h2><p>本 notebook 向你展示在真实应用中使用向量存储的<strong>实用方法</strong>。每个示例都很简单且开箱即用。</p>
+<h3>主题</h3>
+<ol>
+<li><strong>选择合适的索引</strong>——用哪个以及何时用</li>
+<li><strong>智能过滤</strong>——精确找到你需要的内容</li>
+<li><strong>合并结果</strong>——合并来自不同来源的搜索</li>
+<li><strong>组织数据</strong>——将不同用户的数据分开</li>
+</ol>
+<hr />
+<div class="codehilite"><pre><span></span><code><span class="err">!</span><span class="n">pip</span> <span class="n">install</span> <span class="n">semantica</span>
+</code></pre></div></section>
+<section id="sec-2"><h2><span class="pill-num">2</span>第 0 部分：设置嵌入</h2><p>首先，让我们选择嵌入提供方和模型。Semantica 支持多个提供方，例如 Sentence Transformers 和 FastEmbed。</p>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">semantica.embeddings</span><span class="w"> </span><span class="kn">import</span> <span class="n">TextEmbedder</span>
+
+<span class="c1"># 选择提供方和模型</span>
+<span class="n">embedder</span> <span class="o">=</span> <span class="n">TextEmbedder</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="s2">"fastembed"</span><span class="p">,</span> <span class="n">model_name</span><span class="o">=</span><span class="s2">"BAAI/bge-small-en-v1.5"</span><span class="p">)</span>
+<span class="n">dimension</span> <span class="o">=</span> <span class="n">embedder</span><span class="o">.</span><span class="n">get_embedding_dimension</span><span class="p">()</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Selected model: </span><span class="si">{</span><span class="n">embedder</span><span class="o">.</span><span class="n">get_model_info</span><span class="p">()[</span><span class="s1">'model_name'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Embedding dimension: </span><span class="si">{</span><span class="n">dimension</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</code></pre></div></section>
+<section id="sec-3"><h2><span class="pill-num">3</span>第 1 部分：选择合适的索引</h2><p>可以把索引想象成选择一种归档系统：
+- <strong>Flat</strong>：像一个小笔记本——慢但完美
+- <strong>HNSW</strong>：像一个组织良好的图书馆——快速且准确
+- <strong>IVF</strong>：像一个有分区的仓库——对海量集合非常快</p>
+<h3>简单规则</h3>
+<ul>
+<li>少于 10,000 项？使用 <strong>Flat</strong></li>
+<li>在 10,000 到 100 万之间？使用 <strong>HNSW</strong> ✅（推荐）</li>
+<li>超过 100 万？使用 <strong>IVF</strong></li>
+</ul>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">semantica.vector_store</span><span class="w"> </span><span class="kn">import</span> <span class="n">FAISSStore</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="c1"># 创建一些示例向量（类似文档嵌入）</span>
+<span class="n">vectors</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">5000</span><span class="p">,</span> <span class="mi">768</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s1">'float32'</span><span class="p">)</span>
+<span class="n">query</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">768</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s1">'float32'</span><span class="p">)</span>
+
+<span class="n">adapter</span> <span class="o">=</span> <span class="n">FAISSStore</span><span class="p">(</span><span class="n">dimension</span><span class="o">=</span><span class="mi">768</span><span class="p">)</span>
+
+<span class="c1"># HNSW 索引——最适合大多数情况</span>
+<span class="n">index</span> <span class="o">=</span> <span class="n">adapter</span><span class="o">.</span><span class="n">create_index</span><span class="p">(</span><span class="n">index_type</span><span class="o">=</span><span class="s2">"hnsw"</span><span class="p">,</span> <span class="n">metric</span><span class="o">=</span><span class="s2">"L2"</span><span class="p">,</span> <span class="n">m</span><span class="o">=</span><span class="mi">16</span><span class="p">)</span>
+<span class="n">adapter</span><span class="o">.</span><span class="n">add_vectors</span><span class="p">(</span><span class="n">vectors</span><span class="p">,</span> <span class="n">ids</span><span class="o">=</span><span class="p">[</span><span class="sa">f</span><span class="s2">"doc_</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">vectors</span><span class="p">))])</span>
+
+<span class="c1"># 搜索相似向量</span>
+<span class="n">results</span> <span class="o">=</span> <span class="n">adapter</span><span class="o">.</span><span class="n">search_similar</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Found 5 most similar documents:"</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">result</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">results</span><span class="p">,</span> <span class="mi">1</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">. Document </span><span class="si">{</span><span class="n">result</span><span class="p">[</span><span class="s1">'id'</span><span class="p">]</span><span class="si">}</span><span class="s2"> (distance: </span><span class="si">{</span><span class="n">result</span><span class="p">[</span><span class="s1">'distance'</span><span class="p">]</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">)"</span><span class="p">)</span>
+</code></pre></div></section>
+<section id="sec-4"><h2><span class="pill-num">4</span>第 2 部分：使用元数据进行智能过滤</h2><p>想象一下搜索"相似文章"，但只限于 2024 年且只限于"Technology"类别。这就是元数据过滤的作用！</p>
+<h3>真实世界示例</h3>
+<p>你正在构建一个文档搜索，用户想要：
+- 相似文档（向量搜索）
+- 来自特定类别（元数据过滤）
+- 来自最近几年（元数据过滤）</p>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">semantica.vector_store</span><span class="w"> </span><span class="kn">import</span> <span class="n">HybridSearch</span><span class="p">,</span> <span class="n">MetadataFilter</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="c1"># 创建带元数据的示例文档</span>
+<span class="n">documents</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">"text"</span><span class="p">:</span> <span class="s2">"AI in Healthcare"</span><span class="p">,</span> <span class="s2">"category"</span><span class="p">:</span> <span class="s2">"Technology"</span><span class="p">,</span> <span class="s2">"year"</span><span class="p">:</span> <span class="mi">2024</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">"text"</span><span class="p">:</span> <span class="s2">"Machine Learning Basics"</span><span class="p">,</span> <span class="s2">"category"</span><span class="p">:</span> <span class="s2">"Technology"</span><span class="p">,</span> <span class="s2">"year"</span><span class="p">:</span> <span class="mi">2023</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s2">"text"</span><span class="p">:</span> <span class="s2">"Business Strategy"</span><span class="p">,</span> <span class="s2">"category"</span><span class="p">:</span> <span class="s2">"Business"</span><span class="p">,</span> <span class="s2">"year"</span><span class="p">:</span> <span class="mi">2024</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span> <span class="s2">"text"</span><span class="p">:</span> <span class="s2">"Data Science Guide"</span><span class="p">,</span> <span class="s2">"category"</span><span class="p">:</span> <span class="s2">"Technology"</span><span class="p">,</span> <span class="s2">"year"</span><span class="p">:</span> <span class="mi">2024</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span> <span class="s2">"text"</span><span class="p">:</span> <span class="s2">"Marketing Tips"</span><span class="p">,</span> <span class="s2">"category"</span><span class="p">:</span> <span class="s2">"Business"</span><span class="p">,</span> <span class="s2">"year"</span><span class="p">:</span> <span class="mi">2023</span><span class="p">},</span>
+<span class="p">]</span>
+
+<span class="c1"># 为每个文档创建向量</span>
+<span class="n">vectors</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">768</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">documents</span><span class="p">]</span>
+<span class="n">metadata</span> <span class="o">=</span> <span class="p">[{</span><span class="s2">"category"</span><span class="p">:</span> <span class="n">d</span><span class="p">[</span><span class="s2">"category"</span><span class="p">],</span> <span class="s2">"year"</span><span class="p">:</span> <span class="n">d</span><span class="p">[</span><span class="s2">"year"</span><span class="p">]}</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">documents</span><span class="p">]</span>
+<span class="n">vector_ids</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s2">"doc_</span><span class="si">{</span><span class="n">d</span><span class="p">[</span><span class="s1">'id'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">documents</span><span class="p">]</span>
+
+<span class="c1"># 创建搜索</span>
+<span class="n">search</span> <span class="o">=</span> <span class="n">HybridSearch</span><span class="p">()</span>
+<span class="n">query</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">768</span><span class="p">)</span>
+
+<span class="c1"># 示例 1：查找 2024 年的 Technology 文章</span>
+<span class="n">filter1</span> <span class="o">=</span> <span class="n">MetadataFilter</span><span class="p">()</span><span class="o">.</span><span class="n">eq</span><span class="p">(</span><span class="s2">"category"</span><span class="p">,</span> <span class="s2">"Technology"</span><span class="p">)</span><span class="o">.</span><span class="n">eq</span><span class="p">(</span><span class="s2">"year"</span><span class="p">,</span> <span class="mi">2024</span><span class="p">)</span>
+<span class="n">results</span> <span class="o">=</span> <span class="n">search</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">vectors</span><span class="p">,</span> <span class="n">metadata</span><span class="p">,</span> <span class="n">vector_ids</span><span class="p">,</span> <span class="nb">filter</span><span class="o">=</span><span class="n">filter1</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Technology articles from 2024:"</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">results</span><span class="p">:</span>
+    <span class="n">doc_id</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s1">'id'</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">'_'</span><span class="p">)[</span><span class="mi">1</span><span class="p">])</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  - </span><span class="si">{</span><span class="n">documents</span><span class="p">[</span><span class="n">doc_id</span><span class="p">][</span><span class="s1">'text'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+<span class="c1"># 示例 2：查找 2024 年的任意文章</span>
+<span class="n">filter2</span> <span class="o">=</span> <span class="n">MetadataFilter</span><span class="p">()</span><span class="o">.</span><span class="n">eq</span><span class="p">(</span><span class="s2">"year"</span><span class="p">,</span> <span class="mi">2024</span><span class="p">)</span>
+<span class="n">results2</span> <span class="o">=</span> <span class="n">search</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">vectors</span><span class="p">,</span> <span class="n">metadata</span><span class="p">,</span> <span class="n">vector_ids</span><span class="p">,</span> <span class="nb">filter</span><span class="o">=</span><span class="n">filter2</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">All articles from 2024:"</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">results2</span><span class="p">:</span>
+    <span class="n">doc_id</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s1">'id'</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">'_'</span><span class="p">)[</span><span class="mi">1</span><span class="p">])</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  - </span><span class="si">{</span><span class="n">documents</span><span class="p">[</span><span class="n">doc_id</span><span class="p">][</span><span class="s1">'text'</span><span class="p">]</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">documents</span><span class="p">[</span><span class="n">doc_id</span><span class="p">][</span><span class="s1">'category'</span><span class="p">]</span><span class="si">}</span><span class="s2">)"</span><span class="p">)</span>
+</code></pre></div></section>
+<section id="sec-5"><h2><span class="pill-num">5</span>第 3 部分：合并搜索结果</h2><p>有时你想在多个地方搜索并合并结果。就像同时搜索你的电子邮件和文档，然后展示两者的最佳匹配。</p>
+<h3>何时使用</h3>
+<ul>
+<li>搜索多个数据库</li>
+<li>合并不同的搜索策略</li>
+<li>给某些来源更高的权重</li>
+</ul>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">semantica.vector_store</span><span class="w"> </span><span class="kn">import</span> <span class="n">SearchRanker</span>
+
+<span class="c1"># 模拟两个不同的搜索</span>
+<span class="c1"># 搜索 1：最近文档</span>
+<span class="n">recent_results</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="s2">"doc_3"</span><span class="p">,</span> <span class="s2">"score"</span><span class="p">:</span> <span class="mf">0.95</span><span class="p">,</span> <span class="s2">"source"</span><span class="p">:</span> <span class="s2">"recent"</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="s2">"doc_0"</span><span class="p">,</span> <span class="s2">"score"</span><span class="p">:</span> <span class="mf">0.90</span><span class="p">,</span> <span class="s2">"source"</span><span class="p">:</span> <span class="s2">"recent"</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="s2">"doc_2"</span><span class="p">,</span> <span class="s2">"score"</span><span class="p">:</span> <span class="mf">0.85</span><span class="p">,</span> <span class="s2">"source"</span><span class="p">:</span> <span class="s2">"recent"</span><span class="p">},</span>
+<span class="p">]</span>
+
+<span class="c1"># 搜索 2：热门文档</span>
+<span class="n">popular_results</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="s2">"doc_1"</span><span class="p">,</span> <span class="s2">"score"</span><span class="p">:</span> <span class="mf">0.92</span><span class="p">,</span> <span class="s2">"source"</span><span class="p">:</span> <span class="s2">"popular"</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="s2">"doc_3"</span><span class="p">,</span> <span class="s2">"score"</span><span class="p">:</span> <span class="mf">0.88</span><span class="p">,</span> <span class="s2">"source"</span><span class="p">:</span> <span class="s2">"popular"</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="s2">"doc_4"</span><span class="p">,</span> <span class="s2">"score"</span><span class="p">:</span> <span class="mf">0.80</span><span class="p">,</span> <span class="s2">"source"</span><span class="p">:</span> <span class="s2">"popular"</span><span class="p">},</span>
+<span class="p">]</span>
+
+<span class="c1"># 方法 1：公平组合（RRF）</span>
+<span class="n">ranker</span> <span class="o">=</span> <span class="n">SearchRanker</span><span class="p">(</span><span class="n">strategy</span><span class="o">=</span><span class="s2">"reciprocal_rank_fusion"</span><span class="p">)</span>
+<span class="n">combined</span> <span class="o">=</span> <span class="n">ranker</span><span class="o">.</span><span class="n">rank</span><span class="p">([</span><span class="n">recent_results</span><span class="p">,</span> <span class="n">popular_results</span><span class="p">])</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Combined results (fair ranking):"</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">result</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">combined</span><span class="p">[:</span><span class="mi">3</span><span class="p">],</span> <span class="mi">1</span><span class="p">):</span>
+    <span class="n">doc_id</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="s1">'id'</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">'_'</span><span class="p">)[</span><span class="mi">1</span><span class="p">])</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">. </span><span class="si">{</span><span class="n">documents</span><span class="p">[</span><span class="n">doc_id</span><span class="p">][</span><span class="s1">'text'</span><span class="p">]</span><span class="si">}</span><span class="s2"> (score: </span><span class="si">{</span><span class="n">result</span><span class="p">[</span><span class="s1">'score'</span><span class="p">]</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">)"</span><span class="p">)</span>
+
+<span class="c1"># 方法 2：偏好最近文档（70% 最近，30% 热门）</span>
+<span class="n">weighted_ranker</span> <span class="o">=</span> <span class="n">SearchRanker</span><span class="p">(</span><span class="n">strategy</span><span class="o">=</span><span class="s2">"weighted_average"</span><span class="p">)</span>
+<span class="n">weighted_combined</span> <span class="o">=</span> <span class="n">weighted_ranker</span><span class="o">.</span><span class="n">rank</span><span class="p">(</span>
+    <span class="p">[</span><span class="n">recent_results</span><span class="p">,</span> <span class="n">popular_results</span><span class="p">],</span>
+    <span class="n">weights</span><span class="o">=</span><span class="p">[</span><span class="mf">0.7</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">]</span>
+<span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Combined results (prefer recent):"</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">result</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">weighted_combined</span><span class="p">[:</span><span class="mi">3</span><span class="p">],</span> <span class="mi">1</span><span class="p">):</span>
+    <span class="n">doc_id</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="s1">'id'</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">'_'</span><span class="p">)[</span><span class="mi">1</span><span class="p">])</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">. </span><span class="si">{</span><span class="n">documents</span><span class="p">[</span><span class="n">doc_id</span><span class="p">][</span><span class="s1">'text'</span><span class="p">]</span><span class="si">}</span><span class="s2"> (score: </span><span class="si">{</span><span class="n">result</span><span class="p">[</span><span class="s1">'score'</span><span class="p">]</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">)"</span><span class="p">)</span>
+</code></pre></div></section>
+<section id="sec-6"><h2><span class="pill-num">6</span>第 4 部分：将用户数据分开</h2><p>如果你正在构建一个拥有多个用户或公司的应用，你需要将他们的数据分开。命名空间会自动做到这一点。</p>
+<h3>真实示例</h3>
+<p>你正在构建一个 SaaS 应用，其中：
+- 公司 A 有自己的文档
+- 公司 B 有自己的文档
+- 它们永远不应看到彼此的数据</p>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">semantica.vector_store</span><span class="w"> </span><span class="kn">import</span> <span class="n">NamespaceManager</span>
+
+<span class="c1"># 创建管理器</span>
+<span class="n">manager</span> <span class="o">=</span> <span class="n">NamespaceManager</span><span class="p">()</span>
+
+<span class="c1"># 为每个公司创建独立空间</span>
+<span class="n">company_a</span> <span class="o">=</span> <span class="n">manager</span><span class="o">.</span><span class="n">create_namespace</span><span class="p">(</span><span class="s2">"company_a"</span><span class="p">,</span> <span class="s2">"Company A's documents"</span><span class="p">)</span>
+<span class="n">company_b</span> <span class="o">=</span> <span class="n">manager</span><span class="o">.</span><span class="n">create_namespace</span><span class="p">(</span><span class="s2">"company_b"</span><span class="p">,</span> <span class="s2">"Company B's documents"</span><span class="p">)</span>
+
+<span class="c1"># 向公司 A 添加文档</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">10</span><span class="p">):</span>
+    <span class="n">manager</span><span class="o">.</span><span class="n">add_vector_to_namespace</span><span class="p">(</span><span class="sa">f</span><span class="s2">"company_a_doc_</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="s2">"company_a"</span><span class="p">)</span>
+
+<span class="c1"># 向公司 B 添加文档</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">15</span><span class="p">):</span>
+    <span class="n">manager</span><span class="o">.</span><span class="n">add_vector_to_namespace</span><span class="p">(</span><span class="sa">f</span><span class="s2">"company_b_doc_</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="s2">"company_b"</span><span class="p">)</span>
+
+<span class="c1"># 获取每个公司的文档</span>
+<span class="n">a_docs</span> <span class="o">=</span> <span class="n">manager</span><span class="o">.</span><span class="n">get_namespace_vectors</span><span class="p">(</span><span class="s2">"company_a"</span><span class="p">)</span>
+<span class="n">b_docs</span> <span class="o">=</span> <span class="n">manager</span><span class="o">.</span><span class="n">get_namespace_vectors</span><span class="p">(</span><span class="s2">"company_b"</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Company A has </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">a_docs</span><span class="p">)</span><span class="si">}</span><span class="s2"> documents"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Company B has </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">b_docs</span><span class="p">)</span><span class="si">}</span><span class="s2"> documents"</span><span class="p">)</span>
+
+<span class="c1"># 设置权限（谁能访问什么）</span>
+<span class="n">company_a</span><span class="o">.</span><span class="n">set_access_control</span><span class="p">(</span><span class="s2">"admin@companya.com"</span><span class="p">,</span> <span class="p">[</span><span class="s2">"read"</span><span class="p">,</span> <span class="s2">"write"</span><span class="p">,</span> <span class="s2">"delete"</span><span class="p">])</span>
+<span class="n">company_a</span><span class="o">.</span><span class="n">set_access_control</span><span class="p">(</span><span class="s2">"user@companya.com"</span><span class="p">,</span> <span class="p">[</span><span class="s2">"read"</span><span class="p">])</span>  <span class="c1"># 只读</span>
+
+<span class="c1"># 检查权限</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Admin can delete: </span><span class="si">{</span><span class="n">company_a</span><span class="o">.</span><span class="n">has_permission</span><span class="p">(</span><span class="s1">'admin@companya.com'</span><span class="p">,</span><span class="w"> </span><span class="s1">'delete'</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"User can delete: </span><span class="si">{</span><span class="n">company_a</span><span class="o">.</span><span class="n">has_permission</span><span class="p">(</span><span class="s1">'user@companya.com'</span><span class="p">,</span><span class="w"> </span><span class="s1">'delete'</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</code></pre></div></section>
+<section id="sec-7"><h2><span class="pill-num">7</span>快速参考指南</h2><h3>我应该使用哪个索引？</h3>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 小数据集（&lt; 10,000 项）</span>
+<span class="n">index</span> <span class="o">=</span> <span class="n">adapter</span><span class="o">.</span><span class="n">create_index</span><span class="p">(</span><span class="n">index_type</span><span class="o">=</span><span class="s2">"flat"</span><span class="p">,</span> <span class="n">metric</span><span class="o">=</span><span class="s2">"L2"</span><span class="p">)</span>
+
+<span class="c1"># 中等数据集（10,000 - 1,000,000 项）✅ 推荐</span>
+<span class="n">index</span> <span class="o">=</span> <span class="n">adapter</span><span class="o">.</span><span class="n">create_index</span><span class="p">(</span><span class="n">index_type</span><span class="o">=</span><span class="s2">"hnsw"</span><span class="p">,</span> <span class="n">metric</span><span class="o">=</span><span class="s2">"L2"</span><span class="p">,</span> <span class="n">m</span><span class="o">=</span><span class="mi">16</span><span class="p">)</span>
+
+<span class="c1"># 大数据集（&gt; 1,000,000 项）</span>
+<span class="n">index</span> <span class="o">=</span> <span class="n">adapter</span><span class="o">.</span><span class="n">create_index</span><span class="p">(</span><span class="n">index_type</span><span class="o">=</span><span class="s2">"ivf"</span><span class="p">,</span> <span class="n">metric</span><span class="o">=</span><span class="s2">"L2"</span><span class="p">,</span> <span class="n">nlist</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+</code></pre></div>
+
+<h3>如何过滤结果？</h3>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 单个条件</span>
+<span class="nb">filter</span> <span class="o">=</span> <span class="n">MetadataFilter</span><span class="p">()</span><span class="o">.</span><span class="n">eq</span><span class="p">(</span><span class="s2">"category"</span><span class="p">,</span> <span class="s2">"Technology"</span><span class="p">)</span>
+
+<span class="c1"># 多个条件（AND）</span>
+<span class="nb">filter</span> <span class="o">=</span> <span class="n">MetadataFilter</span><span class="p">()</span> \
+    <span class="o">.</span><span class="n">eq</span><span class="p">(</span><span class="s2">"category"</span><span class="p">,</span> <span class="s2">"Technology"</span><span class="p">)</span> \
+    <span class="o">.</span><span class="n">eq</span><span class="p">(</span><span class="s2">"year"</span><span class="p">,</span> <span class="mi">2024</span><span class="p">)</span>
+
+<span class="c1"># 大于 / 小于</span>
+<span class="nb">filter</span> <span class="o">=</span> <span class="n">MetadataFilter</span><span class="p">()</span><span class="o">.</span><span class="n">gt</span><span class="p">(</span><span class="s2">"year"</span><span class="p">,</span> <span class="mi">2020</span><span class="p">)</span>
+</code></pre></div>
+
+<h3>如何合并结果？</h3>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 公平组合</span>
+<span class="n">ranker</span> <span class="o">=</span> <span class="n">SearchRanker</span><span class="p">(</span><span class="n">strategy</span><span class="o">=</span><span class="s2">"reciprocal_rank_fusion"</span><span class="p">)</span>
+<span class="n">combined</span> <span class="o">=</span> <span class="n">ranker</span><span class="o">.</span><span class="n">rank</span><span class="p">([</span><span class="n">results1</span><span class="p">,</span> <span class="n">results2</span><span class="p">])</span>
+
+<span class="c1"># 加权组合（偏好第一个来源）</span>
+<span class="n">ranker</span> <span class="o">=</span> <span class="n">SearchRanker</span><span class="p">(</span><span class="n">strategy</span><span class="o">=</span><span class="s2">"weighted_average"</span><span class="p">)</span>
+<span class="n">combined</span> <span class="o">=</span> <span class="n">ranker</span><span class="o">.</span><span class="n">rank</span><span class="p">([</span><span class="n">results1</span><span class="p">,</span> <span class="n">results2</span><span class="p">],</span> <span class="n">weights</span><span class="o">=</span><span class="p">[</span><span class="mf">0.7</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">])</span>
+</code></pre></div>
+
+<h3>如何分离用户数据？</h3>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 为每个用户/公司创建命名空间</span>
+<span class="n">manager</span> <span class="o">=</span> <span class="n">NamespaceManager</span><span class="p">()</span>
+<span class="n">user_space</span> <span class="o">=</span> <span class="n">manager</span><span class="o">.</span><span class="n">create_namespace</span><span class="p">(</span><span class="s2">"user_123"</span><span class="p">,</span> <span class="s2">"User 123's data"</span><span class="p">)</span>
+
+<span class="c1"># 向命名空间添加数据</span>
+<span class="n">manager</span><span class="o">.</span><span class="n">add_vector_to_namespace</span><span class="p">(</span><span class="s2">"doc_1"</span><span class="p">,</span> <span class="s2">"user_123"</span><span class="p">)</span>
+
+<span class="c1"># 获取用户数据</span>
+<span class="n">user_docs</span> <span class="o">=</span> <span class="n">manager</span><span class="o">.</span><span class="n">get_namespace_vectors</span><span class="p">(</span><span class="s2">"user_123"</span><span class="p">)</span>
+</code></pre></div>
+
+<hr /></section>
+<section id="sec-8"><h2><span class="pill-num">8</span>小结</h2><p>你已经学到了：</p>
+<ol>
+<li>✅ <strong>索引选择</strong>：大多数情况使用 HNSW</li>
+<li>✅ <strong>智能过滤</strong>：将向量搜索与元数据结合</li>
+<li>✅ <strong>结果融合</strong>：合并来自不同来源的搜索</li>
+<li>✅ <strong>数据隔离</strong>：将用户数据分开</li>
+</ol>
+<h3>下一步</h3>
+<ul>
+<li>用你自己的数据尝试这些示例</li>
+<li>尝试不同的过滤器</li>
+<li>构建一个多用户应用</li>
+<li>探索<a href="../introduction/13-vector-store.html">入门 notebook</a>以了解更多基础知识</li>
+</ul>
+<p><strong>需要帮助？</strong> 查看我们的<a href="https://semantica.readthedocs.io">文档</a>或在 <a href="https://github.com/Hawksight-AI/semantica">GitHub</a> 上提问。</p></section>
+    <nav class="pager"><a class="prev" href="14-datalog-style-reasoning.html"><span class="dir">← 上一篇</span><span class="ttl">Datalog 风格推理</span></a><a class="next" href="01-agno-decision-intelligence.html"><span class="dir">→ 下一篇</span><span class="ttl">Agno 决策智能</span></a></nav>
+  </main>
+</div>
+
+<footer>由 Semantica 官方 Cookbook 生成的中文说明页 · <a href="https://github.com/semantica-agi/semantica">semantica-agi/semantica</a></footer>
+
+</body>
+</html>

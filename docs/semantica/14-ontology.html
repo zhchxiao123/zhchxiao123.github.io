@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>本体生成 · Semantica Cookbook</title>
+<style>
+
+:root {
+  --bg: #0b0e17;
+  --bg-soft: #10141f;
+  --panel: #ffffff;
+  --panel-alt: #f6f7fb;
+  --border: #e6e8f0;
+  --text: #1a1d29;
+  --text-dim: #5a5f72;
+  --primary: #6366f1;
+  --primary-dark: #4338ca;
+  --accent: #14b8a6;
+  --accent-2: #f59e0b;
+  --code-bg: #0f172a;
+  --code-text: #e2e8f0;
+  --radius: 14px;
+  --shadow: 0 10px 30px -12px rgba(30, 41, 59, 0.18);
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif;
+  color: var(--text);
+  background: var(--panel-alt);
+  line-height: 1.75;
+}
+a { color: var(--primary-dark); }
+
+/* ---------- HERO ---------- */
+.hero {
+  background: radial-gradient(1200px 600px at 15% -10%, rgba(99,102,241,0.55), transparent 60%),
+              radial-gradient(900px 500px at 90% 10%, rgba(20,184,166,0.35), transparent 55%),
+              linear-gradient(180deg, var(--bg) 0%, var(--bg-soft) 100%);
+  color: #f4f5fb;
+  padding: 64px 24px 88px;
+  position: relative;
+  overflow: hidden;
+}
+.hero-inner { max-width: 1080px; margin: 0 auto; }
+.eyebrow {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-size: 12.5px; letter-spacing: 0.12em; text-transform: uppercase;
+  color: #a5b4fc; background: rgba(99,102,241,0.15);
+  border: 1px solid rgba(165,180,252,0.35);
+  padding: 6px 14px; border-radius: 999px; margin-bottom: 22px;
+}
+.hero h1 { font-size: 40px; line-height: 1.2; margin: 0 0 16px; font-weight: 800; letter-spacing: -0.01em; }
+.hero p.lead { font-size: 17px; color: #cbd0e6; max-width: 720px; margin: 0 0 28px; }
+.hero-badges { display: flex; flex-wrap: wrap; gap: 10px; }
+.badge {
+  font-size: 13px; background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.14); color: #e2e4f5;
+  padding: 6px 12px; border-radius: 999px;
+}
+.hero a.home-link {
+  display: inline-flex; align-items: center; gap: 6px;
+  color: #a5b4fc; text-decoration: none; font-size: 13.5px; margin-bottom: 20px;
+}
+.hero a.home-link:hover { color: #fff; }
+
+/* ---------- LAYOUT ---------- */
+.layout {
+  max-width: 1200px; margin: -48px auto 0; padding: 0 24px 60px;
+  display: grid; grid-template-columns: 240px 1fr; gap: 32px; position: relative;
+}
+.toc {
+  position: sticky; top: 24px; align-self: start;
+  background: var(--panel); border: 1px solid var(--border);
+  border-radius: var(--radius); box-shadow: var(--shadow);
+  padding: 18px 16px; font-size: 13.5px;
+  max-height: calc(100vh - 48px); overflow-y: auto;
+}
+.toc h4 { margin: 0 0 10px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-dim); }
+.toc a { display: block; padding: 6px 8px; border-radius: 8px; color: var(--text-dim); text-decoration: none; margin-bottom: 2px; }
+.toc a:hover { background: var(--panel-alt); color: var(--text); }
+.toc a.active { background: var(--panel-alt); color: var(--primary-dark); font-weight: 600; }
+
+main { min-width: 0; }
+
+section {
+  background: var(--panel); border: 1px solid var(--border);
+  border-radius: var(--radius); box-shadow: var(--shadow);
+  padding: 34px 40px; margin-bottom: 24px; scroll-margin-top: 20px;
+}
+section h2 { font-size: 23px; margin: 0 0 16px; display: flex; align-items: center; gap: 10px; }
+section h2 .pill-num {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 30px; height: 30px; border-radius: 9px; flex-shrink: 0;
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  color: #fff; font-size: 14px; font-weight: 700;
+}
+h3 { font-size: 17px; margin: 26px 0 10px; }
+h4 { font-size: 15px; margin: 20px 0 8px; }
+p { margin: 0 0 14px; }
+ul, ol { margin: 0 0 16px; padding-left: 22px; }
+li { margin-bottom: 6px; }
+li > ul, li > ol { margin-top: 6px; }
+strong { color: var(--text); }
+blockquote {
+  margin: 0 0 16px; padding: 12px 18px;
+  border-left: 4px solid var(--accent); background: var(--panel-alt);
+  border-radius: 0 8px 8px 0; color: var(--text-dim);
+}
+blockquote p { margin: 0; }
+
+/* tables */
+table { width: 100%; border-collapse: collapse; font-size: 13.8px; margin: 8px 0 18px; }
+th {
+  text-align: left; font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em;
+  color: var(--text-dim); border-bottom: 1px solid var(--border); padding: 8px 10px;
+}
+td { padding: 10px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+tr:last-child td { border-bottom: none; }
+
+/* inline code */
+code {
+  background: #eef0fb; color: var(--primary-dark);
+  padding: 2px 7px; border-radius: 6px;
+  font-family: "SFMono-Regular", Menlo, Consolas, monospace; font-size: 13px;
+}
+
+/* code blocks */
+pre {
+  background: var(--code-bg); color: var(--code-text);
+  padding: 16px 18px; border-radius: 10px; overflow-x: auto;
+  font-size: 13px; line-height: 1.6;
+  font-family: "SFMono-Regular", Menlo, Consolas, monospace;
+  margin: 10px 0 18px;
+}
+pre code { background: transparent; color: inherit; padding: 0; border-radius: 0; font-size: 13px; }
+.codehilite { background: var(--code-bg); border-radius: 10px; overflow-x: auto; margin: 10px 0 18px; }
+.codehilite pre { margin: 0; padding: 16px 18px; background: transparent; }
+
+/* pager */
+.pager { display: flex; justify-content: space-between; gap: 16px; margin-top: 8px; }
+.pager a {
+  flex: 1; display: flex; flex-direction: column; gap: 4px;
+  padding: 16px 20px; border-radius: var(--radius); text-decoration: none;
+  background: var(--panel); border: 1px solid var(--border); box-shadow: var(--shadow);
+  transition: transform 0.15s, border-color 0.15s;
+}
+.pager a:hover { transform: translateY(-2px); border-color: var(--primary); }
+.pager a .dir { font-size: 12px; color: var(--text-dim); }
+.pager a .ttl { font-size: 14.5px; font-weight: 700; color: var(--text); }
+.pager a.next { text-align: right; }
+.pager a.disabled { opacity: 0.4; pointer-events: none; }
+
+footer { text-align: center; color: var(--text-dim); font-size: 13px; padding: 20px 0 40px; }
+footer a { color: var(--text-dim); }
+
+@media (max-width: 900px) {
+  .layout { grid-template-columns: 1fr; }
+  .toc { position: static; max-height: none; }
+  section { padding: 26px 22px; }
+  .hero h1 { font-size: 30px; }
+  .pager { flex-direction: column; }
+}
+
+pre { line-height: 125%; }
+td.linenos .normal { color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px; }
+span.linenos { color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px; }
+td.linenos .special { color: #000000; background-color: #ffffc0; padding-left: 5px; padding-right: 5px; }
+span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 5px; padding-right: 5px; }
+.codehilite .hll { background-color: #49483e }
+.codehilite { background: #272822; color: #F8F8F2 }
+.codehilite .c { color: #959077 } /* Comment */
+.codehilite .err { color: #ED007E; background-color: #1E0010 } /* Error */
+.codehilite .esc { color: #F8F8F2 } /* Escape */
+.codehilite .g { color: #F8F8F2 } /* Generic */
+.codehilite .k { color: #66D9EF } /* Keyword */
+.codehilite .l { color: #AE81FF } /* Literal */
+.codehilite .n { color: #F8F8F2 } /* Name */
+.codehilite .o { color: #FF4689 } /* Operator */
+.codehilite .x { color: #F8F8F2 } /* Other */
+.codehilite .p { color: #F8F8F2 } /* Punctuation */
+.codehilite .ch { color: #959077 } /* Comment.Hashbang */
+.codehilite .cm { color: #959077 } /* Comment.Multiline */
+.codehilite .cp { color: #959077 } /* Comment.Preproc */
+.codehilite .cpf { color: #959077 } /* Comment.PreprocFile */
+.codehilite .c1 { color: #959077 } /* Comment.Single */
+.codehilite .cs { color: #959077 } /* Comment.Special */
+.codehilite .gd { color: #FF4689 } /* Generic.Deleted */
+.codehilite .ge { color: #F8F8F2; font-style: italic } /* Generic.Emph */
+.codehilite .ges { color: #F8F8F2; font-weight: bold; font-style: italic } /* Generic.EmphStrong */
+.codehilite .gr { color: #FF4689 } /* Generic.Error */
+.codehilite .gh { color: #F8F8F2 } /* Generic.Heading */
+.codehilite .gi { color: #A6E22E } /* Generic.Inserted */
+.codehilite .go { color: #66D9EF } /* Generic.Output */
+.codehilite .gp { color: #FF4689; font-weight: bold } /* Generic.Prompt */
+.codehilite .gs { color: #F8F8F2; font-weight: bold } /* Generic.Strong */
+.codehilite .gu { color: #959077 } /* Generic.Subheading */
+.codehilite .gt { color: #66D9EF } /* Generic.Traceback */
+.codehilite .kc { color: #66D9EF } /* Keyword.Constant */
+.codehilite .kd { color: #66D9EF } /* Keyword.Declaration */
+.codehilite .kn { color: #FF4689 } /* Keyword.Namespace */
+.codehilite .kp { color: #66D9EF } /* Keyword.Pseudo */
+.codehilite .kr { color: #66D9EF } /* Keyword.Reserved */
+.codehilite .kt { color: #66D9EF } /* Keyword.Type */
+.codehilite .ld { color: #E6DB74 } /* Literal.Date */
+.codehilite .m { color: #AE81FF } /* Literal.Number */
+.codehilite .s { color: #E6DB74 } /* Literal.String */
+.codehilite .na { color: #A6E22E } /* Name.Attribute */
+.codehilite .nb { color: #A6E22E } /* Name.Builtin */
+.codehilite .nc { color: #A6E22E } /* Name.Class */
+.codehilite .no { color: #66D9EF } /* Name.Constant */
+.codehilite .nd { color: #A6E22E } /* Name.Decorator */
+.codehilite .ni { color: #F8F8F2 } /* Name.Entity */
+.codehilite .ne { color: #A6E22E } /* Name.Exception */
+.codehilite .nf { color: #A6E22E } /* Name.Function */
+.codehilite .nl { color: #F8F8F2 } /* Name.Label */
+.codehilite .nn { color: #F8F8F2 } /* Name.Namespace */
+.codehilite .nx { color: #A6E22E } /* Name.Other */
+.codehilite .py { color: #F8F8F2 } /* Name.Property */
+.codehilite .nt { color: #FF4689 } /* Name.Tag */
+.codehilite .nv { color: #F8F8F2 } /* Name.Variable */
+.codehilite .ow { color: #FF4689 } /* Operator.Word */
+.codehilite .pm { color: #F8F8F2 } /* Punctuation.Marker */
+.codehilite .w { color: #F8F8F2 } /* Text.Whitespace */
+.codehilite .mb { color: #AE81FF } /* Literal.Number.Bin */
+.codehilite .mf { color: #AE81FF } /* Literal.Number.Float */
+.codehilite .mh { color: #AE81FF } /* Literal.Number.Hex */
+.codehilite .mi { color: #AE81FF } /* Literal.Number.Integer */
+.codehilite .mo { color: #AE81FF } /* Literal.Number.Oct */
+.codehilite .sa { color: #E6DB74 } /* Literal.String.Affix */
+.codehilite .sb { color: #E6DB74 } /* Literal.String.Backtick */
+.codehilite .sc { color: #E6DB74 } /* Literal.String.Char */
+.codehilite .dl { color: #E6DB74 } /* Literal.String.Delimiter */
+.codehilite .sd { color: #E6DB74 } /* Literal.String.Doc */
+.codehilite .s2 { color: #E6DB74 } /* Literal.String.Double */
+.codehilite .se { color: #AE81FF } /* Literal.String.Escape */
+.codehilite .sh { color: #E6DB74 } /* Literal.String.Heredoc */
+.codehilite .si { color: #E6DB74 } /* Literal.String.Interpol */
+.codehilite .sx { color: #E6DB74 } /* Literal.String.Other */
+.codehilite .sr { color: #E6DB74 } /* Literal.String.Regex */
+.codehilite .s1 { color: #E6DB74 } /* Literal.String.Single */
+.codehilite .ss { color: #E6DB74 } /* Literal.String.Symbol */
+.codehilite .bp { color: #A6E22E } /* Name.Builtin.Pseudo */
+.codehilite .fm { color: #A6E22E } /* Name.Function.Magic */
+.codehilite .vc { color: #F8F8F2 } /* Name.Variable.Class */
+.codehilite .vg { color: #F8F8F2 } /* Name.Variable.Global */
+.codehilite .vi { color: #F8F8F2 } /* Name.Variable.Instance */
+.codehilite .vm { color: #F8F8F2 } /* Name.Variable.Magic */
+.codehilite .il { color: #AE81FF } /* Literal.Number.Integer.Long */
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="hero-inner">
+    <a class="home-link" href="index.html">← 返回 Semantica 专题首页</a>
+    <span class="eyebrow">🌱 SEMANTICA · COOKBOOK · 入门系列</span>
+    <h1>本体生成</h1>
+    <p class="lead">Semantica 官方 Cookbook 中文翻译 · 第 14 / 37 篇</p>
+    <div class="hero-badges">
+      <span class="badge">📦 semantica</span>
+      <span class="badge">🕸️ 知识图谱</span>
+      <span class="badge">🔎 GraphRAG</span>
+    </div>
+  </div>
+</header>
+
+<div class="layout">
+  <nav class="toc">
+    <h4>目录</h4>
+    <a href="#sec-1">开始使用</a>
+<a href="#sec-2">5 阶段生成流水线</a>
+<a href="#sec-3">深入探讨：逐个组件</a>
+<a href="#sec-4">可视化</a>
+<a href="#sec-5">高级用法：生命周期与 AI</a>
+<a href="#sec-6">导出你的本体</a>
+<a href="#sec-7">小结</a>
+  </nav>
+
+  <main>
+    <section id="overview"><div class="intro"><p>欢迎阅读 Semantica 本体模块的全面指南。该模块是将你的数据结构化为有意义的知识图谱的核心引擎，提供从原始数据到经过验证的 OWL 本体的完整 6 阶段流水线。</p>
+<p>在本 notebook 中，我们将深入探讨：
+1.  <strong>6 阶段生成流水线</strong>：理解 Semantica 如何将数据转化为知识。
+2.  <strong>重点核心组件</strong>：<code>ClassInferrer</code>、<code>PropertyGenerator</code> 和 <code>OntologyOptimizer</code> 的详细用法。
+3.  <strong>可视化</strong>：通过交互式图表和层级结构探索你的本体。
+4.  <strong>高级用法</strong>：文本到本体（LLM）、能力问题（Competency Questions）和生命周期管理。
+5.  <strong>导出与互操作性</strong>：以 Turtle 和 RDF/XML 等标准格式保存你的工作成果。</p>
+<p><strong>文档</strong>：<a href="https://semantica.readthedocs.io/reference/ontology/">API Reference</a></p></div></section>
+<section id="sec-1"><h2><span class="pill-num">1</span>开始使用</h2><p>首先，让我们设置环境并初始化 <code>OntologyEngine</code>。该引擎是所有本体操作的统一入口。</p>
+<div class="codehilite"><pre><span></span><code><span class="err">!</span><span class="n">pip</span> <span class="n">install</span> <span class="o">-</span><span class="n">q</span> <span class="n">semantica</span>
+</code></pre></div>
+
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">semantica.ontology</span><span class="w"> </span><span class="kn">import</span> <span class="n">OntologyEngine</span><span class="p">,</span> <span class="n">OntologyGenerator</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">semantica.utils.logging</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_logger</span>
+
+<span class="c1"># 初始化 logger 以便观察</span>
+<span class="n">logger</span> <span class="o">=</span> <span class="n">get_logger</span><span class="p">(</span><span class="s2">"ontology_guide"</span><span class="p">)</span>
+
+<span class="c1"># 初始化引擎</span>
+<span class="c1"># base_uri 定义本体的命名空间根</span>
+<span class="n">engine</span> <span class="o">=</span> <span class="n">OntologyEngine</span><span class="p">(</span><span class="n">base_uri</span><span class="o">=</span><span class="s2">"https://docs.semantica.dev/ontology/"</span><span class="p">,</span> <span class="n">min_occurrences</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Ontology Engine initialized successfully!"</span><span class="p">)</span>
+</code></pre></div>
+
+<hr /></section>
+<section id="sec-2"><h2><span class="pill-num">2</span>5 阶段生成流水线</h2><p>Semantica 使用一个复杂的 6 阶段流水线来稳健地生成本体。这个自动化过程接收原始实体和关系数据，并生成高质量的 OWL 本体。</p>
+<h3>各阶段：</h3>
+<ol>
+<li><strong>语义网络解析</strong>：从你的输入中提取原始概念和连接。</li>
+<li><strong>YAML 到定义</strong>：将概念转化为结构化的类定义。</li>
+<li><strong>定义到类型</strong>：将定义映射到正式的 OWL 类型（例如 <code>owl:Class</code>、<code>owl:ObjectProperty</code>）。</li>
+<li><strong>层级生成</strong>：使用 <code>associatedWith</code> 或语言模式构建分类结构（父子关系）。</li>
+<li><strong>TTL 生成</strong>：将内存中的结构序列化为 Turtle 格式逻辑。</li>
+</ol>
+<p>让我们用一些示例数据来看看它的实际效果。</p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 示例数据：一个简单的公司结构</span>
+<span class="n">entities</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="s2">"e1"</span><span class="p">,</span> <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"Company"</span><span class="p">,</span> <span class="s2">"name"</span><span class="p">:</span> <span class="s2">"TechCorp"</span><span class="p">,</span> <span class="s2">"founded"</span><span class="p">:</span> <span class="s2">"2010"</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="s2">"e2"</span><span class="p">,</span> <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"Person"</span><span class="p">,</span> <span class="s2">"name"</span><span class="p">:</span> <span class="s2">"Alice"</span><span class="p">,</span> <span class="s2">"role"</span><span class="p">:</span> <span class="s2">"CEO"</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="s2">"e3"</span><span class="p">,</span> <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"Person"</span><span class="p">,</span> <span class="s2">"name"</span><span class="p">:</span> <span class="s2">"Bob"</span><span class="p">,</span> <span class="s2">"role"</span><span class="p">:</span> <span class="s2">"CTO"</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="s2">"e4"</span><span class="p">,</span> <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"Department"</span><span class="p">,</span> <span class="s2">"name"</span><span class="p">:</span> <span class="s2">"Engineering"</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="s2">"e5"</span><span class="p">,</span> <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"Project"</span><span class="p">,</span> <span class="s2">"name"</span><span class="p">:</span> <span class="s2">"Project Phoenix"</span><span class="p">},</span>
+    <span class="c1"># 添加实体以确保稳健的类推断</span>
+    <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="s2">"e6"</span><span class="p">,</span> <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"Company"</span><span class="p">,</span> <span class="s2">"name"</span><span class="p">:</span> <span class="s2">"TechSolutions"</span><span class="p">,</span> <span class="s2">"founded"</span><span class="p">:</span> <span class="s2">"2015"</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="s2">"e7"</span><span class="p">,</span> <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"Person"</span><span class="p">,</span> <span class="s2">"name"</span><span class="p">:</span> <span class="s2">"Charlie"</span><span class="p">,</span> <span class="s2">"role"</span><span class="p">:</span> <span class="s2">"Lead"</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="s2">"e8"</span><span class="p">,</span> <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"Person"</span><span class="p">,</span> <span class="s2">"name"</span><span class="p">:</span> <span class="s2">"Dave"</span><span class="p">,</span> <span class="s2">"role"</span><span class="p">:</span> <span class="s2">"Manager"</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="s2">"e9"</span><span class="p">,</span> <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"Department"</span><span class="p">,</span> <span class="s2">"name"</span><span class="p">:</span> <span class="s2">"Research"</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="s2">"e10"</span><span class="p">,</span> <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"Project"</span><span class="p">,</span> <span class="s2">"name"</span><span class="p">:</span> <span class="s2">"Project Orion"</span><span class="p">}</span>
+<span class="p">]</span>
+
+<span class="n">relationships</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="p">{</span><span class="s2">"source"</span><span class="p">:</span> <span class="s2">"e2"</span><span class="p">,</span> <span class="s2">"target"</span><span class="p">:</span> <span class="s2">"e1"</span><span class="p">,</span> <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"leads"</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"source"</span><span class="p">:</span> <span class="s2">"e3"</span><span class="p">,</span> <span class="s2">"target"</span><span class="p">:</span> <span class="s2">"e4"</span><span class="p">,</span> <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"manages"</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"source"</span><span class="p">:</span> <span class="s2">"e4"</span><span class="p">,</span> <span class="s2">"target"</span><span class="p">:</span> <span class="s2">"e1"</span><span class="p">,</span> <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"part_of"</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"source"</span><span class="p">:</span> <span class="s2">"e3"</span><span class="p">,</span> <span class="s2">"target"</span><span class="p">:</span> <span class="s2">"e5"</span><span class="p">,</span> <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"works_on"</span><span class="p">},</span>
+    <span class="c1"># 新实体的额外关系</span>
+    <span class="p">{</span><span class="s2">"source"</span><span class="p">:</span> <span class="s2">"e7"</span><span class="p">,</span> <span class="s2">"target"</span><span class="p">:</span> <span class="s2">"e6"</span><span class="p">,</span> <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"leads"</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"source"</span><span class="p">:</span> <span class="s2">"e8"</span><span class="p">,</span> <span class="s2">"target"</span><span class="p">:</span> <span class="s2">"e9"</span><span class="p">,</span> <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"manages"</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"source"</span><span class="p">:</span> <span class="s2">"e9"</span><span class="p">,</span> <span class="s2">"target"</span><span class="p">:</span> <span class="s2">"e6"</span><span class="p">,</span> <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"part_of"</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"source"</span><span class="p">:</span> <span class="s2">"e7"</span><span class="p">,</span> <span class="s2">"target"</span><span class="p">:</span> <span class="s2">"e10"</span><span class="p">,</span> <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"works_on"</span><span class="p">}</span>
+<span class="p">]</span>
+
+<span class="n">data</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"entities"</span><span class="p">:</span> <span class="n">entities</span><span class="p">,</span>
+    <span class="s2">"relationships"</span><span class="p">:</span> <span class="n">relationships</span>
+<span class="p">}</span>
+
+<span class="c1"># 运行完整流水线</span>
+<span class="n">ontology</span> <span class="o">=</span> <span class="n">engine</span><span class="o">.</span><span class="n">from_data</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">"CorporateOntology"</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Generated Ontology: </span><span class="si">{</span><span class="n">ontology</span><span class="p">[</span><span class="s1">'name'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Classes Found: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">ontology</span><span class="p">[</span><span class="s1">'classes'</span><span class="p">])</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Properties Found: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">ontology</span><span class="p">[</span><span class="s1">'properties'</span><span class="p">])</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</code></pre></div>
+
+<h3>检查结果</h3>
+<p>生成的 <code>ontology</code> 对象是一个丰富的字典，包含所有推断出的结构。让我们窥探一下内部，看看创建了哪些类和属性。</p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 检查类</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"--- Inferred Classes ---"</span><span class="p">)</span>
+<span class="k">for</span> <span class="bp">cls</span> <span class="ow">in</span> <span class="n">ontology</span><span class="p">[</span><span class="s1">'classes'</span><span class="p">]:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Class: </span><span class="si">{</span><span class="bp">cls</span><span class="p">[</span><span class="s1">'name'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  URI: </span><span class="si">{</span><span class="bp">cls</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'uri'</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="c1"># 检查是否推断出了层级</span>
+    <span class="k">if</span> <span class="bp">cls</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'subClassOf'</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  Parent: </span><span class="si">{</span><span class="bp">cls</span><span class="p">[</span><span class="s1">'subClassOf'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">""</span><span class="p">)</span>
+
+<span class="c1"># 检查属性</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"--- Inferred Properties ---"</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">prop</span> <span class="ow">in</span> <span class="n">ontology</span><span class="p">[</span><span class="s1">'properties'</span><span class="p">]:</span>
+    <span class="n">type_label</span> <span class="o">=</span> <span class="s2">"Object Property"</span> <span class="k">if</span> <span class="n">prop</span><span class="p">[</span><span class="s1">'type'</span><span class="p">]</span> <span class="o">==</span> <span class="s1">'object'</span> <span class="k">else</span> <span class="s2">"Data Property"</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">prop</span><span class="p">[</span><span class="s1">'name'</span><span class="p">]</span><span class="si">}</span><span class="s2"> [</span><span class="si">{</span><span class="n">type_label</span><span class="si">}</span><span class="s2">]"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  Domain: </span><span class="si">{</span><span class="n">prop</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'domain'</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  Range: </span><span class="si">{</span><span class="n">prop</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'range'</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">""</span><span class="p">)</span>
+</code></pre></div>
+
+<hr /></section>
+<section id="sec-3"><h2><span class="pill-num">3</span>深入探讨：逐个组件</h2><p>虽然 <code>OntologyEngine</code> 非常适合一次性生成，但你通常需要细粒度的控制。让我们看看驱动该引擎的各个工具。</p>
+<h3>1. <code>ClassInferrer</code>：掌握类发现</h3>
+<p><code>ClassInferrer</code> 分析实体以查找模式。它可以处理噪声，并且只为出现频率足够高的类型创建类。</p>
+<ul>
+<li><strong><code>min_occurrences</code></strong>：忽略实体数量少于该计数的类型。</li>
+<li><strong><code>build_class_hierarchy</code></strong>：切换自动父子检测。</li>
+</ul>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">semantica.ontology</span><span class="w"> </span><span class="kn">import</span> <span class="n">ClassInferrer</span>
+
+<span class="c1"># 使用阈值初始化推断器</span>
+<span class="c1"># 我们在这里设置 min_occurrences=1 以捕获我们小示例中的所有内容</span>
+<span class="n">inferrer</span> <span class="o">=</span> <span class="n">ClassInferrer</span><span class="p">(</span><span class="n">min_occurrences</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+<span class="n">raw_entities</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="p">{</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"Manager"</span><span class="p">,</span> <span class="s2">"name"</span><span class="p">:</span> <span class="s2">"Dave"</span><span class="p">,</span> <span class="s2">"level"</span><span class="p">:</span> <span class="mi">5</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"Manager"</span><span class="p">,</span> <span class="s2">"name"</span><span class="p">:</span> <span class="s2">"Eve"</span><span class="p">,</span> <span class="s2">"level"</span><span class="p">:</span> <span class="mi">4</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"Employee"</span><span class="p">,</span> <span class="s2">"name"</span><span class="p">:</span> <span class="s2">"Frank"</span><span class="p">},</span> <span class="c1"># 只有 1 名员工</span>
+    <span class="p">{</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"TemporaryWorker"</span><span class="p">,</span> <span class="s2">"name"</span><span class="p">:</span> <span class="s2">"Grace"</span><span class="p">}</span> 
+<span class="p">]</span>
+
+<span class="c1"># 推断类</span>
+<span class="n">classes</span> <span class="o">=</span> <span class="n">inferrer</span><span class="o">.</span><span class="n">infer_classes</span><span class="p">(</span><span class="n">raw_entities</span><span class="p">,</span> <span class="n">build_hierarchy</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Inferred </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">classes</span><span class="p">)</span><span class="si">}</span><span class="s2"> classes from raw entities."</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">classes</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"- </span><span class="si">{</span><span class="n">c</span><span class="p">[</span><span class="s1">'name'</span><span class="p">]</span><span class="si">}</span><span class="s2"> (Count: </span><span class="si">{</span><span class="n">c</span><span class="p">[</span><span class="s1">'entity_count'</span><span class="p">]</span><span class="si">}</span><span class="s2">)"</span><span class="p">)</span>
+</code></pre></div>
+
+<h3>2. <code>PropertyGenerator</code>：本体的粘合剂</h3>
+<p>属性定义关系。Semantica 区分：
+*   <strong>对象属性</strong>：两个实体之间的连接（例如 Person 和 Company 之间的 <code>leads</code>）。
+*   <strong>数据属性</strong>：实体的属性（例如 Company 的 <code>founded</code> 年份）。</p>
+<p><code>PropertyGenerator</code> 会自动检测这种区别。</p>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">semantica.ontology</span><span class="w"> </span><span class="kn">import</span> <span class="n">PropertyGenerator</span>
+
+<span class="n">prop_gen</span> <span class="o">=</span> <span class="n">PropertyGenerator</span><span class="p">()</span>
+
+<span class="c1"># 我们首先需要类来帮助属性生成的上下文</span>
+<span class="n">context_classes</span> <span class="o">=</span> <span class="n">classes</span>  <span class="c1"># 复用上一步的结果</span>
+
+<span class="c1"># 让我们通过实体隐式地定义一些关系和属性</span>
+<span class="c1"># 注意：Manager 实体中的 'level' 是一个潜在的数据属性</span>
+<span class="n">complex_entities</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="s2">"m1"</span><span class="p">,</span> <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"Manager"</span><span class="p">,</span> <span class="s2">"name"</span><span class="p">:</span> <span class="s2">"Dave"</span><span class="p">,</span> <span class="s2">"level"</span><span class="p">:</span> <span class="mi">5</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="s2">"e1"</span><span class="p">,</span> <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"Employee"</span><span class="p">,</span> <span class="s2">"name"</span><span class="p">:</span> <span class="s2">"Frank"</span><span class="p">}</span>
+<span class="p">]</span>
+<span class="n">complex_relationships</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="p">{</span><span class="s2">"source"</span><span class="p">:</span> <span class="s2">"m1"</span><span class="p">,</span> <span class="s2">"target"</span><span class="p">:</span> <span class="s2">"e1"</span><span class="p">,</span> <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"supervises"</span><span class="p">}</span> <span class="c1"># 对象属性</span>
+<span class="p">]</span>
+
+<span class="n">properties</span> <span class="o">=</span> <span class="n">prop_gen</span><span class="o">.</span><span class="n">infer_properties</span><span class="p">(</span>
+    <span class="n">entities</span><span class="o">=</span><span class="n">complex_entities</span><span class="p">,</span>
+    <span class="n">relationships</span><span class="o">=</span><span class="n">complex_relationships</span><span class="p">,</span>
+    <span class="n">classes</span><span class="o">=</span><span class="n">context_classes</span>
+<span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">"--- Property Types Identified ---"</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">properties</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Property: </span><span class="si">{</span><span class="n">p</span><span class="p">[</span><span class="s1">'name'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  Type: </span><span class="si">{</span><span class="n">p</span><span class="p">[</span><span class="s1">'type'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  Domain: </span><span class="si">{</span><span class="n">p</span><span class="p">[</span><span class="s1">'domain'</span><span class="p">]</span><span class="si">}</span><span class="s2"> -&gt; Range: </span><span class="si">{</span><span class="n">p</span><span class="p">[</span><span class="s1">'range'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</code></pre></div>
+
+<h3>3. <code>OntologyOptimizer</code>：优化结构</h3>
+<p>在最终确定之前，进行优化是一个好习惯。优化器会移除冗余并提升连贯性，例如确保所有类都有正确的标签和有效的 URI。</p>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">semantica.ontology</span><span class="w"> </span><span class="kn">import</span> <span class="n">OntologyOptimizer</span>
+
+<span class="n">optimizer</span> <span class="o">=</span> <span class="n">OntologyOptimizer</span><span class="p">()</span>
+
+<span class="c1"># 让我们假设有一个混乱的本体字典</span>
+<span class="n">messy_ontology</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"classes"</span><span class="p">:</span> <span class="p">[</span>
+        <span class="p">{</span><span class="s2">"name"</span><span class="p">:</span> <span class="s2">"Person"</span><span class="p">,</span> <span class="s2">"uri"</span><span class="p">:</span> <span class="s2">"...Person"</span><span class="p">},</span>
+        <span class="p">{</span><span class="s2">"name"</span><span class="p">:</span> <span class="s2">"Person"</span><span class="p">,</span> <span class="s2">"uri"</span><span class="p">:</span> <span class="s2">"...Person"</span><span class="p">}</span> <span class="c1"># 重复！</span>
+    <span class="p">],</span>
+    <span class="s2">"properties"</span><span class="p">:</span> <span class="p">[]</span>
+<span class="p">}</span>
+
+<span class="n">clean_ontology</span> <span class="o">=</span> <span class="n">optimizer</span><span class="o">.</span><span class="n">optimize_ontology</span><span class="p">(</span><span class="n">messy_ontology</span><span class="p">,</span> <span class="n">remove_redundancy</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Original Classes: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">messy_ontology</span><span class="p">[</span><span class="s1">'classes'</span><span class="p">])</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Optimized Classes: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">clean_ontology</span><span class="p">[</span><span class="s1">'classes'</span><span class="p">])</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</code></pre></div>
+
+<div class="codehilite"><pre><span></span><code>
+</code></pre></div>
+
+<hr /></section>
+<section id="sec-4"><h2><span class="pill-num">4</span>可视化</h2><p>一图胜千个三元组！<code>OntologyVisualizer</code> 让你交互式地探索本体的结构。</p>
+<p>我们可以可视化：
+*   <strong>类层级</strong>：类继承的树状图。
+*   <strong>结构网络</strong>：类和属性的完整图。
+*   <strong>度量仪表盘</strong>：一目了然的高层统计信息。</p>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">semantica.visualization</span><span class="w"> </span><span class="kn">import</span> <span class="n">OntologyVisualizer</span>
+
+<span class="n">viz</span> <span class="o">=</span> <span class="n">OntologyVisualizer</span><span class="p">()</span>
+
+<span class="c1"># 1. 交互式类层级</span>
+<span class="c1"># 返回一个你可以交互的 Plotly 图形</span>
+<span class="n">fig_hierarchy</span> <span class="o">=</span> <span class="n">viz</span><span class="o">.</span><span class="n">visualize_hierarchy</span><span class="p">(</span><span class="n">ontology</span><span class="p">,</span> <span class="n">output</span><span class="o">=</span><span class="s2">"interactive"</span><span class="p">)</span>
+<span class="k">if</span> <span class="n">fig_hierarchy</span><span class="p">:</span>
+    <span class="n">fig_hierarchy</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+
+<span class="c1"># 2. 本体结构网络</span>
+<span class="c1"># 查看类和属性如何连接</span>
+<span class="n">fig_structure</span> <span class="o">=</span> <span class="n">viz</span><span class="o">.</span><span class="n">visualize_structure</span><span class="p">(</span><span class="n">ontology</span><span class="p">,</span> <span class="n">output</span><span class="o">=</span><span class="s2">"interactive"</span><span class="p">)</span>
+<span class="k">if</span> <span class="n">fig_structure</span><span class="p">:</span>
+    <span class="n">fig_structure</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+
+<span class="c1"># 3. 度量仪表盘</span>
+<span class="c1"># 查看计数、深度和统计信息</span>
+<span class="n">fig_metrics</span> <span class="o">=</span> <span class="n">viz</span><span class="o">.</span><span class="n">visualize_metrics</span><span class="p">(</span><span class="n">ontology</span><span class="p">,</span> <span class="n">output</span><span class="o">=</span><span class="s2">"interactive"</span><span class="p">)</span>
+<span class="k">if</span> <span class="n">fig_metrics</span><span class="p">:</span>
+    <span class="n">fig_metrics</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</code></pre></div>
+
+<hr /></section>
+<section id="sec-5"><h2><span class="pill-num">5</span>高级用法：生命周期与 AI</h2><p>企业本体是活生生的产物。Semantica 提供了工具来管理它们的整个生命周期，并借助 AI 加速创建。</p>
+<h3>1. 文本到本体（LLM 集成）</h3>
+<p>无需手动创建实体，使用 <code>LLMOntologyGenerator</code> 直接从文本需求或文档中抽取本体。</p>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">semantica.ontology</span><span class="w"> </span><span class="kn">import</span> <span class="n">LLMOntologyGenerator</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="c1"># 注意：需要环境变量中有 API 密钥</span>
+    <span class="n">llm_gen</span> <span class="o">=</span> <span class="n">LLMOntologyGenerator</span><span class="p">(</span><span class="n">provider</span><span class="o">=</span><span class="s2">"openai"</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="s2">"gpt-4"</span><span class="p">)</span>
+
+    <span class="n">text_description</span> <span class="o">=</span> <span class="s2">"""</span>
+<span class="s2">    A University has many Departments. Each Department offers several Courses.</span>
+<span class="s2">    Professors teach Courses and belong to a Department.</span>
+<span class="s2">    Students enroll in Courses.</span>
+<span class="s2">    """</span>
+
+    <span class="n">llm_ontology</span> <span class="o">=</span> <span class="n">llm_gen</span><span class="o">.</span><span class="n">generate_ontology_from_text</span><span class="p">(</span>
+        <span class="n">text</span><span class="o">=</span><span class="n">text_description</span><span class="p">,</span>
+        <span class="n">name</span><span class="o">=</span><span class="s2">"UniversityOntology"</span>
+    <span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"Generated Classes:"</span><span class="p">,</span> <span class="p">[</span><span class="n">c</span><span class="p">[</span><span class="s1">'name'</span><span class="p">]</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">llm_ontology</span><span class="p">[</span><span class="s1">'classes'</span><span class="p">]])</span>
+<span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"Skipping LLM generation: No API key or provider configured in this environment."</span><span class="p">)</span>
+</code></pre></div>
+
+<h3>2. 测试驱动设计（能力问题）</h3>
+<p>将你的需求形式化为"能力问题"（CQs）。<code>CompetencyQuestionsManager</code> 可以检查你的本体是否包含回答这些问题所需的术语。</p>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">semantica.ontology</span><span class="w"> </span><span class="kn">import</span> <span class="n">CompetencyQuestionsManager</span>
+
+<span class="n">cq_manager</span> <span class="o">=</span> <span class="n">CompetencyQuestionsManager</span><span class="p">()</span>
+
+<span class="c1"># 定义我们的本体应该能够回答的问题</span>
+<span class="n">cq_manager</span><span class="o">.</span><span class="n">add_question</span><span class="p">(</span><span class="s2">"Who leads TechCorp?"</span><span class="p">,</span> <span class="n">category</span><span class="o">=</span><span class="s2">"organizational"</span><span class="p">)</span>
+<span class="n">cq_manager</span><span class="o">.</span><span class="n">add_question</span><span class="p">(</span><span class="s2">"Which projects does Bob manage?"</span><span class="p">,</span> <span class="n">category</span><span class="o">=</span><span class="s2">"operational"</span><span class="p">)</span>
+
+<span class="c1"># 针对这些问题验证我们的 'ontology'</span>
+<span class="n">validation_results</span> <span class="o">=</span> <span class="n">cq_manager</span><span class="o">.</span><span class="n">validate_ontology</span><span class="p">(</span><span class="n">ontology</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Answerable Questions: </span><span class="si">{</span><span class="n">validation_results</span><span class="p">[</span><span class="s1">'answerable'</span><span class="p">]</span><span class="si">}</span><span class="s2"> / </span><span class="si">{</span><span class="n">validation_results</span><span class="p">[</span><span class="s1">'total_questions'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">q</span> <span class="ow">in</span> <span class="n">cq_manager</span><span class="o">.</span><span class="n">questions</span><span class="p">:</span>
+    <span class="n">status</span> <span class="o">=</span> <span class="s2">"✅"</span> <span class="k">if</span> <span class="n">q</span><span class="o">.</span><span class="n">answerable</span> <span class="k">else</span> <span class="s2">"❌"</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">status</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">q</span><span class="o">.</span><span class="n">question</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</code></pre></div>
+
+<h3>3. 生命周期管理（版本控制与复用）</h3>
+<p>使用 <code>VersionManager</code> 管理迭代，并使用 <code>ReuseManager</code> 导入 FOAF 或 Dublin Core 等外部标准。</p>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">semantica.ontology</span><span class="w"> </span><span class="kn">import</span> <span class="n">VersionManager</span><span class="p">,</span> <span class="n">ReuseManager</span>
+
+<span class="c1"># --- 版本控制 ---</span>
+<span class="n">v_manager</span> <span class="o">=</span> <span class="n">VersionManager</span><span class="p">(</span><span class="n">base_uri</span><span class="o">=</span><span class="s2">"https://example.org/ontology/"</span><span class="p">)</span>
+<span class="n">v1</span> <span class="o">=</span> <span class="n">v_manager</span><span class="o">.</span><span class="n">create_version</span><span class="p">(</span><span class="s2">"1.0"</span><span class="p">,</span> <span class="n">ontology</span><span class="p">,</span> <span class="n">changes</span><span class="o">=</span><span class="p">[</span><span class="s2">"Initial creation"</span><span class="p">])</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Created Version: </span><span class="si">{</span><span class="n">v1</span><span class="o">.</span><span class="n">version</span><span class="si">}</span><span class="s2"> at </span><span class="si">{</span><span class="n">v1</span><span class="o">.</span><span class="n">ontology_iri</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+<span class="c1"># --- 复用 ---</span>
+<span class="n">reuse_manager</span> <span class="o">=</span> <span class="n">ReuseManager</span><span class="p">()</span>
+
+<span class="c1"># 检查我们是否可以复用 FOAF</span>
+<span class="n">foaf_info</span> <span class="o">=</span> <span class="n">reuse_manager</span><span class="o">.</span><span class="n">research_ontology</span><span class="p">(</span><span class="s2">"http://xmlns.com/foaf/0.1/"</span><span class="p">)</span>
+<span class="k">if</span> <span class="n">foaf_info</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Found standard ontology: </span><span class="si">{</span><span class="n">foaf_info</span><span class="p">[</span><span class="s1">'name'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="c1"># 我们现在可以将其导入到我们的本体中</span>
+    <span class="n">ontology</span><span class="p">[</span><span class="s1">'imports'</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">foaf_info</span><span class="p">[</span><span class="s1">'uri'</span><span class="p">])</span>
+</code></pre></div>
+
+<hr /></section>
+<section id="sec-6"><h2><span class="pill-num">6</span>导出你的本体</h2><p>一旦你的本体构建并验证完成，你会想要保存它。Semantica 以 <strong>Turtle（<code>.ttl</code>）</strong> 作为主要格式，但通过 <code>rdflib</code> 支持其他格式。</p>
+<p>你可以导出为字符串，或直接导出到文件。</p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 获取 Turtle 字符串表示</span>
+<span class="n">ttl_output</span> <span class="o">=</span> <span class="n">engine</span><span class="o">.</span><span class="n">to_owl</span><span class="p">(</span><span class="n">ontology</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">"turtle"</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">"--- Turtle Preview (First 500 chars) ---"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">ttl_output</span><span class="p">[:</span><span class="mi">500</span><span class="p">])</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"..."</span><span class="p">)</span>
+
+<span class="c1"># 保存到文件</span>
+<span class="n">output_path</span> <span class="o">=</span> <span class="s2">"corporate_ontology.ttl"</span>
+<span class="n">engine</span><span class="o">.</span><span class="n">export_owl</span><span class="p">(</span><span class="n">ontology</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="n">output_path</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">"turtle"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Successfully saved ontology to </span><span class="si">{</span><span class="n">output_path</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</code></pre></div></section>
+<section id="sec-7"><h2><span class="pill-num">7</span>小结</h2><p>你现在已经掌握了 Semantica 本体模块的要点！</p>
+<ul>
+<li><strong>自动化生成</strong>：使用 6 阶段流水线从原始数据生成结构化本体。</li>
+<li><strong>组件控制</strong>：使用 <code>ClassInferrer</code> 和 <code>PropertyGenerator</code> 进行精细建模。</li>
+<li><strong>可视化</strong>：交互式地探索本体结构。</li>
+<li><strong>高级生命周期</strong>：使用 AI 生成、能力问题和版本控制。</li>
+<li><strong>导出</strong>：序列化你的知识图谱，以便在其他语义网工具中使用。</li>
+</ul>
+<p><strong>下一步</strong>：
+*   尝试自定义 <code>NamespaceManager</code> 以使用你组织的 URL。
+*   探索 <code>OntologyEvaluator</code> 以获取更深入的质量度量。
+*   将生成的本体输入到 <strong>知识图谱</strong> 模块，开始对你的数据进行推理！</p></section>
+    <nav class="pager"><a class="prev" href="13-vector-store.html"><span class="dir">← 上一篇</span><span class="ttl">向量存储</span></a><a class="next" href="15-export.html"><span class="dir">→ 下一篇</span><span class="ttl">导出</span></a></nav>
+  </main>
+</div>
+
+<footer>由 Semantica 官方 Cookbook 生成的中文说明页 · <a href="https://github.com/semantica-agi/semantica">semantica-agi/semantica</a></footer>
+
+</body>
+</html>

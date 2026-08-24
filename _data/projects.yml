@@ -1,4 +1,11 @@
 
+- name: Semantica 专题
+  id: semantica-cookbook
+  description: Semantica 官方 Cookbook 全 37 篇中文翻译：从数据摄取到知识图谱、向量检索、推理与本体治理的完整学习路径。
+  icon: fa-project-diagram
+  sidebar_data: semantica_sidebar
+  doc_url: /docs/semantica/
+
 - name: Claude Code 源码分析
   id: claude-code-source
   description: 24 章节深度复盘 Claude Code 核心架构与实现细节。

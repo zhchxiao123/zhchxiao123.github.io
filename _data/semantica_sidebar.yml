@@ -1,0 +1,84 @@
+# Semantica Cookbook - 文档侧边栏
+
+- title: "入门系列（Introduction）"
+  children:
+    - title: "欢迎使用 Semantica"
+      url: /docs/semantica/01-welcome.html
+    - title: "数据摄取"
+      url: /docs/semantica/02-data-ingestion.html
+    - title: "文档解析"
+      url: /docs/semantica/03-document-parsing.html
+    - title: "数据规范化"
+      url: /docs/semantica/04-data-normalization.html
+    - title: "实体抽取"
+      url: /docs/semantica/05-entity-extraction.html
+    - title: "关系抽取"
+      url: /docs/semantica/06-relation-extraction.html
+    - title: "构建知识图谱"
+      url: /docs/semantica/07-building-knowledge-graphs.html
+    - title: "你的第一个知识图谱"
+      url: /docs/semantica/08-your-first-knowledge-graph.html
+    - title: "图存储"
+      url: /docs/semantica/09-graph-store.html
+    - title: "图分析"
+      url: /docs/semantica/10-graph-analytics.html
+    - title: "分块与切分"
+      url: /docs/semantica/11-chunking-and-splitting.html
+    - title: "嵌入生成"
+      url: /docs/semantica/12-embedding-generation.html
+    - title: "向量存储"
+      url: /docs/semantica/13-vector-store.html
+    - title: "本体"
+      url: /docs/semantica/14-ontology.html
+    - title: "导出"
+      url: /docs/semantica/15-export.html
+    - title: "可视化"
+      url: /docs/semantica/16-visualization.html
+    - title: "冲突检测与消解"
+      url: /docs/semantica/17-conflict-detection-and-resolution.html
+    - title: "去重"
+      url: /docs/semantica/18-deduplication.html
+    - title: "上下文模块"
+      url: /docs/semantica/19-context-module.html
+    - title: "三元组存储"
+      url: /docs/semantica/20-triplet-store.html
+    - title: "Amazon Neptune 存储"
+      url: /docs/semantica/21-amazon-neptune-store.html
+
+- title: "进阶系列（Advanced）"
+  children:
+    - title: "高级抽取"
+      url: /docs/semantica/01-advanced-extraction.html
+    - title: "高级图分析"
+      url: /docs/semantica/02-advanced-graph-analytics.html
+    - title: "完整可视化套件"
+      url: /docs/semantica/03-complete-visualization-suite.html
+    - title: "多格式导出"
+      url: /docs/semantica/05-multi-format-export.html
+    - title: "多源数据集成"
+      url: /docs/semantica/06-multi-source-data-integration.html
+    - title: "推理与推断"
+      url: /docs/semantica/08-reasoning-and-inference.html
+    - title: "语义层构建"
+      url: /docs/semantica/09-semantic-layer-construction.html
+    - title: "时序知识图谱"
+      url: /docs/semantica/10-temporal-knowledge-graphs.html
+    - title: "高级上下文工程"
+      url: /docs/semantica/11-advanced-context-engineering.html
+    - title: "非结构化到本体"
+      url: /docs/semantica/12-unstructured-to-ontology.html
+    - title: "手动本体-Snowflake 映射"
+      url: /docs/semantica/13-manual-ontology-snowflake-mapping.html
+    - title: "Datalog 风格推理"
+      url: /docs/semantica/14-datalog-style-reasoning.html
+    - title: "高级向量存储与检索"
+      url: /docs/semantica/15-advanced-vector-store-and-search.html
+
+- title: "集成系列（Integrations）"
+  children:
+    - title: "Agno 决策智能"
+      url: /docs/semantica/01-agno-decision-intelligence.html
+    - title: "Agno GraphRAG 上下文"
+      url: /docs/semantica/02-agno-graphrag-context.html
+    - title: "Agno 多智能体共享上下文"
+      url: /docs/semantica/03-agno-multi-agent-shared-context.html

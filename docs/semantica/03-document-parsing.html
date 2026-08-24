@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>文档解析 · Semantica Cookbook</title>
+<style>
+
+:root {
+  --bg: #0b0e17;
+  --bg-soft: #10141f;
+  --panel: #ffffff;
+  --panel-alt: #f6f7fb;
+  --border: #e6e8f0;
+  --text: #1a1d29;
+  --text-dim: #5a5f72;
+  --primary: #6366f1;
+  --primary-dark: #4338ca;
+  --accent: #14b8a6;
+  --accent-2: #f59e0b;
+  --code-bg: #0f172a;
+  --code-text: #e2e8f0;
+  --radius: 14px;
+  --shadow: 0 10px 30px -12px rgba(30, 41, 59, 0.18);
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif;
+  color: var(--text);
+  background: var(--panel-alt);
+  line-height: 1.75;
+}
+a { color: var(--primary-dark); }
+
+/* ---------- HERO ---------- */
+.hero {
+  background: radial-gradient(1200px 600px at 15% -10%, rgba(99,102,241,0.55), transparent 60%),
+              radial-gradient(900px 500px at 90% 10%, rgba(20,184,166,0.35), transparent 55%),
+              linear-gradient(180deg, var(--bg) 0%, var(--bg-soft) 100%);
+  color: #f4f5fb;
+  padding: 64px 24px 88px;
+  position: relative;
+  overflow: hidden;
+}
+.hero-inner { max-width: 1080px; margin: 0 auto; }
+.eyebrow {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-size: 12.5px; letter-spacing: 0.12em; text-transform: uppercase;
+  color: #a5b4fc; background: rgba(99,102,241,0.15);
+  border: 1px solid rgba(165,180,252,0.35);
+  padding: 6px 14px; border-radius: 999px; margin-bottom: 22px;
+}
+.hero h1 { font-size: 40px; line-height: 1.2; margin: 0 0 16px; font-weight: 800; letter-spacing: -0.01em; }
+.hero p.lead { font-size: 17px; color: #cbd0e6; max-width: 720px; margin: 0 0 28px; }
+.hero-badges { display: flex; flex-wrap: wrap; gap: 10px; }
+.badge {
+  font-size: 13px; background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.14); color: #e2e4f5;
+  padding: 6px 12px; border-radius: 999px;
+}
+.hero a.home-link {
+  display: inline-flex; align-items: center; gap: 6px;
+  color: #a5b4fc; text-decoration: none; font-size: 13.5px; margin-bottom: 20px;
+}
+.hero a.home-link:hover { color: #fff; }
+
+/* ---------- LAYOUT ---------- */
+.layout {
+  max-width: 1200px; margin: -48px auto 0; padding: 0 24px 60px;
+  display: grid; grid-template-columns: 240px 1fr; gap: 32px; position: relative;
+}
+.toc {
+  position: sticky; top: 24px; align-self: start;
+  background: var(--panel); border: 1px solid var(--border);
+  border-radius: var(--radius); box-shadow: var(--shadow);
+  padding: 18px 16px; font-size: 13.5px;
+  max-height: calc(100vh - 48px); overflow-y: auto;
+}
+.toc h4 { margin: 0 0 10px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-dim); }
+.toc a { display: block; padding: 6px 8px; border-radius: 8px; color: var(--text-dim); text-decoration: none; margin-bottom: 2px; }
+.toc a:hover { background: var(--panel-alt); color: var(--text); }
+.toc a.active { background: var(--panel-alt); color: var(--primary-dark); font-weight: 600; }
+
+main { min-width: 0; }
+
+section {
+  background: var(--panel); border: 1px solid var(--border);
+  border-radius: var(--radius); box-shadow: var(--shadow);
+  padding: 34px 40px; margin-bottom: 24px; scroll-margin-top: 20px;
+}
+section h2 { font-size: 23px; margin: 0 0 16px; display: flex; align-items: center; gap: 10px; }
+section h2 .pill-num {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 30px; height: 30px; border-radius: 9px; flex-shrink: 0;
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  color: #fff; font-size: 14px; font-weight: 700;
+}
+h3 { font-size: 17px; margin: 26px 0 10px; }
+h4 { font-size: 15px; margin: 20px 0 8px; }
+p { margin: 0 0 14px; }
+ul, ol { margin: 0 0 16px; padding-left: 22px; }
+li { margin-bottom: 6px; }
+li > ul, li > ol { margin-top: 6px; }
+strong { color: var(--text); }
+blockquote {
+  margin: 0 0 16px; padding: 12px 18px;
+  border-left: 4px solid var(--accent); background: var(--panel-alt);
+  border-radius: 0 8px 8px 0; color: var(--text-dim);
+}
+blockquote p { margin: 0; }
+
+/* tables */
+table { width: 100%; border-collapse: collapse; font-size: 13.8px; margin: 8px 0 18px; }
+th {
+  text-align: left; font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em;
+  color: var(--text-dim); border-bottom: 1px solid var(--border); padding: 8px 10px;
+}
+td { padding: 10px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+tr:last-child td { border-bottom: none; }
+
+/* inline code */
+code {
+  background: #eef0fb; color: var(--primary-dark);
+  padding: 2px 7px; border-radius: 6px;
+  font-family: "SFMono-Regular", Menlo, Consolas, monospace; font-size: 13px;
+}
+
+/* code blocks */
+pre {
+  background: var(--code-bg); color: var(--code-text);
+  padding: 16px 18px; border-radius: 10px; overflow-x: auto;
+  font-size: 13px; line-height: 1.6;
+  font-family: "SFMono-Regular", Menlo, Consolas, monospace;
+  margin: 10px 0 18px;
+}
+pre code { background: transparent; color: inherit; padding: 0; border-radius: 0; font-size: 13px; }
+.codehilite { background: var(--code-bg); border-radius: 10px; overflow-x: auto; margin: 10px 0 18px; }
+.codehilite pre { margin: 0; padding: 16px 18px; background: transparent; }
+
+/* pager */
+.pager { display: flex; justify-content: space-between; gap: 16px; margin-top: 8px; }
+.pager a {
+  flex: 1; display: flex; flex-direction: column; gap: 4px;
+  padding: 16px 20px; border-radius: var(--radius); text-decoration: none;
+  background: var(--panel); border: 1px solid var(--border); box-shadow: var(--shadow);
+  transition: transform 0.15s, border-color 0.15s;
+}
+.pager a:hover { transform: translateY(-2px); border-color: var(--primary); }
+.pager a .dir { font-size: 12px; color: var(--text-dim); }
+.pager a .ttl { font-size: 14.5px; font-weight: 700; color: var(--text); }
+.pager a.next { text-align: right; }
+.pager a.disabled { opacity: 0.4; pointer-events: none; }
+
+footer { text-align: center; color: var(--text-dim); font-size: 13px; padding: 20px 0 40px; }
+footer a { color: var(--text-dim); }
+
+@media (max-width: 900px) {
+  .layout { grid-template-columns: 1fr; }
+  .toc { position: static; max-height: none; }
+  section { padding: 26px 22px; }
+  .hero h1 { font-size: 30px; }
+  .pager { flex-direction: column; }
+}
+
+pre { line-height: 125%; }
+td.linenos .normal { color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px; }
+span.linenos { color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px; }
+td.linenos .special { color: #000000; background-color: #ffffc0; padding-left: 5px; padding-right: 5px; }
+span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 5px; padding-right: 5px; }
+.codehilite .hll { background-color: #49483e }
+.codehilite { background: #272822; color: #F8F8F2 }
+.codehilite .c { color: #959077 } /* Comment */
+.codehilite .err { color: #ED007E; background-color: #1E0010 } /* Error */
+.codehilite .esc { color: #F8F8F2 } /* Escape */
+.codehilite .g { color: #F8F8F2 } /* Generic */
+.codehilite .k { color: #66D9EF } /* Keyword */
+.codehilite .l { color: #AE81FF } /* Literal */
+.codehilite .n { color: #F8F8F2 } /* Name */
+.codehilite .o { color: #FF4689 } /* Operator */
+.codehilite .x { color: #F8F8F2 } /* Other */
+.codehilite .p { color: #F8F8F2 } /* Punctuation */
+.codehilite .ch { color: #959077 } /* Comment.Hashbang */
+.codehilite .cm { color: #959077 } /* Comment.Multiline */
+.codehilite .cp { color: #959077 } /* Comment.Preproc */
+.codehilite .cpf { color: #959077 } /* Comment.PreprocFile */
+.codehilite .c1 { color: #959077 } /* Comment.Single */
+.codehilite .cs { color: #959077 } /* Comment.Special */
+.codehilite .gd { color: #FF4689 } /* Generic.Deleted */
+.codehilite .ge { color: #F8F8F2; font-style: italic } /* Generic.Emph */
+.codehilite .ges { color: #F8F8F2; font-weight: bold; font-style: italic } /* Generic.EmphStrong */
+.codehilite .gr { color: #FF4689 } /* Generic.Error */
+.codehilite .gh { color: #F8F8F2 } /* Generic.Heading */
+.codehilite .gi { color: #A6E22E } /* Generic.Inserted */
+.codehilite .go { color: #66D9EF } /* Generic.Output */
+.codehilite .gp { color: #FF4689; font-weight: bold } /* Generic.Prompt */
+.codehilite .gs { color: #F8F8F2; font-weight: bold } /* Generic.Strong */
+.codehilite .gu { color: #959077 } /* Generic.Subheading */
+.codehilite .gt { color: #66D9EF } /* Generic.Traceback */
+.codehilite .kc { color: #66D9EF } /* Keyword.Constant */
+.codehilite .kd { color: #66D9EF } /* Keyword.Declaration */
+.codehilite .kn { color: #FF4689 } /* Keyword.Namespace */
+.codehilite .kp { color: #66D9EF } /* Keyword.Pseudo */
+.codehilite .kr { color: #66D9EF } /* Keyword.Reserved */
+.codehilite .kt { color: #66D9EF } /* Keyword.Type */
+.codehilite .ld { color: #E6DB74 } /* Literal.Date */
+.codehilite .m { color: #AE81FF } /* Literal.Number */
+.codehilite .s { color: #E6DB74 } /* Literal.String */
+.codehilite .na { color: #A6E22E } /* Name.Attribute */
+.codehilite .nb { color: #A6E22E } /* Name.Builtin */
+.codehilite .nc { color: #A6E22E } /* Name.Class */
+.codehilite .no { color: #66D9EF } /* Name.Constant */
+.codehilite .nd { color: #A6E22E } /* Name.Decorator */
+.codehilite .ni { color: #F8F8F2 } /* Name.Entity */
+.codehilite .ne { color: #A6E22E } /* Name.Exception */
+.codehilite .nf { color: #A6E22E } /* Name.Function */
+.codehilite .nl { color: #F8F8F2 } /* Name.Label */
+.codehilite .nn { color: #F8F8F2 } /* Name.Namespace */
+.codehilite .nx { color: #A6E22E } /* Name.Other */
+.codehilite .py { color: #F8F8F2 } /* Name.Property */
+.codehilite .nt { color: #FF4689 } /* Name.Tag */
+.codehilite .nv { color: #F8F8F2 } /* Name.Variable */
+.codehilite .ow { color: #FF4689 } /* Operator.Word */
+.codehilite .pm { color: #F8F8F2 } /* Punctuation.Marker */
+.codehilite .w { color: #F8F8F2 } /* Text.Whitespace */
+.codehilite .mb { color: #AE81FF } /* Literal.Number.Bin */
+.codehilite .mf { color: #AE81FF } /* Literal.Number.Float */
+.codehilite .mh { color: #AE81FF } /* Literal.Number.Hex */
+.codehilite .mi { color: #AE81FF } /* Literal.Number.Integer */
+.codehilite .mo { color: #AE81FF } /* Literal.Number.Oct */
+.codehilite .sa { color: #E6DB74 } /* Literal.String.Affix */
+.codehilite .sb { color: #E6DB74 } /* Literal.String.Backtick */
+.codehilite .sc { color: #E6DB74 } /* Literal.String.Char */
+.codehilite .dl { color: #E6DB74 } /* Literal.String.Delimiter */
+.codehilite .sd { color: #E6DB74 } /* Literal.String.Doc */
+.codehilite .s2 { color: #E6DB74 } /* Literal.String.Double */
+.codehilite .se { color: #AE81FF } /* Literal.String.Escape */
+.codehilite .sh { color: #E6DB74 } /* Literal.String.Heredoc */
+.codehilite .si { color: #E6DB74 } /* Literal.String.Interpol */
+.codehilite .sx { color: #E6DB74 } /* Literal.String.Other */
+.codehilite .sr { color: #E6DB74 } /* Literal.String.Regex */
+.codehilite .s1 { color: #E6DB74 } /* Literal.String.Single */
+.codehilite .ss { color: #E6DB74 } /* Literal.String.Symbol */
+.codehilite .bp { color: #A6E22E } /* Name.Builtin.Pseudo */
+.codehilite .fm { color: #A6E22E } /* Name.Function.Magic */
+.codehilite .vc { color: #F8F8F2 } /* Name.Variable.Class */
+.codehilite .vg { color: #F8F8F2 } /* Name.Variable.Global */
+.codehilite .vi { color: #F8F8F2 } /* Name.Variable.Instance */
+.codehilite .vm { color: #F8F8F2 } /* Name.Variable.Magic */
+.codehilite .il { color: #AE81FF } /* Literal.Number.Integer.Long */
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="hero-inner">
+    <a class="home-link" href="index.html">← 返回 Semantica 专题首页</a>
+    <span class="eyebrow">🌱 SEMANTICA · COOKBOOK · 入门系列</span>
+    <h1>文档解析</h1>
+    <p class="lead">Semantica 官方 Cookbook 中文翻译 · 第 3 / 37 篇</p>
+    <div class="hero-badges">
+      <span class="badge">📦 semantica</span>
+      <span class="badge">🕸️ 知识图谱</span>
+      <span class="badge">🔎 GraphRAG</span>
+    </div>
+  </div>
+</header>
+
+<div class="layout">
+  <nav class="toc">
+    <h4>目录</h4>
+    <a href="#sec-1">概览</a>
+<a href="#sec-2">安装</a>
+<a href="#sec-3">步骤 1：文档解析器</a>
+<a href="#sec-4">步骤 2：CSV 解析器</a>
+<a href="#sec-5">步骤 3：JSON 解析器</a>
+<a href="#sec-6">步骤 4：XML 解析器</a>
+<a href="#sec-7">步骤 5：HTML 解析器</a>
+<a href="#sec-8">步骤 6：结构化数据解析器</a>
+<a href="#sec-9">小结</a>
+  </nav>
+
+  <main>
+    <section id="sec-1"><h2><span class="pill-num">1</span>概览</h2><p>本 notebook 演示如何使用 Semantica 的解析模块解析各种文档格式。你将学习从 PDF、DOCX、CSV、JSON、XML 和 HTML 文件中抽取文本、元数据和结构化数据。</p>
+<p><strong>文档</strong>：<a href="https://semantica.readthedocs.io/reference/parse/">API 参考</a></p>
+<h3>学习目标</h3>
+<ul>
+<li>使用 <code>DocumentParser</code> 进行通用文档解析</li>
+<li>使用特定格式的解析器：<code>PDFParser</code>、<code>DOCXParser</code>、<code>CSVParser</code>、<code>JSONParser</code>、<code>XMLParser</code>、<code>HTMLParser</code></li>
+<li>从文档中抽取文本内容和元数据</li>
+<li>解析结构化数据格式</li>
+</ul></section>
+<section id="sec-2"><h2><span class="pill-num">2</span>安装</h2><p>从 PyPI 安装 Semantica：</p>
+<div class="codehilite"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>semantica
+<span class="c1"># 或安装所有可选依赖：</span>
+pip<span class="w"> </span>install<span class="w"> </span>semantica<span class="o">[</span>all<span class="o">]</span>
+</code></pre></div>
+
+<hr /></section>
+<section id="sec-3"><h2><span class="pill-num">3</span>步骤 1：文档解析器</h2><p>使用通用 DocumentParser 解析各种文档格式。</p>
+<div class="codehilite"><pre><span></span><code><span class="err">!</span><span class="n">pip</span> <span class="n">install</span> <span class="n">semantica</span>
+</code></pre></div>
+
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">semantica.parse</span><span class="w"> </span><span class="kn">import</span> <span class="n">DocumentParser</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">tempfile</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+
+<span class="n">document_parser</span> <span class="o">=</span> <span class="n">DocumentParser</span><span class="p">()</span>
+
+<span class="n">temp_dir</span> <span class="o">=</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">mkdtemp</span><span class="p">()</span>
+<span class="n">sample_txt</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">temp_dir</span><span class="p">,</span> <span class="s2">"sample.txt"</span><span class="p">)</span>
+
+<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">sample_txt</span><span class="p">,</span> <span class="s1">'w'</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+    <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">"Apple Inc. is a technology company. Tim Cook is the CEO."</span><span class="p">)</span>
+
+<span class="n">text</span> <span class="o">=</span> <span class="n">document_parser</span><span class="o">.</span><span class="n">extract_text</span><span class="p">(</span><span class="n">sample_txt</span><span class="p">)</span>
+<span class="n">metadata</span> <span class="o">=</span> <span class="n">document_parser</span><span class="o">.</span><span class="n">extract_metadata</span><span class="p">(</span><span class="n">sample_txt</span><span class="p">)</span>
+
+<span class="n">text</span><span class="p">[:</span><span class="mi">50</span><span class="p">],</span> <span class="n">metadata</span>
+</code></pre></div></section>
+<section id="sec-4"><h2><span class="pill-num">4</span>步骤 2：CSV 解析器</h2><p>解析 CSV 文件以抽取结构化数据。</p>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">semantica.parse</span><span class="w"> </span><span class="kn">import</span> <span class="n">CSVParser</span>
+
+<span class="n">csv_parser</span> <span class="o">=</span> <span class="n">CSVParser</span><span class="p">()</span>
+<span class="n">csv_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">temp_dir</span><span class="p">,</span> <span class="s2">"data.csv"</span><span class="p">)</span>
+
+<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">csv_file</span><span class="p">,</span> <span class="s1">'w'</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+    <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">"name,company,role</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span>
+    <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">"Tim Cook,Apple Inc.,CEO</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span>
+    <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">"Satya Nadella,Microsoft Corporation,CEO</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span>
+
+<span class="n">csv_data</span> <span class="o">=</span> <span class="n">csv_parser</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">csv_file</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Parsed CSV with </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">csv_data</span><span class="o">.</span><span class="n">rows</span><span class="p">)</span><span class="si">}</span><span class="s2"> rows"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Columns: </span><span class="si">{</span><span class="n">csv_data</span><span class="o">.</span><span class="n">headers</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">csv_data</span><span class="o">.</span><span class="n">rows</span><span class="p">[:</span><span class="mi">2</span><span class="p">]:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  </span><span class="si">{</span><span class="n">row</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</code></pre></div></section>
+<section id="sec-5"><h2><span class="pill-num">5</span>步骤 3：JSON 解析器</h2><p>解析 JSON 文件以抽取结构化数据。</p>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">semantica.parse</span><span class="w"> </span><span class="kn">import</span> <span class="n">JSONParser</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+
+<span class="n">json_parser</span> <span class="o">=</span> <span class="n">JSONParser</span><span class="p">()</span>
+<span class="n">json_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">temp_dir</span><span class="p">,</span> <span class="s2">"data.json"</span><span class="p">)</span>
+
+<span class="n">data</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"companies"</span><span class="p">:</span> <span class="p">[</span>
+        <span class="p">{</span><span class="s2">"name"</span><span class="p">:</span> <span class="s2">"Apple Inc."</span><span class="p">,</span> <span class="s2">"ceo"</span><span class="p">:</span> <span class="s2">"Tim Cook"</span><span class="p">},</span>
+        <span class="p">{</span><span class="s2">"name"</span><span class="p">:</span> <span class="s2">"Microsoft Corporation"</span><span class="p">,</span> <span class="s2">"ceo"</span><span class="p">:</span> <span class="s2">"Satya Nadella"</span><span class="p">}</span>
+    <span class="p">]</span>
+<span class="p">}</span>
+
+<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">json_file</span><span class="p">,</span> <span class="s1">'w'</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+    <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span>
+
+<span class="n">json_data</span> <span class="o">=</span> <span class="n">json_parser</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">json_file</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Parsed JSON: </span><span class="si">{</span><span class="n">json_data</span><span class="o">.</span><span class="n">data</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Companies: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">json_data</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'companies'</span><span class="p">,</span><span class="w"> </span><span class="p">[]))</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</code></pre></div></section>
+<section id="sec-6"><h2><span class="pill-num">6</span>步骤 4：XML 解析器</h2><p>解析 XML 文件以抽取结构化数据。</p>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">semantica.parse</span><span class="w"> </span><span class="kn">import</span> <span class="n">XMLParser</span>
+
+<span class="n">xml_parser</span> <span class="o">=</span> <span class="n">XMLParser</span><span class="p">()</span>
+<span class="n">xml_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">temp_dir</span><span class="p">,</span> <span class="s2">"data.xml"</span><span class="p">)</span>
+
+<span class="n">xml_content</span> <span class="o">=</span> <span class="s2">"""&lt;?xml version="1.0"?&gt;</span>
+<span class="s2">&lt;companies&gt;</span>
+<span class="s2">    &lt;company name="Apple Inc." ceo="Tim Cook"/&gt;</span>
+<span class="s2">    &lt;company name="Microsoft Corporation" ceo="Satya Nadella"/&gt;</span>
+<span class="s2">&lt;/companies&gt;"""</span>
+
+<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">xml_file</span><span class="p">,</span> <span class="s1">'w'</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+    <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">xml_content</span><span class="p">)</span>
+
+<span class="n">xml_data</span> <span class="o">=</span> <span class="n">xml_parser</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">xml_file</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Parsed XML with </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">xml_data</span><span class="o">.</span><span class="n">root</span><span class="o">.</span><span class="n">children</span><span class="p">)</span><span class="si">}</span><span class="s2"> elements"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Root element: </span><span class="si">{</span><span class="n">xml_data</span><span class="o">.</span><span class="n">root</span><span class="o">.</span><span class="n">tag</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">xml_data</span><span class="o">.</span><span class="n">root</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">'None'</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</code></pre></div></section>
+<section id="sec-7"><h2><span class="pill-num">7</span>步骤 5：HTML 解析器</h2><p>解析 HTML 文件以抽取内容和结构。</p>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">semantica.parse</span><span class="w"> </span><span class="kn">import</span> <span class="n">HTMLParser</span>
+
+<span class="n">html_parser</span> <span class="o">=</span> <span class="n">HTMLParser</span><span class="p">()</span>
+<span class="n">html_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">temp_dir</span><span class="p">,</span> <span class="s2">"page.html"</span><span class="p">)</span>
+
+<span class="n">html_content</span> <span class="o">=</span> <span class="s2">"""&lt;html&gt;</span>
+<span class="s2">&lt;head&gt;&lt;title&gt;Sample Page&lt;/title&gt;&lt;/head&gt;</span>
+<span class="s2">&lt;body&gt;</span>
+<span class="s2">    &lt;h1&gt;Technology Companies&lt;/h1&gt;</span>
+<span class="s2">    &lt;p&gt;Apple Inc. is a technology company.&lt;/p&gt;</span>
+<span class="s2">&lt;/body&gt;</span>
+<span class="s2">&lt;/html&gt;"""</span>
+
+<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">html_file</span><span class="p">,</span> <span class="s1">'w'</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+    <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">html_content</span><span class="p">)</span>
+
+<span class="n">html_data</span> <span class="o">=</span> <span class="n">html_parser</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">html_file</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Parsed HTML"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Title: </span><span class="si">{</span><span class="n">html_data</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'title'</span><span class="p">,</span><span class="w"> </span><span class="s1">'N/A'</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Text content: </span><span class="si">{</span><span class="n">html_data</span><span class="o">.</span><span class="n">text</span><span class="p">[:</span><span class="mi">50</span><span class="p">]</span><span class="si">}</span><span class="s2">..."</span><span class="p">)</span>
+</code></pre></div></section>
+<section id="sec-8"><h2><span class="pill-num">8</span>步骤 6：结构化数据解析器</h2><p>使用 StructuredDataParser 处理多种格式。</p>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">semantica.parse</span><span class="w"> </span><span class="kn">import</span> <span class="n">StructuredDataParser</span>
+
+<span class="n">structured_parser</span> <span class="o">=</span> <span class="n">StructuredDataParser</span><span class="p">()</span>
+
+<span class="n">parsed_json</span> <span class="o">=</span> <span class="n">structured_parser</span><span class="o">.</span><span class="n">parse_data</span><span class="p">(</span><span class="n">json_file</span><span class="p">,</span> <span class="n">data_format</span><span class="o">=</span><span class="s2">"json"</span><span class="p">)</span>
+<span class="n">parsed_csv</span> <span class="o">=</span> <span class="n">structured_parser</span><span class="o">.</span><span class="n">parse_data</span><span class="p">(</span><span class="n">csv_file</span><span class="p">,</span> <span class="n">data_format</span><span class="o">=</span><span class="s2">"csv"</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Structured parser parsed JSON: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">parsed_json</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'data'</span><span class="p">,</span><span class="w"> </span><span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'companies'</span><span class="p">,</span><span class="w"> </span><span class="p">[]))</span><span class="si">}</span><span class="s2"> companies"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Structured parser parsed CSV: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">parsed_csv</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'rows'</span><span class="p">,</span><span class="w"> </span><span class="p">[]))</span><span class="si">}</span><span class="s2"> rows"</span><span class="p">)</span>
+</code></pre></div></section>
+<section id="sec-9"><h2><span class="pill-num">9</span>小结</h2><p>你已经学会了如何解析各种文档格式：</p>
+<ul>
+<li><strong>DocumentParser</strong>：通用文档解析</li>
+<li><strong>CSVParser</strong>：CSV 文件解析</li>
+<li><strong>JSONParser</strong>：JSON 文件解析</li>
+<li><strong>XMLParser</strong>：XML 文件解析</li>
+<li><strong>HTMLParser</strong>：HTML 文件解析</li>
+<li><strong>StructuredDataParser</strong>：多格式结构化数据解析</li>
+</ul>
+<p>下一步：在 Data_Normalization notebook 中学习如何规范化和清洗数据。</p></section>
+    <nav class="pager"><a class="prev" href="02-data-ingestion.html"><span class="dir">← 上一篇</span><span class="ttl">数据摄取</span></a><a class="next" href="04-data-normalization.html"><span class="dir">→ 下一篇</span><span class="ttl">数据规范化</span></a></nav>
+  </main>
+</div>
+
+<footer>由 Semantica 官方 Cookbook 生成的中文说明页 · <a href="https://github.com/semantica-agi/semantica">semantica-agi/semantica</a></footer>
+
+</body>
+</html>

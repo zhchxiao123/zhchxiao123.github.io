@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>高级多格式导出 · Semantica Cookbook</title>
+<style>
+
+:root {
+  --bg: #0b0e17;
+  --bg-soft: #10141f;
+  --panel: #ffffff;
+  --panel-alt: #f6f7fb;
+  --border: #e6e8f0;
+  --text: #1a1d29;
+  --text-dim: #5a5f72;
+  --primary: #6366f1;
+  --primary-dark: #4338ca;
+  --accent: #14b8a6;
+  --accent-2: #f59e0b;
+  --code-bg: #0f172a;
+  --code-text: #e2e8f0;
+  --radius: 14px;
+  --shadow: 0 10px 30px -12px rgba(30, 41, 59, 0.18);
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif;
+  color: var(--text);
+  background: var(--panel-alt);
+  line-height: 1.75;
+}
+a { color: var(--primary-dark); }
+
+/* ---------- HERO ---------- */
+.hero {
+  background: radial-gradient(1200px 600px at 15% -10%, rgba(99,102,241,0.55), transparent 60%),
+              radial-gradient(900px 500px at 90% 10%, rgba(20,184,166,0.35), transparent 55%),
+              linear-gradient(180deg, var(--bg) 0%, var(--bg-soft) 100%);
+  color: #f4f5fb;
+  padding: 64px 24px 88px;
+  position: relative;
+  overflow: hidden;
+}
+.hero-inner { max-width: 1080px; margin: 0 auto; }
+.eyebrow {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-size: 12.5px; letter-spacing: 0.12em; text-transform: uppercase;
+  color: #a5b4fc; background: rgba(99,102,241,0.15);
+  border: 1px solid rgba(165,180,252,0.35);
+  padding: 6px 14px; border-radius: 999px; margin-bottom: 22px;
+}
+.hero h1 { font-size: 40px; line-height: 1.2; margin: 0 0 16px; font-weight: 800; letter-spacing: -0.01em; }
+.hero p.lead { font-size: 17px; color: #cbd0e6; max-width: 720px; margin: 0 0 28px; }
+.hero-badges { display: flex; flex-wrap: wrap; gap: 10px; }
+.badge {
+  font-size: 13px; background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.14); color: #e2e4f5;
+  padding: 6px 12px; border-radius: 999px;
+}
+.hero a.home-link {
+  display: inline-flex; align-items: center; gap: 6px;
+  color: #a5b4fc; text-decoration: none; font-size: 13.5px; margin-bottom: 20px;
+}
+.hero a.home-link:hover { color: #fff; }
+
+/* ---------- LAYOUT ---------- */
+.layout {
+  max-width: 1200px; margin: -48px auto 0; padding: 0 24px 60px;
+  display: grid; grid-template-columns: 240px 1fr; gap: 32px; position: relative;
+}
+.toc {
+  position: sticky; top: 24px; align-self: start;
+  background: var(--panel); border: 1px solid var(--border);
+  border-radius: var(--radius); box-shadow: var(--shadow);
+  padding: 18px 16px; font-size: 13.5px;
+  max-height: calc(100vh - 48px); overflow-y: auto;
+}
+.toc h4 { margin: 0 0 10px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-dim); }
+.toc a { display: block; padding: 6px 8px; border-radius: 8px; color: var(--text-dim); text-decoration: none; margin-bottom: 2px; }
+.toc a:hover { background: var(--panel-alt); color: var(--text); }
+.toc a.active { background: var(--panel-alt); color: var(--primary-dark); font-weight: 600; }
+
+main { min-width: 0; }
+
+section {
+  background: var(--panel); border: 1px solid var(--border);
+  border-radius: var(--radius); box-shadow: var(--shadow);
+  padding: 34px 40px; margin-bottom: 24px; scroll-margin-top: 20px;
+}
+section h2 { font-size: 23px; margin: 0 0 16px; display: flex; align-items: center; gap: 10px; }
+section h2 .pill-num {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 30px; height: 30px; border-radius: 9px; flex-shrink: 0;
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  color: #fff; font-size: 14px; font-weight: 700;
+}
+h3 { font-size: 17px; margin: 26px 0 10px; }
+h4 { font-size: 15px; margin: 20px 0 8px; }
+p { margin: 0 0 14px; }
+ul, ol { margin: 0 0 16px; padding-left: 22px; }
+li { margin-bottom: 6px; }
+li > ul, li > ol { margin-top: 6px; }
+strong { color: var(--text); }
+blockquote {
+  margin: 0 0 16px; padding: 12px 18px;
+  border-left: 4px solid var(--accent); background: var(--panel-alt);
+  border-radius: 0 8px 8px 0; color: var(--text-dim);
+}
+blockquote p { margin: 0; }
+
+/* tables */
+table { width: 100%; border-collapse: collapse; font-size: 13.8px; margin: 8px 0 18px; }
+th {
+  text-align: left; font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em;
+  color: var(--text-dim); border-bottom: 1px solid var(--border); padding: 8px 10px;
+}
+td { padding: 10px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+tr:last-child td { border-bottom: none; }
+
+/* inline code */
+code {
+  background: #eef0fb; color: var(--primary-dark);
+  padding: 2px 7px; border-radius: 6px;
+  font-family: "SFMono-Regular", Menlo, Consolas, monospace; font-size: 13px;
+}
+
+/* code blocks */
+pre {
+  background: var(--code-bg); color: var(--code-text);
+  padding: 16px 18px; border-radius: 10px; overflow-x: auto;
+  font-size: 13px; line-height: 1.6;
+  font-family: "SFMono-Regular", Menlo, Consolas, monospace;
+  margin: 10px 0 18px;
+}
+pre code { background: transparent; color: inherit; padding: 0; border-radius: 0; font-size: 13px; }
+.codehilite { background: var(--code-bg); border-radius: 10px; overflow-x: auto; margin: 10px 0 18px; }
+.codehilite pre { margin: 0; padding: 16px 18px; background: transparent; }
+
+/* pager */
+.pager { display: flex; justify-content: space-between; gap: 16px; margin-top: 8px; }
+.pager a {
+  flex: 1; display: flex; flex-direction: column; gap: 4px;
+  padding: 16px 20px; border-radius: var(--radius); text-decoration: none;
+  background: var(--panel); border: 1px solid var(--border); box-shadow: var(--shadow);
+  transition: transform 0.15s, border-color 0.15s;
+}
+.pager a:hover { transform: translateY(-2px); border-color: var(--primary); }
+.pager a .dir { font-size: 12px; color: var(--text-dim); }
+.pager a .ttl { font-size: 14.5px; font-weight: 700; color: var(--text); }
+.pager a.next { text-align: right; }
+.pager a.disabled { opacity: 0.4; pointer-events: none; }
+
+footer { text-align: center; color: var(--text-dim); font-size: 13px; padding: 20px 0 40px; }
+footer a { color: var(--text-dim); }
+
+@media (max-width: 900px) {
+  .layout { grid-template-columns: 1fr; }
+  .toc { position: static; max-height: none; }
+  section { padding: 26px 22px; }
+  .hero h1 { font-size: 30px; }
+  .pager { flex-direction: column; }
+}
+
+pre { line-height: 125%; }
+td.linenos .normal { color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px; }
+span.linenos { color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px; }
+td.linenos .special { color: #000000; background-color: #ffffc0; padding-left: 5px; padding-right: 5px; }
+span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 5px; padding-right: 5px; }
+.codehilite .hll { background-color: #49483e }
+.codehilite { background: #272822; color: #F8F8F2 }
+.codehilite .c { color: #959077 } /* Comment */
+.codehilite .err { color: #ED007E; background-color: #1E0010 } /* Error */
+.codehilite .esc { color: #F8F8F2 } /* Escape */
+.codehilite .g { color: #F8F8F2 } /* Generic */
+.codehilite .k { color: #66D9EF } /* Keyword */
+.codehilite .l { color: #AE81FF } /* Literal */
+.codehilite .n { color: #F8F8F2 } /* Name */
+.codehilite .o { color: #FF4689 } /* Operator */
+.codehilite .x { color: #F8F8F2 } /* Other */
+.codehilite .p { color: #F8F8F2 } /* Punctuation */
+.codehilite .ch { color: #959077 } /* Comment.Hashbang */
+.codehilite .cm { color: #959077 } /* Comment.Multiline */
+.codehilite .cp { color: #959077 } /* Comment.Preproc */
+.codehilite .cpf { color: #959077 } /* Comment.PreprocFile */
+.codehilite .c1 { color: #959077 } /* Comment.Single */
+.codehilite .cs { color: #959077 } /* Comment.Special */
+.codehilite .gd { color: #FF4689 } /* Generic.Deleted */
+.codehilite .ge { color: #F8F8F2; font-style: italic } /* Generic.Emph */
+.codehilite .ges { color: #F8F8F2; font-weight: bold; font-style: italic } /* Generic.EmphStrong */
+.codehilite .gr { color: #FF4689 } /* Generic.Error */
+.codehilite .gh { color: #F8F8F2 } /* Generic.Heading */
+.codehilite .gi { color: #A6E22E } /* Generic.Inserted */
+.codehilite .go { color: #66D9EF } /* Generic.Output */
+.codehilite .gp { color: #FF4689; font-weight: bold } /* Generic.Prompt */
+.codehilite .gs { color: #F8F8F2; font-weight: bold } /* Generic.Strong */
+.codehilite .gu { color: #959077 } /* Generic.Subheading */
+.codehilite .gt { color: #66D9EF } /* Generic.Traceback */
+.codehilite .kc { color: #66D9EF } /* Keyword.Constant */
+.codehilite .kd { color: #66D9EF } /* Keyword.Declaration */
+.codehilite .kn { color: #FF4689 } /* Keyword.Namespace */
+.codehilite .kp { color: #66D9EF } /* Keyword.Pseudo */
+.codehilite .kr { color: #66D9EF } /* Keyword.Reserved */
+.codehilite .kt { color: #66D9EF } /* Keyword.Type */
+.codehilite .ld { color: #E6DB74 } /* Literal.Date */
+.codehilite .m { color: #AE81FF } /* Literal.Number */
+.codehilite .s { color: #E6DB74 } /* Literal.String */
+.codehilite .na { color: #A6E22E } /* Name.Attribute */
+.codehilite .nb { color: #A6E22E } /* Name.Builtin */
+.codehilite .nc { color: #A6E22E } /* Name.Class */
+.codehilite .no { color: #66D9EF } /* Name.Constant */
+.codehilite .nd { color: #A6E22E } /* Name.Decorator */
+.codehilite .ni { color: #F8F8F2 } /* Name.Entity */
+.codehilite .ne { color: #A6E22E } /* Name.Exception */
+.codehilite .nf { color: #A6E22E } /* Name.Function */
+.codehilite .nl { color: #F8F8F2 } /* Name.Label */
+.codehilite .nn { color: #F8F8F2 } /* Name.Namespace */
+.codehilite .nx { color: #A6E22E } /* Name.Other */
+.codehilite .py { color: #F8F8F2 } /* Name.Property */
+.codehilite .nt { color: #FF4689 } /* Name.Tag */
+.codehilite .nv { color: #F8F8F2 } /* Name.Variable */
+.codehilite .ow { color: #FF4689 } /* Operator.Word */
+.codehilite .pm { color: #F8F8F2 } /* Punctuation.Marker */
+.codehilite .w { color: #F8F8F2 } /* Text.Whitespace */
+.codehilite .mb { color: #AE81FF } /* Literal.Number.Bin */
+.codehilite .mf { color: #AE81FF } /* Literal.Number.Float */
+.codehilite .mh { color: #AE81FF } /* Literal.Number.Hex */
+.codehilite .mi { color: #AE81FF } /* Literal.Number.Integer */
+.codehilite .mo { color: #AE81FF } /* Literal.Number.Oct */
+.codehilite .sa { color: #E6DB74 } /* Literal.String.Affix */
+.codehilite .sb { color: #E6DB74 } /* Literal.String.Backtick */
+.codehilite .sc { color: #E6DB74 } /* Literal.String.Char */
+.codehilite .dl { color: #E6DB74 } /* Literal.String.Delimiter */
+.codehilite .sd { color: #E6DB74 } /* Literal.String.Doc */
+.codehilite .s2 { color: #E6DB74 } /* Literal.String.Double */
+.codehilite .se { color: #AE81FF } /* Literal.String.Escape */
+.codehilite .sh { color: #E6DB74 } /* Literal.String.Heredoc */
+.codehilite .si { color: #E6DB74 } /* Literal.String.Interpol */
+.codehilite .sx { color: #E6DB74 } /* Literal.String.Other */
+.codehilite .sr { color: #E6DB74 } /* Literal.String.Regex */
+.codehilite .s1 { color: #E6DB74 } /* Literal.String.Single */
+.codehilite .ss { color: #E6DB74 } /* Literal.String.Symbol */
+.codehilite .bp { color: #A6E22E } /* Name.Builtin.Pseudo */
+.codehilite .fm { color: #A6E22E } /* Name.Function.Magic */
+.codehilite .vc { color: #F8F8F2 } /* Name.Variable.Class */
+.codehilite .vg { color: #F8F8F2 } /* Name.Variable.Global */
+.codehilite .vi { color: #F8F8F2 } /* Name.Variable.Instance */
+.codehilite .vm { color: #F8F8F2 } /* Name.Variable.Magic */
+.codehilite .il { color: #AE81FF } /* Literal.Number.Integer.Long */
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="hero-inner">
+    <a class="home-link" href="index.html">← 返回 Semantica 专题首页</a>
+    <span class="eyebrow">🚀 SEMANTICA · COOKBOOK · 进阶系列</span>
+    <h1>高级多格式导出</h1>
+    <p class="lead">Semantica 官方 Cookbook 中文翻译 · 第 25 / 37 篇</p>
+    <div class="hero-badges">
+      <span class="badge">📦 semantica</span>
+      <span class="badge">🕸️ 知识图谱</span>
+      <span class="badge">🔎 GraphRAG</span>
+    </div>
+  </div>
+</header>
+
+<div class="layout">
+  <nav class="toc">
+    <h4>目录</h4>
+    <a href="#sec-1">概览</a>
+<a href="#sec-2">安装</a>
+<a href="#sec-3">步骤 1：创建示例知识图谱和数据</a>
+<a href="#sec-4">步骤 2：导出为 JSON</a>
+<a href="#sec-5">步骤 3：导出为 RDF</a>
+<a href="#sec-6">步骤 4：导出为 CSV</a>
+<a href="#sec-7">步骤 5：导出为图格式（GraphML、GEXF、DOT）</a>
+<a href="#sec-8">步骤 6：导出为 OWL</a>
+<a href="#sec-9">步骤 7：导出为向量格式</a>
+<a href="#sec-10">步骤 8：导出为 LPG（带标签的属性图）</a>
+<a href="#sec-11">步骤 9：导出为 YAML</a>
+<a href="#sec-12">步骤 10：生成报告</a>
+<a href="#sec-13">步骤 11：方法注册表与自定义方法</a>
+<a href="#sec-14">步骤 12：配置管理</a>
+<a href="#sec-15">步骤 13：验证所有导出</a>
+  </nav>
+
+  <main>
+    <section id="sec-1"><h2><span class="pill-num">1</span>概览</h2><p>这个高级 notebook 演示了 Semantica 导出模块的全面导出能力，涵盖所有 <strong>8 种导出格式</strong>以及报告生成。你将学习如何将同一个知识图谱同时导出为多种格式、使用高级功能，以及利用方法注册表系统。</p>
+<p><strong>文档</strong>：<a href="https://semantica.readthedocs.io/reference/export/">API 参考</a></p>
+<h3>你将学到什么</h3>
+<ul>
+<li>将知识图谱导出为全部 8 种受支持的格式</li>
+<li>直接使用导出器类进行细粒度控制</li>
+<li>生成多种格式的专业报告</li>
+<li>使用 RDF 序列化、验证和命名空间管理</li>
+<li>注册并使用自定义导出方法</li>
+<li>以编程方式配置导出设置</li>
+<li>为向量存储导出向量和嵌入</li>
+<li>使用 LPG 格式导出到图数据库</li>
+</ul>
+<h3>涵盖的导出格式</h3>
+<ol>
+<li><strong>JSON/JSON-LD</strong> - 标准 JSON 和 JSON-LD 格式</li>
+<li><strong>RDF</strong> - Turtle、RDF/XML、JSON-LD、N-Triples、N3</li>
+<li><strong>CSV</strong> - 用于实体和关系的表格格式</li>
+<li><strong>图格式</strong> - 用于可视化工具的 GraphML、GEXF、DOT</li>
+<li><strong>OWL</strong> - 用于本体的 OWL/XML 和 Turtle</li>
+<li><strong>向量</strong> - 用于向量存储的 JSON、NumPy、Binary、FAISS</li>
+<li><strong>LPG</strong> - 用于图数据库的 Cypher 和 LPG</li>
+<li><strong>YAML</strong> - 语义网络和模式 YAML</li>
+<li><strong>报告</strong> - HTML、Markdown、JSON、Text 报告</li>
+</ol></section>
+<section id="sec-2"><h2><span class="pill-num">2</span>安装</h2><p>从 PyPI 安装 Semantica：</p>
+<div class="codehilite"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>semantica
+<span class="c1"># 或安装所有可选依赖：</span>
+pip<span class="w"> </span>install<span class="w"> </span>semantica<span class="o">[</span>all<span class="o">]</span>
+</code></pre></div>
+
+<div class="codehilite"><pre><span></span><code><span class="err">!</span><span class="n">pip</span> <span class="n">install</span> <span class="n">semantica</span>
+</code></pre></div>
+
+<div class="codehilite"><pre><span></span><code><span class="c1"># 导入用于构建知识图谱的核心模块</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">semantica.kg</span><span class="w"> </span><span class="kn">import</span> <span class="n">GraphBuilder</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">semantica.embeddings</span><span class="w"> </span><span class="kn">import</span> <span class="n">EmbeddingGenerator</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">semantica.ontology</span><span class="w"> </span><span class="kn">import</span> <span class="n">OntologyGenerator</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+
+<span class="c1"># 创建导出目录</span>
+<span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="s2">"exports"</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</code></pre></div></section>
+<section id="sec-3"><h2><span class="pill-num">3</span>步骤 1：创建示例知识图谱和数据</h2><p>创建一个包含实体、关系、嵌入和本体的示例知识图谱，用于全面的导出演示。</p>
+<div class="codehilite"><pre><span></span><code><span class="n">builder</span> <span class="o">=</span> <span class="n">GraphBuilder</span><span class="p">()</span>
+
+<span class="n">entities</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="s2">"e1"</span><span class="p">,</span> <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"Person"</span><span class="p">,</span> <span class="s2">"name"</span><span class="p">:</span> <span class="s2">"Alice"</span><span class="p">,</span> <span class="s2">"properties"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"age"</span><span class="p">:</span> <span class="mi">30</span><span class="p">}},</span>
+    <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="s2">"e2"</span><span class="p">,</span> <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"Person"</span><span class="p">,</span> <span class="s2">"name"</span><span class="p">:</span> <span class="s2">"Bob"</span><span class="p">,</span> <span class="s2">"properties"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"age"</span><span class="p">:</span> <span class="mi">35</span><span class="p">}},</span>
+    <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="s2">"e3"</span><span class="p">,</span> <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"Organization"</span><span class="p">,</span> <span class="s2">"name"</span><span class="p">:</span> <span class="s2">"Tech Corp"</span><span class="p">,</span> <span class="s2">"properties"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"founded"</span><span class="p">:</span> <span class="mi">2010</span><span class="p">}},</span>
+<span class="p">]</span>
+
+<span class="n">relationships</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="p">{</span><span class="s2">"source"</span><span class="p">:</span> <span class="s2">"e1"</span><span class="p">,</span> <span class="s2">"target"</span><span class="p">:</span> <span class="s2">"e2"</span><span class="p">,</span> <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"knows"</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"source"</span><span class="p">:</span> <span class="s2">"e1"</span><span class="p">,</span> <span class="s2">"target"</span><span class="p">:</span> <span class="s2">"e3"</span><span class="p">,</span> <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"works_for"</span><span class="p">},</span>
+<span class="p">]</span>
+
+<span class="n">knowledge_graph</span> <span class="o">=</span> <span class="n">builder</span><span class="o">.</span><span class="n">build</span><span class="p">(</span><span class="n">entities</span> <span class="o">+</span> <span class="n">relationships</span><span class="p">)</span>
+
+<span class="n">embedding_generator</span> <span class="o">=</span> <span class="n">EmbeddingGenerator</span><span class="p">()</span>
+<span class="n">texts</span> <span class="o">=</span> <span class="p">[</span><span class="n">e</span><span class="p">[</span><span class="s2">"name"</span><span class="p">]</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">entities</span><span class="p">]</span>
+<span class="n">embeddings</span> <span class="o">=</span> <span class="n">embedding_generator</span><span class="o">.</span><span class="n">generate_embeddings</span><span class="p">(</span><span class="n">texts</span><span class="p">,</span> <span class="n">data_type</span><span class="o">=</span><span class="s2">"text"</span><span class="p">)</span>
+
+<span class="n">ontology_generator</span> <span class="o">=</span> <span class="n">OntologyGenerator</span><span class="p">()</span>
+<span class="n">ontology</span> <span class="o">=</span> <span class="n">ontology_generator</span><span class="o">.</span><span class="n">generate_from_graph</span><span class="p">(</span><span class="n">knowledge_graph</span><span class="p">)</span>
+</code></pre></div></section>
+<section id="sec-4"><h2><span class="pill-num">4</span>步骤 2：导出为 JSON</h2><p>使用类和便捷函数两种方式将知识图谱导出为 JSON 格式。</p>
+<p><strong>JSONExporter 功能：</strong>
+- 标准 JSON 序列化
+- 支持带 @context 的 JSON-LD 格式
+- 可配置的缩进
+- 元数据和溯源追踪</p>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">semantica.export</span><span class="w"> </span><span class="kn">import</span> <span class="n">JSONExporter</span>
+
+<span class="c1"># 使用自定义设置创建 JSON 导出器</span>
+<span class="n">json_exporter</span> <span class="o">=</span> <span class="n">JSONExporter</span><span class="p">(</span><span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">include_metadata</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="c1"># 导出为 JSON 格式</span>
+<span class="n">json_exporter</span><span class="o">.</span><span class="n">export_knowledge_graph</span><span class="p">(</span><span class="n">knowledge_graph</span><span class="p">,</span> <span class="s2">"exports/output.json"</span><span class="p">)</span>
+
+<span class="c1"># 导出为 JSON-LD 格式</span>
+<span class="n">json_exporter</span><span class="o">.</span><span class="n">export_knowledge_graph</span><span class="p">(</span><span class="n">knowledge_graph</span><span class="p">,</span> <span class="s2">"exports/output.jsonld"</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">"json-ld"</span><span class="p">)</span>
+</code></pre></div></section>
+<section id="sec-5"><h2><span class="pill-num">5</span>步骤 3：导出为 RDF</h2><p>将知识图谱导出为多种 RDF 格式（Turtle、RDF/XML、JSON-LD、N-Triples）。</p>
+<p><strong>RDFExporter 功能：</strong>
+- 支持多种 RDF 格式（Turtle、RDF/XML、JSON-LD、N-Triples、N3）
+- 命名空间管理
+- RDF 验证
+- 格式转换能力</p>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">semantica.export</span><span class="w"> </span><span class="kn">import</span> <span class="n">RDFExporter</span><span class="p">,</span> <span class="n">RDFSerializer</span><span class="p">,</span> <span class="n">RDFValidator</span>
+
+<span class="c1"># 创建 RDF 导出器</span>
+<span class="n">rdf_exporter</span> <span class="o">=</span> <span class="n">RDFExporter</span><span class="p">()</span>
+
+<span class="c1"># 导出为 Turtle 格式（人类可读）</span>
+<span class="n">rdf_exporter</span><span class="o">.</span><span class="n">export_knowledge_graph</span><span class="p">(</span><span class="n">knowledge_graph</span><span class="p">,</span> <span class="s2">"exports/output.ttl"</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">"turtle"</span><span class="p">)</span>
+
+<span class="c1"># 导出为 RDF/XML 格式</span>
+<span class="n">rdf_exporter</span><span class="o">.</span><span class="n">export_knowledge_graph</span><span class="p">(</span><span class="n">knowledge_graph</span><span class="p">,</span> <span class="s2">"exports/output.rdf"</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">"rdfxml"</span><span class="p">)</span>
+
+<span class="c1"># 导出为 JSON-LD 格式</span>
+<span class="n">rdf_exporter</span><span class="o">.</span><span class="n">export_knowledge_graph</span><span class="p">(</span><span class="n">knowledge_graph</span><span class="p">,</span> <span class="s2">"exports/output.jsonld"</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">"jsonld"</span><span class="p">)</span>
+
+<span class="c1"># 导出为 N-Triples 格式</span>
+<span class="n">rdf_exporter</span><span class="o">.</span><span class="n">export_knowledge_graph</span><span class="p">(</span><span class="n">knowledge_graph</span><span class="p">,</span> <span class="s2">"exports/output.nt"</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">"ntriples"</span><span class="p">)</span>
+
+<span class="c1"># 使用 RDFSerializer 进行格式转换</span>
+<span class="n">serializer</span> <span class="o">=</span> <span class="n">RDFSerializer</span><span class="p">()</span>
+<span class="n">rdf_data</span> <span class="o">=</span> <span class="n">serializer</span><span class="o">.</span><span class="n">convert_kg_to_rdf</span><span class="p">(</span><span class="n">knowledge_graph</span><span class="p">)</span>
+<span class="n">turtle_string</span> <span class="o">=</span> <span class="n">serializer</span><span class="o">.</span><span class="n">serialize_to_turtle</span><span class="p">(</span><span class="n">rdf_data</span><span class="p">)</span>
+
+<span class="c1"># 使用 RDFValidator 进行验证</span>
+<span class="n">validator</span> <span class="o">=</span> <span class="n">RDFValidator</span><span class="p">()</span>
+<span class="n">validation_result</span> <span class="o">=</span> <span class="n">validator</span><span class="o">.</span><span class="n">validate_rdf_syntax</span><span class="p">(</span><span class="n">turtle_string</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">"turtle"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"RDF validation: </span><span class="si">{</span><span class="n">validation_result</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'is_valid'</span><span class="p">,</span><span class="w"> </span><span class="kc">False</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</code></pre></div></section>
+<section id="sec-6"><h2><span class="pill-num">6</span>步骤 4：导出为 CSV</h2><p>将知识图谱导出为 CSV 格式以进行表格分析。</p>
+<p><strong>CSVExporter 功能：</strong>
+- 实体和关系使用单独的文件
+- 可配置的分隔符（逗号、制表符、分号）
+- 自动生成表头
+- 元数据序列化</p>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">semantica.export</span><span class="w"> </span><span class="kn">import</span> <span class="n">CSVExporter</span>
+
+<span class="c1"># 使用自定义分隔符创建 CSV 导出器</span>
+<span class="n">csv_exporter</span> <span class="o">=</span> <span class="n">CSVExporter</span><span class="p">(</span><span class="n">delimiter</span><span class="o">=</span><span class="s2">","</span><span class="p">)</span>
+
+<span class="c1"># 导出完整知识图谱</span>
+<span class="n">csv_exporter</span><span class="o">.</span><span class="n">export_knowledge_graph</span><span class="p">(</span><span class="n">knowledge_graph</span><span class="p">,</span> <span class="s2">"exports/output"</span><span class="p">)</span>
+
+<span class="c1"># 单独导出实体</span>
+<span class="n">entities</span> <span class="o">=</span> <span class="n">knowledge_graph</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"entities"</span><span class="p">,</span> <span class="p">[])</span>
+<span class="n">csv_exporter</span><span class="o">.</span><span class="n">export_entities</span><span class="p">(</span><span class="n">entities</span><span class="p">,</span> <span class="s2">"exports/entities.csv"</span><span class="p">)</span>
+
+<span class="c1"># 单独导出关系</span>
+<span class="n">relationships</span> <span class="o">=</span> <span class="n">knowledge_graph</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"relationships"</span><span class="p">,</span> <span class="p">[])</span>
+<span class="n">csv_exporter</span><span class="o">.</span><span class="n">export_relationships</span><span class="p">(</span><span class="n">relationships</span><span class="p">,</span> <span class="s2">"exports/relationships.csv"</span><span class="p">)</span>
+</code></pre></div></section>
+<section id="sec-7"><h2><span class="pill-num">7</span>步骤 5：导出为图格式（GraphML、GEXF、DOT）</h2><p>将知识图谱导出为图格式以供可视化工具使用。</p>
+<p><strong>GraphExporter 功能：</strong>
+- GraphML 格式（Cytoscape、yEd）
+- GEXF 格式（Gephi）
+- DOT 格式（Graphviz）
+- 节点和边属性映射</p>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">semantica.export</span><span class="w"> </span><span class="kn">import</span> <span class="n">GraphExporter</span>
+
+<span class="c1"># 创建图导出器</span>
+<span class="n">graph_exporter</span> <span class="o">=</span> <span class="n">GraphExporter</span><span class="p">()</span>
+
+<span class="c1"># 导出为 GraphML 格式（用于 Cytoscape、yEd）</span>
+<span class="n">graph_exporter</span><span class="o">.</span><span class="n">export_knowledge_graph</span><span class="p">(</span><span class="n">knowledge_graph</span><span class="p">,</span> <span class="s2">"exports/output.graphml"</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">"graphml"</span><span class="p">)</span>
+
+<span class="c1"># 导出为 GEXF 格式（用于 Gephi）</span>
+<span class="n">graph_exporter</span><span class="o">.</span><span class="n">export_knowledge_graph</span><span class="p">(</span><span class="n">knowledge_graph</span><span class="p">,</span> <span class="s2">"exports/output.gexf"</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">"gexf"</span><span class="p">)</span>
+
+<span class="c1"># 导出为 DOT 格式（用于 Graphviz）</span>
+<span class="n">graph_exporter</span><span class="o">.</span><span class="n">export_knowledge_graph</span><span class="p">(</span><span class="n">knowledge_graph</span><span class="p">,</span> <span class="s2">"exports/output.dot"</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">"dot"</span><span class="p">)</span>
+</code></pre></div></section>
+<section id="sec-8"><h2><span class="pill-num">8</span>步骤 6：导出为 OWL</h2><p>将本体导出为 OWL 格式。<strong>注意：</strong> OWLExporter 期望的是本体结构，而不是知识图谱。</p>
+<p><strong>OWLExporter 功能：</strong>
+- OWL/XML 格式
+- Turtle 格式的 OWL
+- 类层级导出
+- 属性定义导出</p>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">semantica.export</span><span class="w"> </span><span class="kn">import</span> <span class="n">OWLExporter</span>
+
+<span class="c1"># 使用自定义 URI 和版本创建 OWL 导出器</span>
+<span class="n">owl_exporter</span> <span class="o">=</span> <span class="n">OWLExporter</span><span class="p">(</span><span class="n">ontology_uri</span><span class="o">=</span><span class="s2">"https://example.org/ontology/"</span><span class="p">,</span> <span class="n">version</span><span class="o">=</span><span class="s2">"1.0"</span><span class="p">)</span>
+
+<span class="c1"># 将完整本体导出为 OWL/XML</span>
+<span class="n">owl_exporter</span><span class="o">.</span><span class="n">export</span><span class="p">(</span><span class="n">ontology</span><span class="p">,</span> <span class="s2">"exports/output.owl"</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">"owl-xml"</span><span class="p">)</span>
+
+<span class="c1"># 导出为 Turtle 格式的 OWL</span>
+<span class="n">owl_exporter</span><span class="o">.</span><span class="n">export</span><span class="p">(</span><span class="n">ontology</span><span class="p">,</span> <span class="s2">"exports/output_owl.ttl"</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">"turtle"</span><span class="p">)</span>
+
+<span class="c1"># 仅导出类</span>
+<span class="n">classes</span> <span class="o">=</span> <span class="n">ontology</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"classes"</span><span class="p">,</span> <span class="p">[])</span>
+<span class="n">owl_exporter</span><span class="o">.</span><span class="n">export_classes</span><span class="p">(</span><span class="n">classes</span><span class="p">,</span> <span class="s2">"exports/classes.owl"</span><span class="p">)</span>
+
+<span class="c1"># 仅导出属性</span>
+<span class="n">properties</span> <span class="o">=</span> <span class="n">ontology</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"object_properties"</span><span class="p">,</span> <span class="p">[])</span>
+<span class="n">owl_exporter</span><span class="o">.</span><span class="n">export_properties</span><span class="p">(</span><span class="n">properties</span><span class="p">,</span> <span class="s2">"exports/properties.owl"</span><span class="p">,</span> <span class="n">property_type</span><span class="o">=</span><span class="s2">"object"</span><span class="p">)</span>
+</code></pre></div></section>
+<section id="sec-9"><h2><span class="pill-num">9</span>步骤 7：导出为向量格式</h2><p>将向量嵌入导出为各种格式以供向量存储使用。</p>
+<p><strong>VectorExporter 功能：</strong>
+- JSON 格式
+- NumPy 格式
+- Binary 格式
+- FAISS 格式
+- 向量存储集成（Weaviate、Qdrant）</p>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">semantica.export</span><span class="w"> </span><span class="kn">import</span> <span class="n">VectorExporter</span>
+
+<span class="c1"># 创建向量导出器</span>
+<span class="n">vector_exporter</span> <span class="o">=</span> <span class="n">VectorExporter</span><span class="p">()</span>
+
+<span class="c1"># 导出为 JSON 格式</span>
+<span class="n">vector_exporter</span><span class="o">.</span><span class="n">export</span><span class="p">(</span><span class="n">embeddings</span><span class="p">,</span> <span class="s2">"exports/output_vectors.json"</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">"json"</span><span class="p">)</span>
+
+<span class="c1"># 导出为 NumPy 格式</span>
+<span class="n">vector_exporter</span><span class="o">.</span><span class="n">export</span><span class="p">(</span><span class="n">embeddings</span><span class="p">,</span> <span class="s2">"exports/output_vectors.npy"</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">"numpy"</span><span class="p">)</span>
+
+<span class="c1"># 导出为 Binary 格式</span>
+<span class="n">vector_exporter</span><span class="o">.</span><span class="n">export</span><span class="p">(</span><span class="n">embeddings</span><span class="p">,</span> <span class="s2">"exports/output_vectors.bin"</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">"binary"</span><span class="p">)</span>
+
+<span class="c1"># 导出为 FAISS 格式</span>
+<span class="n">vector_exporter</span><span class="o">.</span><span class="n">export</span><span class="p">(</span><span class="n">embeddings</span><span class="p">,</span> <span class="s2">"exports/output_vectors.faiss"</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">"faiss"</span><span class="p">)</span>
+</code></pre></div></section>
+<section id="sec-10"><h2><span class="pill-num">10</span>步骤 8：导出为 LPG（带标签的属性图）</h2><p>将知识图谱导出为 LPG 格式，用于 Neo4j 和 Memgraph 等图数据库。</p>
+<p><strong>LPGExporter 功能：</strong>
+- Cypher 查询格式
+- 带标签的属性图格式
+- 批量节点/关系导出
+- 索引生成</p>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">semantica.export</span><span class="w"> </span><span class="kn">import</span> <span class="n">LPGExporter</span>
+
+<span class="c1"># 创建 LPG 导出器</span>
+<span class="n">lpg_exporter</span> <span class="o">=</span> <span class="n">LPGExporter</span><span class="p">()</span>
+
+<span class="c1"># 导出为 Cypher 格式（用于 Neo4j、Memgraph）</span>
+<span class="n">lpg_exporter</span><span class="o">.</span><span class="n">export_knowledge_graph</span><span class="p">(</span><span class="n">knowledge_graph</span><span class="p">,</span> <span class="s2">"exports/output.cypher"</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">"cypher"</span><span class="p">)</span>
+
+<span class="c1"># 导出为 LPG 格式</span>
+<span class="n">lpg_exporter</span><span class="o">.</span><span class="n">export_knowledge_graph</span><span class="p">(</span><span class="n">knowledge_graph</span><span class="p">,</span> <span class="s2">"exports/output.lpg"</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">"lpg"</span><span class="p">)</span>
+</code></pre></div></section>
+<section id="sec-11"><h2><span class="pill-num">11</span>步骤 9：导出为 YAML</h2><p>将语义网络和模式导出为 YAML 格式。</p>
+<p><strong>YAML 导出器功能：</strong>
+- 语义网络 YAML 导出
+- 模式 YAML 导出
+- 人类可读格式</p>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">semantica.export</span><span class="w"> </span><span class="kn">import</span> <span class="n">SemanticNetworkYAMLExporter</span><span class="p">,</span> <span class="n">YAMLSchemaExporter</span>
+
+<span class="c1"># 使用 SemanticNetworkYAMLExporter 处理知识图谱</span>
+<span class="n">yaml_exporter</span> <span class="o">=</span> <span class="n">SemanticNetworkYAMLExporter</span><span class="p">()</span>
+<span class="n">yaml_exporter</span><span class="o">.</span><span class="n">export</span><span class="p">(</span><span class="n">knowledge_graph</span><span class="p">,</span> <span class="s2">"exports/output_network.yaml"</span><span class="p">)</span>
+
+<span class="c1"># 使用 YAMLSchemaExporter 处理本体模式</span>
+<span class="n">schema_exporter</span> <span class="o">=</span> <span class="n">YAMLSchemaExporter</span><span class="p">()</span>
+<span class="n">yaml_content</span> <span class="o">=</span> <span class="n">schema_exporter</span><span class="o">.</span><span class="n">export_ontology_schema</span><span class="p">(</span><span class="n">ontology</span><span class="p">)</span>
+<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s2">"exports/output_schema.yaml"</span><span class="p">,</span> <span class="s2">"w"</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+    <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">yaml_content</span><span class="p">)</span>
+</code></pre></div></section>
+<section id="sec-12"><h2><span class="pill-num">12</span>步骤 10：生成报告</h2><p>使用 ReportGenerator 生成多种格式的专业报告。</p>
+<p><strong>ReportGenerator 功能：</strong>
+- 带样式的 HTML 报告
+- Markdown 报告
+- JSON 报告
+- 纯文本报告
+- 质量指标聚合</p>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">semantica.export</span><span class="w"> </span><span class="kn">import</span> <span class="n">ReportGenerator</span>
+
+<span class="c1"># 准备报告数据</span>
+<span class="n">report_data</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"title"</span><span class="p">:</span> <span class="s2">"Knowledge Graph Export Report"</span><span class="p">,</span>
+    <span class="s2">"summary"</span><span class="p">:</span> <span class="s2">"Comprehensive export of knowledge graph to multiple formats"</span><span class="p">,</span>
+    <span class="s2">"knowledge_graph"</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">"entities"</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">knowledge_graph</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"entities"</span><span class="p">,</span> <span class="p">[])),</span>
+        <span class="s2">"relationships"</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">knowledge_graph</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"relationships"</span><span class="p">,</span> <span class="p">[]))</span>
+    <span class="p">},</span>
+    <span class="s2">"formats_exported"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"JSON"</span><span class="p">,</span> <span class="s2">"RDF"</span><span class="p">,</span> <span class="s2">"CSV"</span><span class="p">,</span> <span class="s2">"GraphML"</span><span class="p">,</span> <span class="s2">"GEXF"</span><span class="p">,</span> <span class="s2">"OWL"</span><span class="p">,</span> <span class="s2">"Vector"</span><span class="p">,</span> <span class="s2">"LPG"</span><span class="p">,</span> <span class="s2">"YAML"</span><span class="p">],</span>
+    <span class="s2">"export_timestamp"</span><span class="p">:</span> <span class="s2">"2024-01-01T00:00:00Z"</span>
+<span class="p">}</span>
+
+<span class="c1"># 创建报告生成器</span>
+<span class="n">report_generator</span> <span class="o">=</span> <span class="n">ReportGenerator</span><span class="p">()</span>
+
+<span class="c1"># 生成 HTML 报告</span>
+<span class="n">report_generator</span><span class="o">.</span><span class="n">generate_report</span><span class="p">(</span><span class="n">report_data</span><span class="p">,</span> <span class="s2">"exports/report.html"</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">"html"</span><span class="p">)</span>
+
+<span class="c1"># 生成 Markdown 报告</span>
+<span class="n">report_generator</span><span class="o">.</span><span class="n">generate_report</span><span class="p">(</span><span class="n">report_data</span><span class="p">,</span> <span class="s2">"exports/report.md"</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">"markdown"</span><span class="p">)</span>
+
+<span class="c1"># 生成 JSON 报告</span>
+<span class="n">report_generator</span><span class="o">.</span><span class="n">generate_report</span><span class="p">(</span><span class="n">report_data</span><span class="p">,</span> <span class="s2">"exports/report.json"</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">"json"</span><span class="p">)</span>
+
+<span class="c1"># 生成 Text 报告</span>
+<span class="n">report_generator</span><span class="o">.</span><span class="n">generate_report</span><span class="p">(</span><span class="n">report_data</span><span class="p">,</span> <span class="s2">"exports/report.txt"</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">"text"</span><span class="p">)</span>
+</code></pre></div></section>
+<section id="sec-13"><h2><span class="pill-num">13</span>步骤 11：方法注册表与自定义方法</h2><p>使用 MethodRegistry 系统注册并使用自定义导出方法。</p>
+<p><strong>MethodRegistry 功能：</strong>
+- 注册自定义导出方法
+- 列出可用方法
+- 按名称获取方法
+- 注销方法</p>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">semantica.export</span><span class="w"> </span><span class="kn">import</span> <span class="n">MethodRegistry</span><span class="p">,</span> <span class="n">method_registry</span><span class="p">,</span> <span class="n">JSONExporter</span>
+
+<span class="c1"># 定义一个自定义导出方法</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">custom_json_export</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">file_path</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Custom JSON export with additional formatting."""</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span> <span class="s1">'w'</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">sort_keys</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Custom export completed: </span><span class="si">{</span><span class="n">file_path</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+<span class="c1"># 注册自定义方法</span>
+<span class="n">MethodRegistry</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="s2">"json"</span><span class="p">,</span> <span class="s2">"custom_formatted"</span><span class="p">,</span> <span class="n">custom_json_export</span><span class="p">)</span>
+
+<span class="c1"># 列出所有可用方法</span>
+<span class="n">all_methods</span> <span class="o">=</span> <span class="n">method_registry</span><span class="o">.</span><span class="n">list_all</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Available methods:"</span><span class="p">,</span> <span class="n">all_methods</span><span class="p">)</span>
+
+<span class="c1"># 列出特定任务的方法</span>
+<span class="n">json_methods</span> <span class="o">=</span> <span class="n">method_registry</span><span class="o">.</span><span class="n">list_all</span><span class="p">(</span><span class="s2">"json"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"JSON methods:"</span><span class="p">,</span> <span class="n">json_methods</span><span class="p">)</span>
+
+<span class="c1"># 使用 JSONExporter 使用已注册的方法</span>
+<span class="n">json_exporter</span> <span class="o">=</span> <span class="n">JSONExporter</span><span class="p">()</span>
+<span class="c1"># 自定义方法可以通过注册表系统使用</span>
+<span class="n">custom_method</span> <span class="o">=</span> <span class="n">method_registry</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"json"</span><span class="p">,</span> <span class="s2">"custom_formatted"</span><span class="p">)</span>
+<span class="k">if</span> <span class="n">custom_method</span><span class="p">:</span>
+    <span class="n">custom_method</span><span class="p">(</span><span class="n">knowledge_graph</span><span class="p">,</span> <span class="s2">"exports/custom_output.json"</span><span class="p">)</span>
+</code></pre></div></section>
+<section id="sec-14"><h2><span class="pill-num">14</span>步骤 12：配置管理</h2><p>使用 ExportConfig 配置导出设置。</p>
+<p><strong>ExportConfig 功能：</strong>
+- 环境变量支持
+- 配置文件支持
+- 编程式配置
+- 方法特定配置</p>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">semantica.export</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExportConfig</span><span class="p">,</span> <span class="n">export_config</span><span class="p">,</span> <span class="n">JSONExporter</span>
+
+<span class="c1"># 获取当前配置</span>
+<span class="n">config</span> <span class="o">=</span> <span class="n">export_config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"default"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Default config:"</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
+
+<span class="c1"># 以编程方式设置配置</span>
+<span class="n">export_config</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">"json"</span><span class="p">,</span> <span class="p">{</span><span class="s2">"indent"</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span> <span class="s2">"include_metadata"</span><span class="p">:</span> <span class="kc">True</span><span class="p">})</span>
+<span class="n">export_config</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">"rdf"</span><span class="p">,</span> <span class="p">{</span><span class="s2">"format"</span><span class="p">:</span> <span class="s2">"turtle"</span><span class="p">,</span> <span class="s2">"base_uri"</span><span class="p">:</span> <span class="s2">"https://example.org/"</span><span class="p">})</span>
+
+<span class="c1"># 获取方法特定配置</span>
+<span class="n">json_config</span> <span class="o">=</span> <span class="n">export_config</span><span class="o">.</span><span class="n">get_method_config</span><span class="p">(</span><span class="s2">"json"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"JSON config:"</span><span class="p">,</span> <span class="n">json_config</span><span class="p">)</span>
+
+<span class="c1"># 设置方法特定配置</span>
+<span class="n">export_config</span><span class="o">.</span><span class="n">set_method_config</span><span class="p">(</span><span class="s2">"csv"</span><span class="p">,</span> <span class="p">{</span><span class="s2">"delimiter"</span><span class="p">:</span> <span class="s2">"</span><span class="se">\t</span><span class="s2">"</span><span class="p">})</span>
+
+<span class="c1"># 使用已配置的设置</span>
+<span class="n">json_exporter</span> <span class="o">=</span> <span class="n">JSONExporter</span><span class="p">(</span><span class="o">**</span><span class="n">export_config</span><span class="o">.</span><span class="n">get_method_config</span><span class="p">(</span><span class="s2">"json"</span><span class="p">))</span>
+<span class="n">json_exporter</span><span class="o">.</span><span class="n">export_knowledge_graph</span><span class="p">(</span><span class="n">knowledge_graph</span><span class="p">,</span> <span class="s2">"exports/output_configured.json"</span><span class="p">)</span>
+</code></pre></div></section>
+<section id="sec-15"><h2><span class="pill-num">15</span>步骤 13：验证所有导出</h2><p>验证所有导出的文件是否已成功创建。</p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 列出所有导出的文件</span>
+<span class="n">export_files</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">"exports/output.json"</span><span class="p">,</span>
+    <span class="s2">"exports/output.jsonld"</span><span class="p">,</span>
+    <span class="s2">"exports/output.ttl"</span><span class="p">,</span>
+    <span class="s2">"exports/output.rdf"</span><span class="p">,</span>
+    <span class="s2">"exports/output.nt"</span><span class="p">,</span>
+    <span class="s2">"exports/output.csv"</span><span class="p">,</span>
+    <span class="s2">"exports/entities.csv"</span><span class="p">,</span>
+    <span class="s2">"exports/relationships.csv"</span><span class="p">,</span>
+    <span class="s2">"exports/output.graphml"</span><span class="p">,</span>
+    <span class="s2">"exports/output.gexf"</span><span class="p">,</span>
+    <span class="s2">"exports/output.dot"</span><span class="p">,</span>
+    <span class="s2">"exports/output.owl"</span><span class="p">,</span>
+    <span class="s2">"exports/output_owl.ttl"</span><span class="p">,</span>
+    <span class="s2">"exports/output_vectors.json"</span><span class="p">,</span>
+    <span class="s2">"exports/output_vectors.npy"</span><span class="p">,</span>
+    <span class="s2">"exports/output.cypher"</span><span class="p">,</span>
+    <span class="s2">"exports/output_network.yaml"</span><span class="p">,</span>
+    <span class="s2">"exports/output_schema.yaml"</span><span class="p">,</span>
+    <span class="s2">"exports/report.html"</span><span class="p">,</span>
+    <span class="s2">"exports/report.md"</span><span class="p">,</span>
+    <span class="s2">"exports/report.json"</span><span class="p">,</span>
+    <span class="s2">"exports/report.txt"</span>
+<span class="p">]</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">"📊 Export Summary:"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"="</span> <span class="o">*</span> <span class="mi">60</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="n">export_files</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">file</span><span class="p">):</span>
+        <span class="n">size</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">getsize</span><span class="p">(</span><span class="n">file</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"✅ </span><span class="si">{</span><span class="n">file</span><span class="si">:</span><span class="s2">50</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">size</span><span class="si">:</span><span class="s2">&gt;10,</span><span class="si">}</span><span class="s2"> bytes)"</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"❌ </span><span class="si">{</span><span class="n">file</span><span class="si">:</span><span class="s2">50</span><span class="si">}</span><span class="s2"> (not found)"</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">"="</span> <span class="o">*</span> <span class="mi">60</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Total files checked: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">export_files</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Files created: </span><span class="si">{</span><span class="nb">sum</span><span class="p">(</span><span class="mi">1</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">f</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">export_files</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">f</span><span class="p">))</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</code></pre></div></section>
+    <nav class="pager"><a class="prev" href="03-complete-visualization-suite.html"><span class="dir">← 上一篇</span><span class="ttl">完整可视化套件</span></a><a class="next" href="06-multi-source-data-integration.html"><span class="dir">→ 下一篇</span><span class="ttl">多源数据集成</span></a></nav>
+  </main>
+</div>
+
+<footer>由 Semantica 官方 Cookbook 生成的中文说明页 · <a href="https://github.com/semantica-agi/semantica">semantica-agi/semantica</a></footer>
+
+</body>
+</html>

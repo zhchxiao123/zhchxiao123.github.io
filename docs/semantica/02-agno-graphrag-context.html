@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agno × Semantica：GraphRAG 上下文智能体 · Semantica Cookbook</title>
+<style>
+
+:root {
+  --bg: #0b0e17;
+  --bg-soft: #10141f;
+  --panel: #ffffff;
+  --panel-alt: #f6f7fb;
+  --border: #e6e8f0;
+  --text: #1a1d29;
+  --text-dim: #5a5f72;
+  --primary: #6366f1;
+  --primary-dark: #4338ca;
+  --accent: #14b8a6;
+  --accent-2: #f59e0b;
+  --code-bg: #0f172a;
+  --code-text: #e2e8f0;
+  --radius: 14px;
+  --shadow: 0 10px 30px -12px rgba(30, 41, 59, 0.18);
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif;
+  color: var(--text);
+  background: var(--panel-alt);
+  line-height: 1.75;
+}
+a { color: var(--primary-dark); }
+
+/* ---------- HERO ---------- */
+.hero {
+  background: radial-gradient(1200px 600px at 15% -10%, rgba(99,102,241,0.55), transparent 60%),
+              radial-gradient(900px 500px at 90% 10%, rgba(20,184,166,0.35), transparent 55%),
+              linear-gradient(180deg, var(--bg) 0%, var(--bg-soft) 100%);
+  color: #f4f5fb;
+  padding: 64px 24px 88px;
+  position: relative;
+  overflow: hidden;
+}
+.hero-inner { max-width: 1080px; margin: 0 auto; }
+.eyebrow {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-size: 12.5px; letter-spacing: 0.12em; text-transform: uppercase;
+  color: #a5b4fc; background: rgba(99,102,241,0.15);
+  border: 1px solid rgba(165,180,252,0.35);
+  padding: 6px 14px; border-radius: 999px; margin-bottom: 22px;
+}
+.hero h1 { font-size: 40px; line-height: 1.2; margin: 0 0 16px; font-weight: 800; letter-spacing: -0.01em; }
+.hero p.lead { font-size: 17px; color: #cbd0e6; max-width: 720px; margin: 0 0 28px; }
+.hero-badges { display: flex; flex-wrap: wrap; gap: 10px; }
+.badge {
+  font-size: 13px; background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.14); color: #e2e4f5;
+  padding: 6px 12px; border-radius: 999px;
+}
+.hero a.home-link {
+  display: inline-flex; align-items: center; gap: 6px;
+  color: #a5b4fc; text-decoration: none; font-size: 13.5px; margin-bottom: 20px;
+}
+.hero a.home-link:hover { color: #fff; }
+
+/* ---------- LAYOUT ---------- */
+.layout {
+  max-width: 1200px; margin: -48px auto 0; padding: 0 24px 60px;
+  display: grid; grid-template-columns: 240px 1fr; gap: 32px; position: relative;
+}
+.toc {
+  position: sticky; top: 24px; align-self: start;
+  background: var(--panel); border: 1px solid var(--border);
+  border-radius: var(--radius); box-shadow: var(--shadow);
+  padding: 18px 16px; font-size: 13.5px;
+  max-height: calc(100vh - 48px); overflow-y: auto;
+}
+.toc h4 { margin: 0 0 10px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-dim); }
+.toc a { display: block; padding: 6px 8px; border-radius: 8px; color: var(--text-dim); text-decoration: none; margin-bottom: 2px; }
+.toc a:hover { background: var(--panel-alt); color: var(--text); }
+.toc a.active { background: var(--panel-alt); color: var(--primary-dark); font-weight: 600; }
+
+main { min-width: 0; }
+
+section {
+  background: var(--panel); border: 1px solid var(--border);
+  border-radius: var(--radius); box-shadow: var(--shadow);
+  padding: 34px 40px; margin-bottom: 24px; scroll-margin-top: 20px;
+}
+section h2 { font-size: 23px; margin: 0 0 16px; display: flex; align-items: center; gap: 10px; }
+section h2 .pill-num {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 30px; height: 30px; border-radius: 9px; flex-shrink: 0;
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  color: #fff; font-size: 14px; font-weight: 700;
+}
+h3 { font-size: 17px; margin: 26px 0 10px; }
+h4 { font-size: 15px; margin: 20px 0 8px; }
+p { margin: 0 0 14px; }
+ul, ol { margin: 0 0 16px; padding-left: 22px; }
+li { margin-bottom: 6px; }
+li > ul, li > ol { margin-top: 6px; }
+strong { color: var(--text); }
+blockquote {
+  margin: 0 0 16px; padding: 12px 18px;
+  border-left: 4px solid var(--accent); background: var(--panel-alt);
+  border-radius: 0 8px 8px 0; color: var(--text-dim);
+}
+blockquote p { margin: 0; }
+
+/* tables */
+table { width: 100%; border-collapse: collapse; font-size: 13.8px; margin: 8px 0 18px; }
+th {
+  text-align: left; font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em;
+  color: var(--text-dim); border-bottom: 1px solid var(--border); padding: 8px 10px;
+}
+td { padding: 10px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+tr:last-child td { border-bottom: none; }
+
+/* inline code */
+code {
+  background: #eef0fb; color: var(--primary-dark);
+  padding: 2px 7px; border-radius: 6px;
+  font-family: "SFMono-Regular", Menlo, Consolas, monospace; font-size: 13px;
+}
+
+/* code blocks */
+pre {
+  background: var(--code-bg); color: var(--code-text);
+  padding: 16px 18px; border-radius: 10px; overflow-x: auto;
+  font-size: 13px; line-height: 1.6;
+  font-family: "SFMono-Regular", Menlo, Consolas, monospace;
+  margin: 10px 0 18px;
+}
+pre code { background: transparent; color: inherit; padding: 0; border-radius: 0; font-size: 13px; }
+.codehilite { background: var(--code-bg); border-radius: 10px; overflow-x: auto; margin: 10px 0 18px; }
+.codehilite pre { margin: 0; padding: 16px 18px; background: transparent; }
+
+/* pager */
+.pager { display: flex; justify-content: space-between; gap: 16px; margin-top: 8px; }
+.pager a {
+  flex: 1; display: flex; flex-direction: column; gap: 4px;
+  padding: 16px 20px; border-radius: var(--radius); text-decoration: none;
+  background: var(--panel); border: 1px solid var(--border); box-shadow: var(--shadow);
+  transition: transform 0.15s, border-color 0.15s;
+}
+.pager a:hover { transform: translateY(-2px); border-color: var(--primary); }
+.pager a .dir { font-size: 12px; color: var(--text-dim); }
+.pager a .ttl { font-size: 14.5px; font-weight: 700; color: var(--text); }
+.pager a.next { text-align: right; }
+.pager a.disabled { opacity: 0.4; pointer-events: none; }
+
+footer { text-align: center; color: var(--text-dim); font-size: 13px; padding: 20px 0 40px; }
+footer a { color: var(--text-dim); }
+
+@media (max-width: 900px) {
+  .layout { grid-template-columns: 1fr; }
+  .toc { position: static; max-height: none; }
+  section { padding: 26px 22px; }
+  .hero h1 { font-size: 30px; }
+  .pager { flex-direction: column; }
+}
+
+pre { line-height: 125%; }
+td.linenos .normal { color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px; }
+span.linenos { color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px; }
+td.linenos .special { color: #000000; background-color: #ffffc0; padding-left: 5px; padding-right: 5px; }
+span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 5px; padding-right: 5px; }
+.codehilite .hll { background-color: #49483e }
+.codehilite { background: #272822; color: #F8F8F2 }
+.codehilite .c { color: #959077 } /* Comment */
+.codehilite .err { color: #ED007E; background-color: #1E0010 } /* Error */
+.codehilite .esc { color: #F8F8F2 } /* Escape */
+.codehilite .g { color: #F8F8F2 } /* Generic */
+.codehilite .k { color: #66D9EF } /* Keyword */
+.codehilite .l { color: #AE81FF } /* Literal */
+.codehilite .n { color: #F8F8F2 } /* Name */
+.codehilite .o { color: #FF4689 } /* Operator */
+.codehilite .x { color: #F8F8F2 } /* Other */
+.codehilite .p { color: #F8F8F2 } /* Punctuation */
+.codehilite .ch { color: #959077 } /* Comment.Hashbang */
+.codehilite .cm { color: #959077 } /* Comment.Multiline */
+.codehilite .cp { color: #959077 } /* Comment.Preproc */
+.codehilite .cpf { color: #959077 } /* Comment.PreprocFile */
+.codehilite .c1 { color: #959077 } /* Comment.Single */
+.codehilite .cs { color: #959077 } /* Comment.Special */
+.codehilite .gd { color: #FF4689 } /* Generic.Deleted */
+.codehilite .ge { color: #F8F8F2; font-style: italic } /* Generic.Emph */
+.codehilite .ges { color: #F8F8F2; font-weight: bold; font-style: italic } /* Generic.EmphStrong */
+.codehilite .gr { color: #FF4689 } /* Generic.Error */
+.codehilite .gh { color: #F8F8F2 } /* Generic.Heading */
+.codehilite .gi { color: #A6E22E } /* Generic.Inserted */
+.codehilite .go { color: #66D9EF } /* Generic.Output */
+.codehilite .gp { color: #FF4689; font-weight: bold } /* Generic.Prompt */
+.codehilite .gs { color: #F8F8F2; font-weight: bold } /* Generic.Strong */
+.codehilite .gu { color: #959077 } /* Generic.Subheading */
+.codehilite .gt { color: #66D9EF } /* Generic.Traceback */
+.codehilite .kc { color: #66D9EF } /* Keyword.Constant */
+.codehilite .kd { color: #66D9EF } /* Keyword.Declaration */
+.codehilite .kn { color: #FF4689 } /* Keyword.Namespace */
+.codehilite .kp { color: #66D9EF } /* Keyword.Pseudo */
+.codehilite .kr { color: #66D9EF } /* Keyword.Reserved */
+.codehilite .kt { color: #66D9EF } /* Keyword.Type */
+.codehilite .ld { color: #E6DB74 } /* Literal.Date */
+.codehilite .m { color: #AE81FF } /* Literal.Number */
+.codehilite .s { color: #E6DB74 } /* Literal.String */
+.codehilite .na { color: #A6E22E } /* Name.Attribute */
+.codehilite .nb { color: #A6E22E } /* Name.Builtin */
+.codehilite .nc { color: #A6E22E } /* Name.Class */
+.codehilite .no { color: #66D9EF } /* Name.Constant */
+.codehilite .nd { color: #A6E22E } /* Name.Decorator */
+.codehilite .ni { color: #F8F8F2 } /* Name.Entity */
+.codehilite .ne { color: #A6E22E } /* Name.Exception */
+.codehilite .nf { color: #A6E22E } /* Name.Function */
+.codehilite .nl { color: #F8F8F2 } /* Name.Label */
+.codehilite .nn { color: #F8F8F2 } /* Name.Namespace */
+.codehilite .nx { color: #A6E22E } /* Name.Other */
+.codehilite .py { color: #F8F8F2 } /* Name.Property */
+.codehilite .nt { color: #FF4689 } /* Name.Tag */
+.codehilite .nv { color: #F8F8F2 } /* Name.Variable */
+.codehilite .ow { color: #FF4689 } /* Operator.Word */
+.codehilite .pm { color: #F8F8F2 } /* Punctuation.Marker */
+.codehilite .w { color: #F8F8F2 } /* Text.Whitespace */
+.codehilite .mb { color: #AE81FF } /* Literal.Number.Bin */
+.codehilite .mf { color: #AE81FF } /* Literal.Number.Float */
+.codehilite .mh { color: #AE81FF } /* Literal.Number.Hex */
+.codehilite .mi { color: #AE81FF } /* Literal.Number.Integer */
+.codehilite .mo { color: #AE81FF } /* Literal.Number.Oct */
+.codehilite .sa { color: #E6DB74 } /* Literal.String.Affix */
+.codehilite .sb { color: #E6DB74 } /* Literal.String.Backtick */
+.codehilite .sc { color: #E6DB74 } /* Literal.String.Char */
+.codehilite .dl { color: #E6DB74 } /* Literal.String.Delimiter */
+.codehilite .sd { color: #E6DB74 } /* Literal.String.Doc */
+.codehilite .s2 { color: #E6DB74 } /* Literal.String.Double */
+.codehilite .se { color: #AE81FF } /* Literal.String.Escape */
+.codehilite .sh { color: #E6DB74 } /* Literal.String.Heredoc */
+.codehilite .si { color: #E6DB74 } /* Literal.String.Interpol */
+.codehilite .sx { color: #E6DB74 } /* Literal.String.Other */
+.codehilite .sr { color: #E6DB74 } /* Literal.String.Regex */
+.codehilite .s1 { color: #E6DB74 } /* Literal.String.Single */
+.codehilite .ss { color: #E6DB74 } /* Literal.String.Symbol */
+.codehilite .bp { color: #A6E22E } /* Name.Builtin.Pseudo */
+.codehilite .fm { color: #A6E22E } /* Name.Function.Magic */
+.codehilite .vc { color: #F8F8F2 } /* Name.Variable.Class */
+.codehilite .vg { color: #F8F8F2 } /* Name.Variable.Global */
+.codehilite .vi { color: #F8F8F2 } /* Name.Variable.Instance */
+.codehilite .vm { color: #F8F8F2 } /* Name.Variable.Magic */
+.codehilite .il { color: #AE81FF } /* Literal.Number.Integer.Long */
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="hero-inner">
+    <a class="home-link" href="index.html">← 返回 Semantica 专题首页</a>
+    <span class="eyebrow">🔌 SEMANTICA · COOKBOOK · 集成系列</span>
+    <h1>Agno × Semantica：GraphRAG 上下文智能体</h1>
+    <p class="lead">Semantica 官方 Cookbook 中文翻译 · 第 36 / 37 篇</p>
+    <div class="hero-badges">
+      <span class="badge">📦 semantica</span>
+      <span class="badge">🕸️ 知识图谱</span>
+      <span class="badge">🔎 GraphRAG</span>
+    </div>
+  </div>
+</header>
+
+<div class="layout">
+  <nav class="toc">
+    <h4>目录</h4>
+    <a href="#sec-1">架构</a>
+<a href="#sec-2">安装</a>
+<a href="#sec-3">1. 导入 — Semantica 核心 + Agno 集成</a>
+<a href="#sec-4">2. 构建 Semantica 抽取流水线</a>
+<a href="#sec-5">3. 直接使用 Semantica 抽取（在 Agno 之前）</a>
+<a href="#sec-6">4. 构建 AgnoKnowledgeGraph</a>
+<a href="#sec-7">5. GraphRAG 检索</a>
+<a href="#sec-8">6. AgnoKGToolkit — 实时图谱构建</a>
+<a href="#sec-9">7. 运行完整的 Agno GraphRAG 智能体（需要 API 密钥）</a>
+<a href="#sec-10">8. 使用 Semantica 进行会话后图谱分析</a>
+<a href="#sec-11">小结</a>
+  </nav>
+
+  <main>
+    <section id="overview"><div class="intro"><p>本 notebook 演示如何为 Agno 智能体提供一个<strong>关系型知识图谱</strong>，而非扁平的文档存储。该智能体通过<strong>多跳图遍历</strong>来检索答案——发现纯向量检索会遗漏的连接。</p>
+<p><strong>领域：</strong> 监管合规（Basel IV / DORA）——文档被摄取，实体与关系被抽取，然后智能体通过在图谱中跳转来回答问题。</p>
+<hr /></div></section>
+<section id="sec-1"><h2><span class="pill-num">1</span>架构</h2><div class="codehilite"><pre><span></span><code>Agno Agent
+  ├── knowledge=AgnoKnowledgeGraph       ← GraphRAG 知识库
+  └── tools=[AgnoKGToolkit]              ← 实时的图谱构建/查询工具
+          │
+          │   由 Semantica 支撑：
+          ├── NERExtractor               ← 命名实体识别
+          ├── RelationExtractor          ← 关系抽取
+          ├── GraphBuilder               ← 从抽取结果构建 ContextGraph
+          ├── ContextGraph               ← 带分析能力的内存图谱
+          └── Reasoner                   ← 基于规则的推断
+</code></pre></div></section>
+<section id="sec-2"><h2><span class="pill-num">2</span>安装</h2><div class="codehilite"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>semantica<span class="o">[</span>agno<span class="o">]</span>
+</code></pre></div></section>
+<section id="sec-3"><h2><span class="pill-num">3</span>1. 导入 — Semantica 核心 + Agno 集成</h2><div class="codehilite"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">sys</span><span class="o">,</span><span class="w"> </span><span class="nn">os</span><span class="o">,</span><span class="w"> </span><span class="nn">json</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="s2">"../../"</span><span class="p">))</span>
+
+<span class="c1"># ── Semantica 核心——直接用于流水线设置 ───────────────────────</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">semantica.kg</span><span class="w"> </span><span class="kn">import</span> <span class="n">GraphBuilder</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">semantica.context</span><span class="w"> </span><span class="kn">import</span> <span class="n">ContextGraph</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">semantica.semantic_extract</span><span class="w"> </span><span class="kn">import</span> <span class="n">NERExtractor</span><span class="p">,</span> <span class="n">RelationExtractor</span><span class="p">,</span> <span class="n">TripletExtractor</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">semantica.reasoning</span><span class="w"> </span><span class="kn">import</span> <span class="n">Reasoner</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">semantica.vector_store</span><span class="w"> </span><span class="kn">import</span> <span class="n">VectorStore</span>
+
+<span class="c1"># ── Agno 集成层 ───────────────────────────────────────────────────</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">integrations.agno</span><span class="w"> </span><span class="kn">import</span> <span class="n">AgnoKnowledgeGraph</span><span class="p">,</span> <span class="n">AgnoKGToolkit</span><span class="p">,</span> <span class="n">AGNO_AVAILABLE</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Semantica imports OK"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Agno installed: </span><span class="si">{</span><span class="n">AGNO_AVAILABLE</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</code></pre></div></section>
+<section id="sec-4"><h2><span class="pill-num">4</span>2. 构建 Semantica 抽取流水线</h2><p>抽取流水线（NER → 关系抽取 → 图谱构建）是纯 Semantica 的。我们显式地构建每个组件，以便也能在 Agno 之外使用它们进行分析。</p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># NER——识别组织、法规、日期、金额、角色</span>
+<span class="n">ner</span> <span class="o">=</span> <span class="n">NERExtractor</span><span class="p">()</span>
+
+<span class="c1"># 关系抽取器——发现实体之间的带类型边</span>
+<span class="n">rel_extractor</span> <span class="o">=</span> <span class="n">RelationExtractor</span><span class="p">(</span><span class="n">confidence_threshold</span><span class="o">=</span><span class="mf">0.60</span><span class="p">)</span>
+
+<span class="c1"># 知识图谱构建器</span>
+<span class="n">graph_builder</span> <span class="o">=</span> <span class="n">GraphBuilder</span><span class="p">(</span><span class="n">merge_entities</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">temporal_support</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="c1"># 内存上下文图谱（如需持久化可切换为 neo4j/falkordb）</span>
+<span class="n">context_graph</span> <span class="o">=</span> <span class="n">ContextGraph</span><span class="p">(</span><span class="n">advanced_analytics</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="c1"># 用于在图谱上进行规则推断的推理器</span>
+<span class="n">reasoner</span> <span class="o">=</span> <span class="n">Reasoner</span><span class="p">()</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Semantica extraction pipeline assembled"</span><span class="p">)</span>
+</code></pre></div></section>
+<section id="sec-5"><h2><span class="pill-num">5</span>3. 直接使用 Semantica 抽取（在 Agno 之前）</h2><p>我们首先使用<strong>原生 Semantica API</strong> 演示抽取，以便你确切地看到进入图谱的内容。
+这正是 <code>AgnoKnowledgeGraph.load()</code> 内部运行的同一流水线。</p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 监管文档（代表性片段）</span>
+<span class="n">REGULATORY_DOCS</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="p">{</span>
+        <span class="s2">"title"</span><span class="p">:</span> <span class="s2">"Basel IV — Capital Requirements"</span><span class="p">,</span>
+        <span class="s2">"text"</span><span class="p">:</span> <span class="p">(</span>
+            <span class="s2">"Basel IV introduces a revised standardised approach for credit risk, "</span>
+            <span class="s2">"replacing internal model floors. Banks must maintain a minimum CET1 ratio "</span>
+            <span class="s2">"of 4.5</span><span class="si">% a</span><span class="s2">nd a total capital ratio of 8%. The BCBS finalised these requirements "</span>
+            <span class="s2">"in December 2017 with a phased implementation starting January 2022. "</span>
+            <span class="s2">"National regulators including the EBA and FCA are responsible for local "</span>
+            <span class="s2">"transposition. Risk-weighted assets under Basel IV are calculated using "</span>
+            <span class="s2">"the Output Floor, capping RWA reductions at 72.5%."</span>
+        <span class="p">),</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s2">"title"</span><span class="p">:</span> <span class="s2">"DORA — Digital Operational Resilience Act"</span><span class="p">,</span>
+        <span class="s2">"text"</span><span class="p">:</span> <span class="p">(</span>
+            <span class="s2">"DORA (Regulation EU 2022/2554) applies to financial entities and ICT "</span>
+            <span class="s2">"third-party service providers operating in the EU. It mandates ICT risk "</span>
+            <span class="s2">"management frameworks, incident classification, and annual operational "</span>
+            <span class="s2">"resilience testing. Supervised entities must report major ICT incidents to "</span>
+            <span class="s2">"the European Supervisory Authorities (ESAs) within 4 hours of classification. "</span>
+            <span class="s2">"Critical ICT providers are subject to direct oversight by the Joint Oversight "</span>
+            <span class="s2">"Network led by ESMA, EBA, and EIOPA. DORA became applicable on 17 January 2025."</span>
+        <span class="p">),</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s2">"title"</span><span class="p">:</span> <span class="s2">"AML — Anti-Money Laundering Directive VI"</span><span class="p">,</span>
+        <span class="s2">"text"</span><span class="p">:</span> <span class="p">(</span>
+            <span class="s2">"AMLD6 strengthens the EU's anti-money laundering framework by extending "</span>
+            <span class="s2">"criminal liability to 22 predicate offences including cybercrime and "</span>
+            <span class="s2">"environmental crime. Financial institutions must apply Customer Due Diligence "</span>
+            <span class="s2">"(CDD) at onboarding and Enhanced Due Diligence (EDD) for high-risk customers. "</span>
+            <span class="s2">"Suspicious Activity Reports (SARs) are filed with the national Financial "</span>
+            <span class="s2">"Intelligence Unit (FIU). Non-compliance carries penalties up to 10</span><span class="si">% o</span><span class="s2">f "</span>
+            <span class="s2">"annual global turnover. AMLD6 was transposed into UK law via MLCO 2020."</span>
+        <span class="p">),</span>
+    <span class="p">},</span>
+<span class="p">]</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Documents to ingest: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">REGULATORY_DOCS</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">doc</span> <span class="ow">in</span> <span class="n">REGULATORY_DOCS</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  • </span><span class="si">{</span><span class="n">doc</span><span class="p">[</span><span class="s1">'title'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</code></pre></div>
+
+<div class="codehilite"><pre><span></span><code><span class="c1"># ── 直接使用 Semantica 运行 NER ─────────────────────────────────────────</span>
+<span class="n">all_entities</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">doc</span> <span class="ow">in</span> <span class="n">REGULATORY_DOCS</span><span class="p">:</span>
+    <span class="n">entities</span> <span class="o">=</span> <span class="n">ner</span><span class="o">.</span><span class="n">extract_entities</span><span class="p">(</span><span class="n">doc</span><span class="p">[</span><span class="s1">'text'</span><span class="p">])</span> <span class="ow">or</span> <span class="p">[]</span>
+    <span class="n">all_entities</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">entities</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"[</span><span class="si">{</span><span class="n">doc</span><span class="p">[</span><span class="s1">'title'</span><span class="p">]</span><span class="si">}</span><span class="s2">] → </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">entities</span><span class="p">)</span><span class="si">}</span><span class="s2"> entities"</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">entities</span><span class="p">[:</span><span class="mi">4</span><span class="p">]:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"    </span><span class="si">{</span><span class="nb">getattr</span><span class="p">(</span><span class="n">e</span><span class="p">,</span><span class="s1">'name'</span><span class="p">,</span><span class="s1">'?'</span><span class="p">)</span><span class="si">:</span><span class="s2">30s</span><span class="si">}</span><span class="s2">  type=</span><span class="si">{</span><span class="nb">getattr</span><span class="p">(</span><span class="n">e</span><span class="p">,</span><span class="s1">'type'</span><span class="p">,</span><span class="s1">'?'</span><span class="p">)</span><span class="si">}</span><span class="s2">  conf=</span><span class="si">{</span><span class="nb">getattr</span><span class="p">(</span><span class="n">e</span><span class="p">,</span><span class="s1">'confidence'</span><span class="p">,</span><span class="mi">0</span><span class="p">)</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Total entities extracted: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">all_entities</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</code></pre></div>
+
+<div class="codehilite"><pre><span></span><code><span class="c1"># ── 直接使用 Semantica 运行关系抽取 ──────────────────────────</span>
+<span class="n">all_relations</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">doc</span> <span class="ow">in</span> <span class="n">REGULATORY_DOCS</span><span class="p">:</span>
+    <span class="n">relations</span> <span class="o">=</span> <span class="n">rel_extractor</span><span class="o">.</span><span class="n">extract_relations</span><span class="p">(</span><span class="n">doc</span><span class="p">[</span><span class="s1">'text'</span><span class="p">])</span> <span class="ow">or</span> <span class="p">[]</span>
+    <span class="n">all_relations</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">relations</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"[</span><span class="si">{</span><span class="n">doc</span><span class="p">[</span><span class="s1">'title'</span><span class="p">]</span><span class="si">}</span><span class="s2">] → </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">relations</span><span class="p">)</span><span class="si">}</span><span class="s2"> relations"</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">relations</span><span class="p">[:</span><span class="mi">3</span><span class="p">]:</span>
+        <span class="n">src</span>  <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="s1">'source'</span><span class="p">,</span> <span class="s1">'?'</span><span class="p">)</span>
+        <span class="n">rtype</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="s1">'type'</span><span class="p">,</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="s1">'relation'</span><span class="p">,</span> <span class="s1">'?'</span><span class="p">))</span>
+        <span class="n">tgt</span>  <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="s1">'target'</span><span class="p">,</span> <span class="s1">'?'</span><span class="p">)</span>
+        <span class="n">conf</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="s1">'confidence'</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"    </span><span class="si">{</span><span class="n">src</span><span class="si">!s:</span><span class="s2">20s</span><span class="si">}</span><span class="s2"> --[</span><span class="si">{</span><span class="n">rtype</span><span class="si">}</span><span class="s2">]--&gt; </span><span class="si">{</span><span class="n">tgt</span><span class="si">!s:</span><span class="s2">20s</span><span class="si">}</span><span class="s2">  conf=</span><span class="si">{</span><span class="n">conf</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Total relations extracted: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">all_relations</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</code></pre></div></section>
+<section id="sec-6"><h2><span class="pill-num">6</span>4. 构建 AgnoKnowledgeGraph</h2><p><code>AgnoKnowledgeGraph</code> 包装抽取流水线，并实现 Agno 的 <code>AgentKnowledge</code> 协议。它在内部运行相同的 NER + 关系抽取 + 图谱构建流水线——这里我们传入预先构建好的组件，以便复用相同的实例。</p>
+<div class="codehilite"><pre><span></span><code><span class="n">kg</span> <span class="o">=</span> <span class="n">AgnoKnowledgeGraph</span><span class="p">(</span>
+    <span class="n">graph_builder</span><span class="o">=</span><span class="n">graph_builder</span><span class="p">,</span>
+    <span class="n">ner_extractor</span><span class="o">=</span><span class="n">ner</span><span class="p">,</span>
+    <span class="n">relation_extractor</span><span class="o">=</span><span class="n">rel_extractor</span><span class="p">,</span>
+    <span class="n">context_graph</span><span class="o">=</span><span class="n">context_graph</span><span class="p">,</span>
+    <span class="n">num_documents</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="c1"># 通过集成封装摄取所有文档</span>
+<span class="n">kg</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">texts</span><span class="o">=</span><span class="p">[</span><span class="n">doc</span><span class="p">[</span><span class="s1">'text'</span><span class="p">]</span> <span class="k">for</span> <span class="n">doc</span> <span class="ow">in</span> <span class="n">REGULATORY_DOCS</span><span class="p">])</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"AgnoKnowledgeGraph: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">kg</span><span class="o">.</span><span class="n">_docs</span><span class="p">)</span><span class="si">}</span><span class="s2"> documents indexed"</span><span class="p">)</span>
+</code></pre></div></section>
+<section id="sec-7"><h2><span class="pill-num">7</span>5. GraphRAG 检索</h2><p><code>search()</code> 方法实现<strong>多跳 GraphRAG</strong>：
+1. 对已存储的文档文本进行向量相似度计算
+2. 在上下文图谱中进行实体查找
+3. 对实体邻域进行图谱跳转扩展
+4. 将上下文注入返回的文档</p>
+<div class="codehilite"><pre><span></span><code><span class="n">queries</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">"What is the minimum CET1 ratio required under Basel IV?"</span><span class="p">,</span>
+    <span class="s2">"Which authorities supervise critical ICT providers under DORA?"</span><span class="p">,</span>
+    <span class="s2">"What are the reporting timelines for major ICT incidents?"</span><span class="p">,</span>
+    <span class="s2">"How does AMLD6 handle customer due diligence?"</span><span class="p">,</span>
+<span class="p">]</span>
+
+<span class="k">for</span> <span class="n">query</span> <span class="ow">in</span> <span class="n">queries</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Q: </span><span class="si">{</span><span class="n">query</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="n">results</span> <span class="o">=</span> <span class="n">kg</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">num_documents</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"   Retrieved </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">results</span><span class="p">)</span><span class="si">}</span><span class="s2"> document(s)"</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">doc</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">results</span><span class="p">,</span> <span class="mi">1</span><span class="p">):</span>
+        <span class="n">content</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">doc</span><span class="p">,</span> <span class="s1">'content'</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">doc</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"   [</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">] </span><span class="si">{</span><span class="n">content</span><span class="p">[:</span><span class="mi">120</span><span class="p">]</span><span class="si">}</span><span class="s2">..."</span><span class="p">)</span>
+</code></pre></div>
+
+<div class="codehilite"><pre><span></span><code><span class="c1"># 获取特定实体的图谱上下文</span>
+<span class="n">entity_contexts</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"BCBS"</span><span class="p">,</span> <span class="s2">"EBA"</span><span class="p">,</span> <span class="s2">"DORA"</span><span class="p">,</span> <span class="s2">"Basel IV"</span><span class="p">]</span>
+<span class="k">for</span> <span class="n">entity</span> <span class="ow">in</span> <span class="n">entity_contexts</span><span class="p">:</span>
+    <span class="n">ctx</span> <span class="o">=</span> <span class="n">kg</span><span class="o">.</span><span class="n">get_graph_context</span><span class="p">(</span><span class="n">entity</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Graph context for '</span><span class="si">{</span><span class="n">entity</span><span class="si">}</span><span class="s2">':"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">ctx</span> <span class="k">if</span> <span class="n">ctx</span> <span class="k">else</span> <span class="s2">"  (no graph nodes found — depends on NER extraction quality)"</span><span class="p">)</span>
+</code></pre></div></section>
+<section id="sec-8"><h2><span class="pill-num">8</span>6. AgnoKGToolkit — 实时图谱构建</h2><p><code>AgnoKGToolkit</code> 暴露 7 个工具，LLM 可以在推理过程中调用它们来<strong>主动修改和查询图谱</strong>。</p>
+<div class="codehilite"><pre><span></span><code><span class="n">toolkit</span> <span class="o">=</span> <span class="n">AgnoKGToolkit</span><span class="p">(</span>
+    <span class="n">ner_extractor</span><span class="o">=</span><span class="n">ner</span><span class="p">,</span>
+    <span class="n">relation_extractor</span><span class="o">=</span><span class="n">rel_extractor</span><span class="p">,</span>
+    <span class="n">reasoner</span><span class="o">=</span><span class="n">reasoner</span><span class="p">,</span>
+    <span class="n">context</span><span class="o">=</span><span class="n">context_graph</span><span class="p">,</span>  <span class="c1"># 与知识库共享同一个图谱</span>
+<span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"AgnoKGToolkit: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">toolkit</span><span class="o">.</span><span class="n">_tools</span><span class="p">)</span><span class="si">}</span><span class="s2"> tools"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"  Tools:"</span><span class="p">,</span> <span class="p">[</span><span class="n">fn</span><span class="o">.</span><span class="vm">__name__</span> <span class="k">for</span> <span class="n">fn</span> <span class="ow">in</span> <span class="n">toolkit</span><span class="o">.</span><span class="n">_tools</span><span class="p">])</span>
+</code></pre></div>
+
+<div class="codehilite"><pre><span></span><code><span class="c1"># 工具：extract_entities</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"="</span> <span class="o">*</span> <span class="mi">55</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"TOOL: extract_entities"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"="</span> <span class="o">*</span> <span class="mi">55</span><span class="p">)</span>
+
+<span class="n">new_text</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"The PRA published a consultation paper requiring UK banks to "</span>
+    <span class="s2">"implement DORA-equivalent resilience testing by Q3 2025, "</span>
+    <span class="s2">"with Barclays and HSBC named as systemic institutions."</span>
+<span class="p">)</span>
+<span class="n">entities_json</span> <span class="o">=</span> <span class="n">toolkit</span><span class="o">.</span><span class="n">extract_entities</span><span class="p">(</span><span class="n">new_text</span><span class="p">)</span>
+<span class="n">entities_result</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">entities_json</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Found </span><span class="si">{</span><span class="n">entities_result</span><span class="p">[</span><span class="s1">'count'</span><span class="p">]</span><span class="si">}</span><span class="s2"> entities:"</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">entities_result</span><span class="p">[</span><span class="s1">'entities'</span><span class="p">]:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  </span><span class="si">{</span><span class="n">e</span><span class="p">[</span><span class="s1">'name'</span><span class="p">]</span><span class="si">:</span><span class="s2">30s</span><span class="si">}</span><span class="s2">  type=</span><span class="si">{</span><span class="n">e</span><span class="p">[</span><span class="s1">'type'</span><span class="p">]</span><span class="si">:</span><span class="s2">15s</span><span class="si">}</span><span class="s2">  conf=</span><span class="si">{</span><span class="n">e</span><span class="p">[</span><span class="s1">'confidence'</span><span class="p">]</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</code></pre></div>
+
+<div class="codehilite"><pre><span></span><code><span class="c1"># 工具：extract_relations</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"="</span> <span class="o">*</span> <span class="mi">55</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"TOOL: extract_relations"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"="</span> <span class="o">*</span> <span class="mi">55</span><span class="p">)</span>
+
+<span class="n">relations_json</span> <span class="o">=</span> <span class="n">toolkit</span><span class="o">.</span><span class="n">extract_relations</span><span class="p">(</span><span class="n">new_text</span><span class="p">)</span>
+<span class="n">relations_result</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">relations_json</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Found </span><span class="si">{</span><span class="n">relations_result</span><span class="p">[</span><span class="s1">'count'</span><span class="p">]</span><span class="si">}</span><span class="s2"> relations:"</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">relations_result</span><span class="p">[</span><span class="s1">'relations'</span><span class="p">]:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  </span><span class="si">{</span><span class="n">r</span><span class="p">[</span><span class="s1">'source'</span><span class="p">]</span><span class="si">:</span><span class="s2">20s</span><span class="si">}</span><span class="s2"> --[</span><span class="si">{</span><span class="n">r</span><span class="p">[</span><span class="s1">'relation'</span><span class="p">]</span><span class="si">}</span><span class="s2">]--&gt; </span><span class="si">{</span><span class="n">r</span><span class="p">[</span><span class="s1">'target'</span><span class="p">]</span><span class="si">:</span><span class="s2">20s</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</code></pre></div>
+
+<div class="codehilite"><pre><span></span><code><span class="c1"># 工具：add_to_graph</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"="</span> <span class="o">*</span> <span class="mi">55</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"TOOL: add_to_graph"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"="</span> <span class="o">*</span> <span class="mi">55</span><span class="p">)</span>
+
+<span class="n">add_result</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">toolkit</span><span class="o">.</span><span class="n">add_to_graph</span><span class="p">(</span>
+    <span class="n">entities</span><span class="o">=</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">([</span>
+        <span class="p">{</span><span class="s2">"name"</span><span class="p">:</span> <span class="s2">"PRA"</span><span class="p">,</span> <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"REGULATOR"</span><span class="p">},</span>
+        <span class="p">{</span><span class="s2">"name"</span><span class="p">:</span> <span class="s2">"Barclays"</span><span class="p">,</span> <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"BANK"</span><span class="p">},</span>
+        <span class="p">{</span><span class="s2">"name"</span><span class="p">:</span> <span class="s2">"HSBC"</span><span class="p">,</span> <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"BANK"</span><span class="p">},</span>
+    <span class="p">]),</span>
+    <span class="n">relations</span><span class="o">=</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">([</span>
+        <span class="p">{</span><span class="s2">"source"</span><span class="p">:</span> <span class="s2">"PRA"</span><span class="p">,</span> <span class="s2">"relation"</span><span class="p">:</span> <span class="s2">"SUPERVISES"</span><span class="p">,</span> <span class="s2">"target"</span><span class="p">:</span> <span class="s2">"Barclays"</span><span class="p">},</span>
+        <span class="p">{</span><span class="s2">"source"</span><span class="p">:</span> <span class="s2">"PRA"</span><span class="p">,</span> <span class="s2">"relation"</span><span class="p">:</span> <span class="s2">"SUPERVISES"</span><span class="p">,</span> <span class="s2">"target"</span><span class="p">:</span> <span class="s2">"HSBC"</span><span class="p">},</span>
+        <span class="p">{</span><span class="s2">"source"</span><span class="p">:</span> <span class="s2">"Barclays"</span><span class="p">,</span> <span class="s2">"relation"</span><span class="p">:</span> <span class="s2">"SUBJECT_TO"</span><span class="p">,</span> <span class="s2">"target"</span><span class="p">:</span> <span class="s2">"DORA"</span><span class="p">},</span>
+        <span class="p">{</span><span class="s2">"source"</span><span class="p">:</span> <span class="s2">"HSBC"</span><span class="p">,</span> <span class="s2">"relation"</span><span class="p">:</span> <span class="s2">"SUBJECT_TO"</span><span class="p">,</span> <span class="s2">"target"</span><span class="p">:</span> <span class="s2">"DORA"</span><span class="p">},</span>
+    <span class="p">]),</span>
+<span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Added: </span><span class="si">{</span><span class="n">add_result</span><span class="p">[</span><span class="s1">'nodes_added'</span><span class="p">]</span><span class="si">}</span><span class="s2"> nodes, </span><span class="si">{</span><span class="n">add_result</span><span class="p">[</span><span class="s1">'edges_added'</span><span class="p">]</span><span class="si">}</span><span class="s2"> edges"</span><span class="p">)</span>
+</code></pre></div>
+
+<div class="codehilite"><pre><span></span><code><span class="c1"># 工具：query_graph</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"="</span> <span class="o">*</span> <span class="mi">55</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"TOOL: query_graph"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"="</span> <span class="o">*</span> <span class="mi">55</span><span class="p">)</span>
+
+<span class="n">query_result</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">toolkit</span><span class="o">.</span><span class="n">query_graph</span><span class="p">(</span><span class="s2">"PRA"</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Keyword query 'PRA' → </span><span class="si">{</span><span class="n">query_result</span><span class="p">[</span><span class="s1">'count'</span><span class="p">]</span><span class="si">}</span><span class="s2"> node(s):"</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">query_result</span><span class="p">[</span><span class="s1">'results'</span><span class="p">]:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  label=</span><span class="si">{</span><span class="n">node</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'label'</span><span class="p">)</span><span class="si">}</span><span class="s2">  type=</span><span class="si">{</span><span class="n">node</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'type'</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</code></pre></div>
+
+<div class="codehilite"><pre><span></span><code><span class="c1"># 工具：find_related</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"="</span> <span class="o">*</span> <span class="mi">55</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"TOOL: find_related"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"="</span> <span class="o">*</span> <span class="mi">55</span><span class="p">)</span>
+
+<span class="n">related_result</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">toolkit</span><span class="o">.</span><span class="n">find_related</span><span class="p">(</span><span class="s2">"Barclays"</span><span class="p">,</span> <span class="n">hops</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Related to 'Barclays' (2 hops): </span><span class="si">{</span><span class="n">related_result</span><span class="p">[</span><span class="s1">'count'</span><span class="p">]</span><span class="si">}</span><span class="s2"> entity/entities"</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">related_result</span><span class="p">[</span><span class="s1">'related'</span><span class="p">]:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  → </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</code></pre></div>
+
+<div class="codehilite"><pre><span></span><code><span class="c1"># 工具：infer_facts——Semantica 的 Reasoner 从图谱状态推导出新事实</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"="</span> <span class="o">*</span> <span class="mi">55</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"TOOL: infer_facts"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"="</span> <span class="o">*</span> <span class="mi">55</span><span class="p">)</span>
+
+<span class="c1"># 规则：监管合规推断</span>
+<span class="n">inference_rules</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">([</span>
+    <span class="s2">"IF BANK(?x) THEN FinancialEntity(?x)"</span><span class="p">,</span>
+    <span class="s2">"IF REGULATOR(?x) THEN SupervisoryAuthority(?x)"</span><span class="p">,</span>
+    <span class="s2">"IF FinancialEntity(?x) THEN ComplianceSubject(?x)"</span><span class="p">,</span>
+<span class="p">])</span>
+
+<span class="n">infer_result</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">toolkit</span><span class="o">.</span><span class="n">infer_facts</span><span class="p">(</span><span class="n">rules</span><span class="o">=</span><span class="n">inference_rules</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Inferred </span><span class="si">{</span><span class="n">infer_result</span><span class="p">[</span><span class="s1">'count'</span><span class="p">]</span><span class="si">}</span><span class="s2"> new fact(s):"</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">fact</span> <span class="ow">in</span> <span class="n">infer_result</span><span class="p">[</span><span class="s1">'inferred_facts'</span><span class="p">][:</span><span class="mi">8</span><span class="p">]:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  </span><span class="si">{</span><span class="n">fact</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</code></pre></div>
+
+<div class="codehilite"><pre><span></span><code><span class="c1"># 工具：export_subgraph——为下游系统导出知识</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"="</span> <span class="o">*</span> <span class="mi">55</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"TOOL: export_subgraph (JSON-LD)"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"="</span> <span class="o">*</span> <span class="mi">55</span><span class="p">)</span>
+
+<span class="n">export_result</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">toolkit</span><span class="o">.</span><span class="n">export_subgraph</span><span class="p">(</span><span class="n">entity</span><span class="o">=</span><span class="s2">"DORA"</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">"json-ld"</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Exported as format='</span><span class="si">{</span><span class="n">export_result</span><span class="p">[</span><span class="s1">'format'</span><span class="p">]</span><span class="si">}</span><span class="s2">'"</span><span class="p">)</span>
+<span class="k">if</span> <span class="s1">'data'</span> <span class="ow">in</span> <span class="n">export_result</span><span class="p">:</span>
+    <span class="n">preview</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">export_result</span><span class="p">[</span><span class="s1">'data'</span><span class="p">])[:</span><span class="mi">300</span><span class="p">]</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Preview: </span><span class="si">{</span><span class="n">preview</span><span class="si">}</span><span class="s2">..."</span><span class="p">)</span>
+<span class="k">elif</span> <span class="s1">'nodes'</span> <span class="ow">in</span> <span class="n">export_result</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Graph nodes exported: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">export_result</span><span class="p">[</span><span class="s1">'nodes'</span><span class="p">])</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">export_result</span><span class="p">[</span><span class="s1">'nodes'</span><span class="p">][:</span><span class="mi">5</span><span class="p">]:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  </span><span class="si">{</span><span class="n">node</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</code></pre></div></section>
+<section id="sec-9"><h2><span class="pill-num">9</span>7. 运行完整的 Agno GraphRAG 智能体（需要 API 密钥）</h2><div class="codehilite"><pre><span></span><code><span class="k">if</span> <span class="n">AGNO_AVAILABLE</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">agno.agent</span><span class="w"> </span><span class="kn">import</span> <span class="n">Agent</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">agno.models.openai</span><span class="w"> </span><span class="kn">import</span> <span class="n">OpenAIChat</span>
+
+    <span class="n">compliance_agent</span> <span class="o">=</span> <span class="n">Agent</span><span class="p">(</span>
+        <span class="n">name</span><span class="o">=</span><span class="s2">"ComplianceAnalyst"</span><span class="p">,</span>
+        <span class="n">model</span><span class="o">=</span><span class="n">OpenAIChat</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="s2">"gpt-4o"</span><span class="p">),</span>
+        <span class="n">knowledge</span><span class="o">=</span><span class="n">kg</span><span class="p">,</span>
+        <span class="n">search_knowledge</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">tools</span><span class="o">=</span><span class="p">[</span><span class="n">toolkit</span><span class="p">],</span>
+        <span class="n">show_tool_calls</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">"You are a regulatory compliance analyst. Use the knowledge graph "</span>
+            <span class="s2">"to answer questions about Basel IV, DORA, and AML regulations. "</span>
+            <span class="s2">"When answering, use find_related and query_graph to discover "</span>
+            <span class="s2">"connections between regulators, rules, and institutions."</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+
+    <span class="n">compliance_agent</span><span class="o">.</span><span class="n">print_response</span><span class="p">(</span>
+        <span class="s2">"Which supervisory authorities are responsible for overseeing DORA compliance "</span>
+        <span class="s2">"for UK banks, and how does this relate to Basel IV capital requirements?"</span>
+    <span class="p">)</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"[Agno not installed — skipping live agent run]"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">()</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"Expected reasoning flow:"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"  search_knowledge('DORA supervisory authorities UK banks')"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"    → retrieves DORA doc with graph expansion"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"  query_graph('PRA') → finds PRA node"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"  find_related('PRA', hops=2) → PRA → SUPERVISES → Barclays, HSBC"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"  find_related('Basel IV', hops=1) → capital ratio requirements"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"  Answer: PRA supervises UK banks under DORA; Basel IV CET1 requirement is 4.5%"</span><span class="p">)</span>
+</code></pre></div></section>
+<section id="sec-10"><h2><span class="pill-num">10</span>8. 使用 Semantica 进行会话后图谱分析</h2><p>智能体会话结束后，直接使用 Semantica 的图谱分析能力来探索累积的知识。</p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 在同一个 ContextGraph 上直接使用 Semantica 的 GraphAnalyzer</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">semantica.kg</span><span class="w"> </span><span class="kn">import</span> <span class="n">GraphAnalyzer</span><span class="p">,</span> <span class="n">CentralityCalculator</span><span class="p">,</span> <span class="n">PathFinder</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="n">analyzer</span> <span class="o">=</span> <span class="n">GraphAnalyzer</span><span class="p">()</span>
+    <span class="n">analysis</span> <span class="o">=</span> <span class="n">analyzer</span><span class="o">.</span><span class="n">analyze_graph</span><span class="p">(</span><span class="n">context_graph</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"Graph analysis (Semantica native):"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">analysis</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">analysis</span><span class="o">.</span><span class="n">items</span><span class="p">())[:</span><span class="mi">8</span><span class="p">]:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  </span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">v</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  </span><span class="si">{</span><span class="n">analysis</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"GraphAnalyzer: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</code></pre></div>
+
+<div class="codehilite"><pre><span></span><code><span class="c1"># 中心性——哪些实体连接最多/最具影响力？</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="n">centrality</span> <span class="o">=</span> <span class="n">CentralityCalculator</span><span class="p">()</span>
+    <span class="n">scores</span> <span class="o">=</span> <span class="n">centrality</span><span class="o">.</span><span class="n">calculate_degree_centrality</span><span class="p">(</span><span class="n">context_graph</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"Degree centrality (most connected entities):"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">scores</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="n">top</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">scores</span><span class="o">.</span><span class="n">items</span><span class="p">(),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">)[:</span><span class="mi">5</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">entity</span><span class="p">,</span> <span class="n">score</span> <span class="ow">in</span> <span class="n">top</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  </span><span class="si">{</span><span class="n">entity</span><span class="si">:</span><span class="s2">30s</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">score</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  </span><span class="si">{</span><span class="n">scores</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"CentralityCalculator: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</code></pre></div></section>
+<section id="sec-11"><h2><span class="pill-num">11</span>小结</h2><table>
+<thead>
+<tr>
+<th>组件</th>
+<th>作用</th>
+<th>库</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>NERExtractor</code></td>
+<td>从文本中抽取监管实体</td>
+<td>Semantica</td>
+</tr>
+<tr>
+<td><code>RelationExtractor</code></td>
+<td>抽取实体之间的带类型边</td>
+<td>Semantica</td>
+</tr>
+<tr>
+<td><code>GraphBuilder</code></td>
+<td>从抽取结果构建 <code>ContextGraph</code></td>
+<td>Semantica</td>
+</tr>
+<tr>
+<td><code>Reasoner</code></td>
+<td>从图谱状态推断新事实</td>
+<td>Semantica</td>
+</tr>
+<tr>
+<td><code>AgnoKnowledgeGraph</code></td>
+<td>GraphRAG <code>AgentKnowledge</code> 接口</td>
+<td>Agno 集成</td>
+</tr>
+<tr>
+<td><code>AgnoKGToolkit</code></td>
+<td>供 Agno LLM 使用的 7 个实时图谱工具</td>
+<td>Agno 集成</td>
+</tr>
+<tr>
+<td><code>GraphAnalyzer</code> / <code>CentralityCalculator</code></td>
+<td>会话后分析</td>
+<td>Semantica</td>
+</tr>
+</tbody>
+</table>
+<p>Agno 集成封装了 Semantica 组件——完整的 Semantica API 可用于独立于智能体的前处理/后处理和分析。</p></section>
+    <nav class="pager"><a class="prev" href="01-agno-decision-intelligence.html"><span class="dir">← 上一篇</span><span class="ttl">Agno 决策智能</span></a><a class="next" href="03-agno-multi-agent-shared-context.html"><span class="dir">→ 下一篇</span><span class="ttl">Agno 多智能体共享上下文</span></a></nav>
+  </main>
+</div>
+
+<footer>由 Semantica 官方 Cookbook 生成的中文说明页 · <a href="https://github.com/semantica-agi/semantica">semantica-agi/semantica</a></footer>
+
+</body>
+</html>

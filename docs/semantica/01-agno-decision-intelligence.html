@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agno × Semantica：决策智能智能体 · Semantica Cookbook</title>
+<style>
+
+:root {
+  --bg: #0b0e17;
+  --bg-soft: #10141f;
+  --panel: #ffffff;
+  --panel-alt: #f6f7fb;
+  --border: #e6e8f0;
+  --text: #1a1d29;
+  --text-dim: #5a5f72;
+  --primary: #6366f1;
+  --primary-dark: #4338ca;
+  --accent: #14b8a6;
+  --accent-2: #f59e0b;
+  --code-bg: #0f172a;
+  --code-text: #e2e8f0;
+  --radius: 14px;
+  --shadow: 0 10px 30px -12px rgba(30, 41, 59, 0.18);
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif;
+  color: var(--text);
+  background: var(--panel-alt);
+  line-height: 1.75;
+}
+a { color: var(--primary-dark); }
+
+/* ---------- HERO ---------- */
+.hero {
+  background: radial-gradient(1200px 600px at 15% -10%, rgba(99,102,241,0.55), transparent 60%),
+              radial-gradient(900px 500px at 90% 10%, rgba(20,184,166,0.35), transparent 55%),
+              linear-gradient(180deg, var(--bg) 0%, var(--bg-soft) 100%);
+  color: #f4f5fb;
+  padding: 64px 24px 88px;
+  position: relative;
+  overflow: hidden;
+}
+.hero-inner { max-width: 1080px; margin: 0 auto; }
+.eyebrow {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-size: 12.5px; letter-spacing: 0.12em; text-transform: uppercase;
+  color: #a5b4fc; background: rgba(99,102,241,0.15);
+  border: 1px solid rgba(165,180,252,0.35);
+  padding: 6px 14px; border-radius: 999px; margin-bottom: 22px;
+}
+.hero h1 { font-size: 40px; line-height: 1.2; margin: 0 0 16px; font-weight: 800; letter-spacing: -0.01em; }
+.hero p.lead { font-size: 17px; color: #cbd0e6; max-width: 720px; margin: 0 0 28px; }
+.hero-badges { display: flex; flex-wrap: wrap; gap: 10px; }
+.badge {
+  font-size: 13px; background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.14); color: #e2e4f5;
+  padding: 6px 12px; border-radius: 999px;
+}
+.hero a.home-link {
+  display: inline-flex; align-items: center; gap: 6px;
+  color: #a5b4fc; text-decoration: none; font-size: 13.5px; margin-bottom: 20px;
+}
+.hero a.home-link:hover { color: #fff; }
+
+/* ---------- LAYOUT ---------- */
+.layout {
+  max-width: 1200px; margin: -48px auto 0; padding: 0 24px 60px;
+  display: grid; grid-template-columns: 240px 1fr; gap: 32px; position: relative;
+}
+.toc {
+  position: sticky; top: 24px; align-self: start;
+  background: var(--panel); border: 1px solid var(--border);
+  border-radius: var(--radius); box-shadow: var(--shadow);
+  padding: 18px 16px; font-size: 13.5px;
+  max-height: calc(100vh - 48px); overflow-y: auto;
+}
+.toc h4 { margin: 0 0 10px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-dim); }
+.toc a { display: block; padding: 6px 8px; border-radius: 8px; color: var(--text-dim); text-decoration: none; margin-bottom: 2px; }
+.toc a:hover { background: var(--panel-alt); color: var(--text); }
+.toc a.active { background: var(--panel-alt); color: var(--primary-dark); font-weight: 600; }
+
+main { min-width: 0; }
+
+section {
+  background: var(--panel); border: 1px solid var(--border);
+  border-radius: var(--radius); box-shadow: var(--shadow);
+  padding: 34px 40px; margin-bottom: 24px; scroll-margin-top: 20px;
+}
+section h2 { font-size: 23px; margin: 0 0 16px; display: flex; align-items: center; gap: 10px; }
+section h2 .pill-num {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 30px; height: 30px; border-radius: 9px; flex-shrink: 0;
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  color: #fff; font-size: 14px; font-weight: 700;
+}
+h3 { font-size: 17px; margin: 26px 0 10px; }
+h4 { font-size: 15px; margin: 20px 0 8px; }
+p { margin: 0 0 14px; }
+ul, ol { margin: 0 0 16px; padding-left: 22px; }
+li { margin-bottom: 6px; }
+li > ul, li > ol { margin-top: 6px; }
+strong { color: var(--text); }
+blockquote {
+  margin: 0 0 16px; padding: 12px 18px;
+  border-left: 4px solid var(--accent); background: var(--panel-alt);
+  border-radius: 0 8px 8px 0; color: var(--text-dim);
+}
+blockquote p { margin: 0; }
+
+/* tables */
+table { width: 100%; border-collapse: collapse; font-size: 13.8px; margin: 8px 0 18px; }
+th {
+  text-align: left; font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em;
+  color: var(--text-dim); border-bottom: 1px solid var(--border); padding: 8px 10px;
+}
+td { padding: 10px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+tr:last-child td { border-bottom: none; }
+
+/* inline code */
+code {
+  background: #eef0fb; color: var(--primary-dark);
+  padding: 2px 7px; border-radius: 6px;
+  font-family: "SFMono-Regular", Menlo, Consolas, monospace; font-size: 13px;
+}
+
+/* code blocks */
+pre {
+  background: var(--code-bg); color: var(--code-text);
+  padding: 16px 18px; border-radius: 10px; overflow-x: auto;
+  font-size: 13px; line-height: 1.6;
+  font-family: "SFMono-Regular", Menlo, Consolas, monospace;
+  margin: 10px 0 18px;
+}
+pre code { background: transparent; color: inherit; padding: 0; border-radius: 0; font-size: 13px; }
+.codehilite { background: var(--code-bg); border-radius: 10px; overflow-x: auto; margin: 10px 0 18px; }
+.codehilite pre { margin: 0; padding: 16px 18px; background: transparent; }
+
+/* pager */
+.pager { display: flex; justify-content: space-between; gap: 16px; margin-top: 8px; }
+.pager a {
+  flex: 1; display: flex; flex-direction: column; gap: 4px;
+  padding: 16px 20px; border-radius: var(--radius); text-decoration: none;
+  background: var(--panel); border: 1px solid var(--border); box-shadow: var(--shadow);
+  transition: transform 0.15s, border-color 0.15s;
+}
+.pager a:hover { transform: translateY(-2px); border-color: var(--primary); }
+.pager a .dir { font-size: 12px; color: var(--text-dim); }
+.pager a .ttl { font-size: 14.5px; font-weight: 700; color: var(--text); }
+.pager a.next { text-align: right; }
+.pager a.disabled { opacity: 0.4; pointer-events: none; }
+
+footer { text-align: center; color: var(--text-dim); font-size: 13px; padding: 20px 0 40px; }
+footer a { color: var(--text-dim); }
+
+@media (max-width: 900px) {
+  .layout { grid-template-columns: 1fr; }
+  .toc { position: static; max-height: none; }
+  section { padding: 26px 22px; }
+  .hero h1 { font-size: 30px; }
+  .pager { flex-direction: column; }
+}
+
+pre { line-height: 125%; }
+td.linenos .normal { color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px; }
+span.linenos { color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px; }
+td.linenos .special { color: #000000; background-color: #ffffc0; padding-left: 5px; padding-right: 5px; }
+span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 5px; padding-right: 5px; }
+.codehilite .hll { background-color: #49483e }
+.codehilite { background: #272822; color: #F8F8F2 }
+.codehilite .c { color: #959077 } /* Comment */
+.codehilite .err { color: #ED007E; background-color: #1E0010 } /* Error */
+.codehilite .esc { color: #F8F8F2 } /* Escape */
+.codehilite .g { color: #F8F8F2 } /* Generic */
+.codehilite .k { color: #66D9EF } /* Keyword */
+.codehilite .l { color: #AE81FF } /* Literal */
+.codehilite .n { color: #F8F8F2 } /* Name */
+.codehilite .o { color: #FF4689 } /* Operator */
+.codehilite .x { color: #F8F8F2 } /* Other */
+.codehilite .p { color: #F8F8F2 } /* Punctuation */
+.codehilite .ch { color: #959077 } /* Comment.Hashbang */
+.codehilite .cm { color: #959077 } /* Comment.Multiline */
+.codehilite .cp { color: #959077 } /* Comment.Preproc */
+.codehilite .cpf { color: #959077 } /* Comment.PreprocFile */
+.codehilite .c1 { color: #959077 } /* Comment.Single */
+.codehilite .cs { color: #959077 } /* Comment.Special */
+.codehilite .gd { color: #FF4689 } /* Generic.Deleted */
+.codehilite .ge { color: #F8F8F2; font-style: italic } /* Generic.Emph */
+.codehilite .ges { color: #F8F8F2; font-weight: bold; font-style: italic } /* Generic.EmphStrong */
+.codehilite .gr { color: #FF4689 } /* Generic.Error */
+.codehilite .gh { color: #F8F8F2 } /* Generic.Heading */
+.codehilite .gi { color: #A6E22E } /* Generic.Inserted */
+.codehilite .go { color: #66D9EF } /* Generic.Output */
+.codehilite .gp { color: #FF4689; font-weight: bold } /* Generic.Prompt */
+.codehilite .gs { color: #F8F8F2; font-weight: bold } /* Generic.Strong */
+.codehilite .gu { color: #959077 } /* Generic.Subheading */
+.codehilite .gt { color: #66D9EF } /* Generic.Traceback */
+.codehilite .kc { color: #66D9EF } /* Keyword.Constant */
+.codehilite .kd { color: #66D9EF } /* Keyword.Declaration */
+.codehilite .kn { color: #FF4689 } /* Keyword.Namespace */
+.codehilite .kp { color: #66D9EF } /* Keyword.Pseudo */
+.codehilite .kr { color: #66D9EF } /* Keyword.Reserved */
+.codehilite .kt { color: #66D9EF } /* Keyword.Type */
+.codehilite .ld { color: #E6DB74 } /* Literal.Date */
+.codehilite .m { color: #AE81FF } /* Literal.Number */
+.codehilite .s { color: #E6DB74 } /* Literal.String */
+.codehilite .na { color: #A6E22E } /* Name.Attribute */
+.codehilite .nb { color: #A6E22E } /* Name.Builtin */
+.codehilite .nc { color: #A6E22E } /* Name.Class */
+.codehilite .no { color: #66D9EF } /* Name.Constant */
+.codehilite .nd { color: #A6E22E } /* Name.Decorator */
+.codehilite .ni { color: #F8F8F2 } /* Name.Entity */
+.codehilite .ne { color: #A6E22E } /* Name.Exception */
+.codehilite .nf { color: #A6E22E } /* Name.Function */
+.codehilite .nl { color: #F8F8F2 } /* Name.Label */
+.codehilite .nn { color: #F8F8F2 } /* Name.Namespace */
+.codehilite .nx { color: #A6E22E } /* Name.Other */
+.codehilite .py { color: #F8F8F2 } /* Name.Property */
+.codehilite .nt { color: #FF4689 } /* Name.Tag */
+.codehilite .nv { color: #F8F8F2 } /* Name.Variable */
+.codehilite .ow { color: #FF4689 } /* Operator.Word */
+.codehilite .pm { color: #F8F8F2 } /* Punctuation.Marker */
+.codehilite .w { color: #F8F8F2 } /* Text.Whitespace */
+.codehilite .mb { color: #AE81FF } /* Literal.Number.Bin */
+.codehilite .mf { color: #AE81FF } /* Literal.Number.Float */
+.codehilite .mh { color: #AE81FF } /* Literal.Number.Hex */
+.codehilite .mi { color: #AE81FF } /* Literal.Number.Integer */
+.codehilite .mo { color: #AE81FF } /* Literal.Number.Oct */
+.codehilite .sa { color: #E6DB74 } /* Literal.String.Affix */
+.codehilite .sb { color: #E6DB74 } /* Literal.String.Backtick */
+.codehilite .sc { color: #E6DB74 } /* Literal.String.Char */
+.codehilite .dl { color: #E6DB74 } /* Literal.String.Delimiter */
+.codehilite .sd { color: #E6DB74 } /* Literal.String.Doc */
+.codehilite .s2 { color: #E6DB74 } /* Literal.String.Double */
+.codehilite .se { color: #AE81FF } /* Literal.String.Escape */
+.codehilite .sh { color: #E6DB74 } /* Literal.String.Heredoc */
+.codehilite .si { color: #E6DB74 } /* Literal.String.Interpol */
+.codehilite .sx { color: #E6DB74 } /* Literal.String.Other */
+.codehilite .sr { color: #E6DB74 } /* Literal.String.Regex */
+.codehilite .s1 { color: #E6DB74 } /* Literal.String.Single */
+.codehilite .ss { color: #E6DB74 } /* Literal.String.Symbol */
+.codehilite .bp { color: #A6E22E } /* Name.Builtin.Pseudo */
+.codehilite .fm { color: #A6E22E } /* Name.Function.Magic */
+.codehilite .vc { color: #F8F8F2 } /* Name.Variable.Class */
+.codehilite .vg { color: #F8F8F2 } /* Name.Variable.Global */
+.codehilite .vi { color: #F8F8F2 } /* Name.Variable.Instance */
+.codehilite .vm { color: #F8F8F2 } /* Name.Variable.Magic */
+.codehilite .il { color: #AE81FF } /* Literal.Number.Integer.Long */
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="hero-inner">
+    <a class="home-link" href="index.html">← 返回 Semantica 专题首页</a>
+    <span class="eyebrow">🔌 SEMANTICA · COOKBOOK · 集成系列</span>
+    <h1>Agno × Semantica：决策智能智能体</h1>
+    <p class="lead">Semantica 官方 Cookbook 中文翻译 · 第 35 / 37 篇</p>
+    <div class="hero-badges">
+      <span class="badge">📦 semantica</span>
+      <span class="badge">🕸️ 知识图谱</span>
+      <span class="badge">🔎 GraphRAG</span>
+    </div>
+  </div>
+</header>
+
+<div class="layout">
+  <nav class="toc">
+    <h4>目录</h4>
+    <a href="#sec-1">架构</a>
+<a href="#sec-2">安装</a>
+<a href="#sec-3">1. 设置 — Semantica 后端</a>
+<a href="#sec-4">2. 播种历史决策</a>
+<a href="#sec-5">3. 使用 Semantica 定义策略规则</a>
+<a href="#sec-6">4. 构建 Agno 决策智能智能体</a>
+<a href="#sec-7">5. 演示决策工具</a>
+<a href="#sec-8">6. 运行完整的 Agno 智能体（需要 API 密钥）</a>
+<a href="#sec-9">7. 使用 Semantica 进行会话后分析</a>
+<a href="#sec-10">小结</a>
+  </nav>
+
+  <main>
+    <section id="overview"><div class="intro"><p>本 notebook 展示如何将 Semantica 的<strong>决策智能</strong>技术栈接入一个 Agno 智能体，使其能够：</p>
+<ul>
+<li>记录它所做出的每一个决策，并附带完整的推理溯源</li>
+<li>在行动之前检索历史先例</li>
+<li>依据策略规则校验决策</li>
+<li>追踪跨决策的因果链</li>
+<li>积累可跨会话存续的机构知识</li>
+</ul>
+<p><strong>所用领域：</strong> 金融贷款审批（可轻松适配医疗、法律、人力资源等领域）</p>
+<hr /></div></section>
+<section id="sec-1"><h2><span class="pill-num">1</span>架构</h2><div class="codehilite"><pre><span></span><code>Agno Agent
+  ├── memory=AgnoContextStore       ← 图支撑的持久化记忆
+  └── tools=[AgnoDecisionKit]       ← LLM 可调用的决策工具
+          │
+          ├── record_decision       ← Semantica AgentContext.record_decision()
+          ├── find_precedents       ← Semantica AgentContext.find_precedents_advanced()
+          ├── trace_causal_chain    ← Semantica ContextGraph.trace_decision_causality()
+          ├── analyze_impact        ← Semantica AgentContext.analyze_decision_influence()
+          ├── check_policy          ← Semantica PolicyEngine
+          └── get_decision_summary  ← Semantica AgentContext.get_context_insights()
+</code></pre></div></section>
+<section id="sec-2"><h2><span class="pill-num">2</span>安装</h2><div class="codehilite"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>semantica<span class="o">[</span>agno<span class="o">]</span>
+</code></pre></div></section>
+<section id="sec-3"><h2><span class="pill-num">3</span>1. 设置 — Semantica 后端</h2><p>我们先构建 Semantica 组件。这些组件<strong>独立于 Agno</strong>——你可以在不触碰智能体代码的情况下更换后端。</p>
+<div class="codehilite"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">sys</span><span class="o">,</span><span class="w"> </span><span class="nn">os</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="s2">"../../"</span><span class="p">))</span>
+
+<span class="c1"># ── Semantica 核心（非 Agno 专用）──────────────────────────────────────</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">semantica.context</span><span class="w"> </span><span class="kn">import</span> <span class="n">AgentContext</span><span class="p">,</span> <span class="n">ContextGraph</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">semantica.context</span><span class="w"> </span><span class="kn">import</span> <span class="n">PolicyEngine</span><span class="p">,</span> <span class="n">DecisionQuery</span><span class="p">,</span> <span class="n">CausalChainAnalyzer</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">semantica.vector_store</span><span class="w"> </span><span class="kn">import</span> <span class="n">VectorStore</span>
+
+<span class="c1"># ── Agno 集成层 ───────────────────────────────────────────────────</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">integrations.agno</span><span class="w"> </span><span class="kn">import</span> <span class="n">AgnoContextStore</span><span class="p">,</span> <span class="n">AgnoDecisionKit</span><span class="p">,</span> <span class="n">AGNO_AVAILABLE</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Semantica imports OK"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Agno installed: </span><span class="si">{</span><span class="n">AGNO_AVAILABLE</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</code></pre></div>
+
+<div class="codehilite"><pre><span></span><code><span class="c1"># ── 向量存储（FAISS，无需外部服务）────────────────────────</span>
+<span class="n">vector_store</span> <span class="o">=</span> <span class="n">VectorStore</span><span class="p">(</span><span class="n">backend</span><span class="o">=</span><span class="s2">"faiss"</span><span class="p">,</span> <span class="n">dimension</span><span class="o">=</span><span class="mi">768</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"VectorStore ready (FAISS)"</span><span class="p">)</span>
+
+<span class="c1"># ── 带完整分析能力的内存上下文图谱 ──────────────────────────────</span>
+<span class="n">knowledge_graph</span> <span class="o">=</span> <span class="n">ContextGraph</span><span class="p">(</span>
+    <span class="n">advanced_analytics</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="c1"># 生产环境可切换为 neo4j：</span>
+    <span class="c1"># backend="neo4j", uri="bolt://localhost:7687"</span>
+<span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"ContextGraph ready (in-memory)"</span><span class="p">)</span>
+</code></pre></div></section>
+<section id="sec-4"><h2><span class="pill-num">4</span>2. 播种历史决策</h2><p>在智能体运行之前，我们使用<strong>原生 Semantica API</strong> 预加载历史决策，使先例数据库处于就绪状态。</p>
+<p>在生产环境中，你会从数据库或先前会话的图谱导出中摄取数据。</p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 构建一个纯 Semantica 的 AgentContext 用于播种历史数据</span>
+<span class="n">seed_context</span> <span class="o">=</span> <span class="n">AgentContext</span><span class="p">(</span>
+    <span class="n">vector_store</span><span class="o">=</span><span class="n">vector_store</span><span class="p">,</span>
+    <span class="n">knowledge_graph</span><span class="o">=</span><span class="n">knowledge_graph</span><span class="p">,</span>
+    <span class="n">decision_tracking</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">historical_loans</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="nb">dict</span><span class="p">(</span>
+        <span class="n">category</span><span class="o">=</span><span class="s2">"loan_approval"</span><span class="p">,</span>
+        <span class="n">scenario</span><span class="o">=</span><span class="s2">"Applicant: credit score 740, income $95k, DTI 28%, down payment 20%"</span><span class="p">,</span>
+        <span class="n">reasoning</span><span class="o">=</span><span class="s2">"Strong credit history, debt load well below 35% threshold, adequate down payment"</span><span class="p">,</span>
+        <span class="n">outcome</span><span class="o">=</span><span class="s2">"approved"</span><span class="p">,</span>
+        <span class="n">confidence</span><span class="o">=</span><span class="mf">0.96</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="nb">dict</span><span class="p">(</span>
+        <span class="n">category</span><span class="o">=</span><span class="s2">"loan_approval"</span><span class="p">,</span>
+        <span class="n">scenario</span><span class="o">=</span><span class="s2">"Applicant: credit score 620, income $45k, DTI 42%, down payment 5%"</span><span class="p">,</span>
+        <span class="n">reasoning</span><span class="o">=</span><span class="s2">"Credit score below 650 floor, DTI exceeds 40% maximum, insufficient down payment"</span><span class="p">,</span>
+        <span class="n">outcome</span><span class="o">=</span><span class="s2">"rejected"</span><span class="p">,</span>
+        <span class="n">confidence</span><span class="o">=</span><span class="mf">0.97</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="nb">dict</span><span class="p">(</span>
+        <span class="n">category</span><span class="o">=</span><span class="s2">"loan_approval"</span><span class="p">,</span>
+        <span class="n">scenario</span><span class="o">=</span><span class="s2">"Applicant: credit score 700, income $72k, DTI 33%, down payment 15%"</span><span class="p">,</span>
+        <span class="n">reasoning</span><span class="o">=</span><span class="s2">"Adequate credit, moderate DTI within range, down payment slightly below ideal"</span><span class="p">,</span>
+        <span class="n">outcome</span><span class="o">=</span><span class="s2">"approved_with_conditions"</span><span class="p">,</span>
+        <span class="n">confidence</span><span class="o">=</span><span class="mf">0.82</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="nb">dict</span><span class="p">(</span>
+        <span class="n">category</span><span class="o">=</span><span class="s2">"loan_approval"</span><span class="p">,</span>
+        <span class="n">scenario</span><span class="o">=</span><span class="s2">"Applicant: credit score 780, income $130k, DTI 22%, down payment 30%"</span><span class="p">,</span>
+        <span class="n">reasoning</span><span class="o">=</span><span class="s2">"Excellent credit, low debt load, strong down payment — low-risk profile"</span><span class="p">,</span>
+        <span class="n">outcome</span><span class="o">=</span><span class="s2">"approved"</span><span class="p">,</span>
+        <span class="n">confidence</span><span class="o">=</span><span class="mf">0.99</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="nb">dict</span><span class="p">(</span>
+        <span class="n">category</span><span class="o">=</span><span class="s2">"loan_approval"</span><span class="p">,</span>
+        <span class="n">scenario</span><span class="o">=</span><span class="s2">"Applicant: credit score 660, income $58k, DTI 38%, down payment 10%"</span><span class="p">,</span>
+        <span class="n">reasoning</span><span class="o">=</span><span class="s2">"Borderline credit, high DTI, minimal down payment — escalated to senior review"</span><span class="p">,</span>
+        <span class="n">outcome</span><span class="o">=</span><span class="s2">"escalated"</span><span class="p">,</span>
+        <span class="n">confidence</span><span class="o">=</span><span class="mf">0.70</span><span class="p">,</span>
+    <span class="p">),</span>
+<span class="p">]</span>
+
+<span class="k">for</span> <span class="n">loan</span> <span class="ow">in</span> <span class="n">historical_loans</span><span class="p">:</span>
+    <span class="n">did</span> <span class="o">=</span> <span class="n">seed_context</span><span class="o">.</span><span class="n">record_decision</span><span class="p">(</span><span class="o">**</span><span class="n">loan</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  Seeded [</span><span class="si">{</span><span class="n">loan</span><span class="p">[</span><span class="s1">'outcome'</span><span class="p">]</span><span class="si">:</span><span class="s2">25s</span><span class="si">}</span><span class="s2">] → </span><span class="si">{</span><span class="n">did</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">historical_loans</span><span class="p">)</span><span class="si">}</span><span class="s2"> historical decisions loaded into Semantica KG"</span><span class="p">)</span>
+</code></pre></div></section>
+<section id="sec-5"><h2><span class="pill-num">5</span>3. 使用 Semantica 定义策略规则</h2><p>我们直接使用 <code>PolicyEngine</code>——这里不涉及 Agno。<code>AgnoDecisionKit.check_policy</code> 工具会在智能体的推理循环中调用该引擎。</p>
+<div class="codehilite"><pre><span></span><code><span class="n">LENDING_POLICY_RULES</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">"credit_score &gt;= 650"</span><span class="p">,</span>
+    <span class="s2">"dti &lt;= 40"</span><span class="p">,</span>
+    <span class="s2">"down_payment_pct &gt;= 10"</span><span class="p">,</span>
+    <span class="s2">"confidence &gt;= 0.70"</span><span class="p">,</span>
+<span class="p">]</span>
+
+<span class="c1"># 在接入 Agno 之前，先用 Semantica 的 PolicyEngine 直接验证</span>
+<span class="n">policy_engine</span> <span class="o">=</span> <span class="n">PolicyEngine</span><span class="p">(</span><span class="n">graph_store</span><span class="o">=</span><span class="n">knowledge_graph</span><span class="p">)</span>
+
+<span class="n">test_application</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"credit_score"</span><span class="p">:</span> <span class="mi">720</span><span class="p">,</span> <span class="s2">"dti"</span><span class="p">:</span> <span class="mi">31</span><span class="p">,</span> <span class="s2">"down_payment_pct"</span><span class="p">:</span> <span class="mi">18</span><span class="p">,</span> <span class="s2">"confidence"</span><span class="p">:</span> <span class="mf">0.88</span><span class="p">}</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">policy_engine</span><span class="o">.</span><span class="n">check_compliance</span><span class="p">(</span><span class="n">test_application</span><span class="p">,</span> <span class="n">LENDING_POLICY_RULES</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Policy check result: compliant=</span><span class="si">{</span><span class="nb">getattr</span><span class="p">(</span><span class="n">result</span><span class="p">,</span><span class="w"> </span><span class="s1">'compliant'</span><span class="p">,</span><span class="w"> </span><span class="s1">'N/A'</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Violations: </span><span class="si">{</span><span class="nb">getattr</span><span class="p">(</span><span class="n">result</span><span class="p">,</span><span class="w"> </span><span class="s1">'violations'</span><span class="p">,</span><span class="w"> </span><span class="p">[])</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"PolicyEngine fallback (expected without full rule engine): </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Policy rules defined:"</span><span class="p">,</span> <span class="n">LENDING_POLICY_RULES</span><span class="p">)</span>
+</code></pre></div></section>
+<section id="sec-6"><h2><span class="pill-num">6</span>4. 构建 Agno 决策智能智能体</h2><p>现在我们使用集成类将所有内容接入 Agno。</p>
+<ul>
+<li><code>AgnoContextStore</code> 为智能体提供<strong>图支撑的持久化记忆</strong></li>
+<li><code>AgnoDecisionKit</code> 暴露 <strong>6 个决策工具</strong>，供 LLM 在推理过程中调用</li>
+</ul>
+<div class="codehilite"><pre><span></span><code><span class="c1"># ── AgnoContextStore：将 AgentContext 包装为 Agno MemoryDb ────────────────────</span>
+<span class="n">store</span> <span class="o">=</span> <span class="n">AgnoContextStore</span><span class="p">(</span>
+    <span class="n">vector_store</span><span class="o">=</span><span class="n">vector_store</span><span class="p">,</span>       <span class="c1"># 同一个存储——共享已播种的决策</span>
+    <span class="n">knowledge_graph</span><span class="o">=</span><span class="n">knowledge_graph</span><span class="p">,</span> <span class="c1"># 同一个图谱——共享已播种的决策</span>
+    <span class="n">decision_tracking</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">graph_expansion</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">session_id</span><span class="o">=</span><span class="s2">"loan_underwriter_v1"</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"AgnoContextStore ready"</span><span class="p">)</span>
+
+<span class="c1"># ── AgnoDecisionKit：向 Agno 的 LLM 暴露 Semantica 决策工具 ──────────</span>
+<span class="n">decision_kit</span> <span class="o">=</span> <span class="n">AgnoDecisionKit</span><span class="p">(</span>
+    <span class="n">context</span><span class="o">=</span><span class="n">store</span><span class="o">.</span><span class="n">context</span><span class="p">,</span>    <span class="c1"># 复用同一个 AgentContext——共享决策历史</span>
+    <span class="n">max_precedents</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
+    <span class="n">causal_depth</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+    <span class="n">enable_policy_check</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"AgnoDecisionKit ready — </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">decision_kit</span><span class="o">.</span><span class="n">_tools</span><span class="p">)</span><span class="si">}</span><span class="s2"> tools registered"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"  Tools:"</span><span class="p">,</span> <span class="p">[</span><span class="n">fn</span><span class="o">.</span><span class="vm">__name__</span> <span class="k">for</span> <span class="n">fn</span> <span class="ow">in</span> <span class="n">decision_kit</span><span class="o">.</span><span class="n">_tools</span><span class="p">])</span>
+</code></pre></div>
+
+<div class="codehilite"><pre><span></span><code><span class="k">if</span> <span class="n">AGNO_AVAILABLE</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">agno.agent</span><span class="w"> </span><span class="kn">import</span> <span class="n">Agent</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">agno.memory</span><span class="w"> </span><span class="kn">import</span> <span class="n">AgentMemory</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">agno.models.openai</span><span class="w"> </span><span class="kn">import</span> <span class="n">OpenAIChat</span>  <span class="c1"># 或任何 Agno 支持的模型</span>
+
+    <span class="n">agent</span> <span class="o">=</span> <span class="n">Agent</span><span class="p">(</span>
+        <span class="n">name</span><span class="o">=</span><span class="s2">"LoanUnderwriter"</span><span class="p">,</span>
+        <span class="n">model</span><span class="o">=</span><span class="n">OpenAIChat</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="s2">"gpt-4o"</span><span class="p">),</span>
+        <span class="n">memory</span><span class="o">=</span><span class="n">AgentMemory</span><span class="p">(</span><span class="n">db</span><span class="o">=</span><span class="n">store</span><span class="p">),</span>
+        <span class="n">tools</span><span class="o">=</span><span class="p">[</span><span class="n">decision_kit</span><span class="p">],</span>
+        <span class="n">show_tool_calls</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">"You are a senior loan underwriter. Before approving or rejecting any application:"</span>
+            <span class="s2">" (1) find_precedents for similar past cases,"</span>
+            <span class="s2">" (2) check_policy compliance,"</span>
+            <span class="s2">" (3) record_decision with full reasoning."</span>
+            <span class="s2">" Always cite precedents and policy rule results in your explanation."</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"Agno Agent assembled and ready"</span><span class="p">)</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"Agno not installed — demonstrating tool calls directly below"</span><span class="p">)</span>
+</code></pre></div></section>
+<section id="sec-7"><h2><span class="pill-num">7</span>5. 演示决策工具</h2><p>我们<strong>直接</strong>调用决策工具，这样 notebook 无需 OpenAI 密钥即可完整运行。当接入 Agno 后，LLM 会自动编排这些相同的调用。</p>
+<div class="codehilite"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+
+<span class="c1"># ── 5a. 查找先例 ───────────────────────────────────────────────────────</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"="</span> <span class="o">*</span> <span class="mi">60</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"TOOL: find_precedents"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"="</span> <span class="o">*</span> <span class="mi">60</span><span class="p">)</span>
+
+<span class="n">new_application_scenario</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"Applicant: credit score 715, income $82k, DTI 30%, down payment 18%"</span>
+<span class="p">)</span>
+
+<span class="n">precedents_json</span> <span class="o">=</span> <span class="n">decision_kit</span><span class="o">.</span><span class="n">find_precedents</span><span class="p">(</span>
+    <span class="n">scenario</span><span class="o">=</span><span class="n">new_application_scenario</span><span class="p">,</span>
+    <span class="n">category</span><span class="o">=</span><span class="s2">"loan_approval"</span><span class="p">,</span>
+    <span class="n">limit</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">precedents</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">precedents_json</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Found </span><span class="si">{</span><span class="n">precedents</span><span class="p">[</span><span class="s1">'count'</span><span class="p">]</span><span class="si">}</span><span class="s2"> similar past decisions:"</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">precedents</span><span class="p">[</span><span class="s1">'precedents'</span><span class="p">]:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  [</span><span class="si">{</span><span class="n">p</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'outcome'</span><span class="p">,</span><span class="s1">'?'</span><span class="p">)</span><span class="si">:</span><span class="s2">25s</span><span class="si">}</span><span class="s2">] confidence=</span><span class="si">{</span><span class="n">p</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'confidence'</span><span class="p">,</span><span class="mi">0</span><span class="p">)</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"    </span><span class="si">{</span><span class="n">p</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'scenario'</span><span class="p">,</span><span class="s1">''</span><span class="p">)[:</span><span class="mi">80</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</code></pre></div>
+
+<div class="codehilite"><pre><span></span><code><span class="c1"># ── 5b. 校验策略 ─────────────────────────────────────────────────────────</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"="</span> <span class="o">*</span> <span class="mi">60</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"TOOL: check_policy"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"="</span> <span class="o">*</span> <span class="mi">60</span><span class="p">)</span>
+
+<span class="n">decision_data</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">({</span>
+    <span class="s2">"credit_score"</span><span class="p">:</span> <span class="mi">715</span><span class="p">,</span>
+    <span class="s2">"dti"</span><span class="p">:</span> <span class="mi">30</span><span class="p">,</span>
+    <span class="s2">"down_payment_pct"</span><span class="p">:</span> <span class="mi">18</span><span class="p">,</span>
+    <span class="s2">"confidence"</span><span class="p">:</span> <span class="mf">0.88</span><span class="p">,</span>
+    <span class="s2">"outcome"</span><span class="p">:</span> <span class="s2">"approved"</span><span class="p">,</span>
+<span class="p">})</span>
+
+<span class="n">policy_json</span> <span class="o">=</span> <span class="n">decision_kit</span><span class="o">.</span><span class="n">check_policy</span><span class="p">(</span>
+    <span class="n">decision_data</span><span class="o">=</span><span class="n">decision_data</span><span class="p">,</span>
+    <span class="n">policy_rules</span><span class="o">=</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">LENDING_POLICY_RULES</span><span class="p">),</span>
+<span class="p">)</span>
+<span class="n">policy_result</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">policy_json</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Compliant: </span><span class="si">{</span><span class="n">policy_result</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'compliant'</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Violations: </span><span class="si">{</span><span class="n">policy_result</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'violations'</span><span class="p">,</span><span class="w"> </span><span class="p">[])</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Warnings:   </span><span class="si">{</span><span class="n">policy_result</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'warnings'</span><span class="p">,</span><span class="w"> </span><span class="p">[])</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</code></pre></div>
+
+<div class="codehilite"><pre><span></span><code><span class="c1"># ── 5c. 记录决策 ──────────────────────────────────────────────────────</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"="</span> <span class="o">*</span> <span class="mi">60</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"TOOL: record_decision"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"="</span> <span class="o">*</span> <span class="mi">60</span><span class="p">)</span>
+
+<span class="n">record_json</span> <span class="o">=</span> <span class="n">decision_kit</span><span class="o">.</span><span class="n">record_decision</span><span class="p">(</span>
+    <span class="n">category</span><span class="o">=</span><span class="s2">"loan_approval"</span><span class="p">,</span>
+    <span class="n">scenario</span><span class="o">=</span><span class="n">new_application_scenario</span><span class="p">,</span>
+    <span class="n">reasoning</span><span class="o">=</span><span class="p">(</span>
+        <span class="s2">"3 similar precedents found — 2 approved, 1 escalated. "</span>
+        <span class="s2">"Credit score 715 exceeds 650 floor. DTI 30% well within 40</span><span class="si">% li</span><span class="s2">mit. "</span>
+        <span class="s2">"Down payment 18</span><span class="si">% a</span><span class="s2">bove 10% minimum. All policy rules satisfied."</span>
+    <span class="p">),</span>
+    <span class="n">outcome</span><span class="o">=</span><span class="s2">"approved"</span><span class="p">,</span>
+    <span class="n">confidence</span><span class="o">=</span><span class="mf">0.91</span><span class="p">,</span>
+    <span class="n">entities</span><span class="o">=</span><span class="s2">"loan_applicant, credit_bureau, lending_policy_v2"</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">record_result</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">record_json</span><span class="p">)</span>
+<span class="n">decision_id</span> <span class="o">=</span> <span class="n">record_result</span><span class="p">[</span><span class="s1">'decision_id'</span><span class="p">]</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Decision recorded: </span><span class="si">{</span><span class="n">decision_id</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Status: </span><span class="si">{</span><span class="n">record_result</span><span class="p">[</span><span class="s1">'status'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</code></pre></div>
+
+<div class="codehilite"><pre><span></span><code><span class="c1"># ── 5d. 分析影响 ───────────────────────────────────────────────────────</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"="</span> <span class="o">*</span> <span class="mi">60</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"TOOL: analyze_impact"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"="</span> <span class="o">*</span> <span class="mi">60</span><span class="p">)</span>
+
+<span class="n">impact_json</span> <span class="o">=</span> <span class="n">decision_kit</span><span class="o">.</span><span class="n">analyze_impact</span><span class="p">(</span><span class="n">decision_id</span><span class="o">=</span><span class="n">decision_id</span><span class="p">)</span>
+<span class="n">impact</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">impact_json</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Impact analysis:"</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">impact</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="k">if</span> <span class="n">k</span> <span class="o">!=</span> <span class="s2">"decision_id"</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  </span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">v</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</code></pre></div>
+
+<div class="codehilite"><pre><span></span><code><span class="c1"># ── 5e. 决策摘要 ─────────────────────────────────────────────────────</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"="</span> <span class="o">*</span> <span class="mi">60</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"TOOL: get_decision_summary"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"="</span> <span class="o">*</span> <span class="mi">60</span><span class="p">)</span>
+
+<span class="n">summary_json</span> <span class="o">=</span> <span class="n">decision_kit</span><span class="o">.</span><span class="n">get_decision_summary</span><span class="p">(</span><span class="n">category</span><span class="o">=</span><span class="s2">"loan_approval"</span><span class="p">)</span>
+<span class="n">summary</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">summary_json</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Decision history summary:"</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">summary</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="k">if</span> <span class="n">k</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"category_filter"</span><span class="p">,):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  </span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">v</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</code></pre></div></section>
+<section id="sec-8"><h2><span class="pill-num">8</span>6. 运行完整的 Agno 智能体（需要 API 密钥）</h2><p>当 <code>AGNO_AVAILABLE=True</code> 且设置了 OpenAI 密钥时，LLM 会自动编排所有工具调用。</p>
+<div class="codehilite"><pre><span></span><code><span class="n">NEW_CASE</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"New mortgage application received:</span><span class="se">\n</span><span class="s2">"</span>
+    <span class="s2">"  Credit score: 715, Annual income: $82,000</span><span class="se">\n</span><span class="s2">"</span>
+    <span class="s2">"  Debt-to-income: 30%, Down payment: 18%</span><span class="se">\n</span><span class="s2">"</span>
+    <span class="s2">"  Loan amount: $320,000 for a primary residence in Austin TX</span><span class="se">\n</span><span class="s2">"</span>
+    <span class="s2">"Should we approve this application?"</span>
+<span class="p">)</span>
+
+<span class="k">if</span> <span class="n">AGNO_AVAILABLE</span><span class="p">:</span>
+    <span class="n">agent</span><span class="o">.</span><span class="n">print_response</span><span class="p">(</span><span class="n">NEW_CASE</span><span class="p">)</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"[Agno not installed — skipping live agent run]"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">()</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"Expected agent reasoning flow:"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"  1. find_precedents('credit score 715, DTI 30%, down payment 18%')"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"     → 2 approved, 1 escalated among similar cases"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"  2. check_policy(credit_score=715, dti=30, down_payment_pct=18)"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"     → compliant=True, violations=[]"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"  3. record_decision(outcome='approved', confidence=0.91)"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"     → decision_id recorded in Semantica KG"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">()</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"  Recommendation: APPROVE — 3 precedents + full policy compliance"</span><span class="p">)</span>
+</code></pre></div></section>
+<section id="sec-9"><h2><span class="pill-num">9</span>7. 使用 Semantica 进行会话后分析</h2><p>智能体会话结束后，使用<strong>原生 Semantica API</strong> 进行报告和因果分析——无需 Agno。</p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 直接从 Semantica 查询决策历史</span>
+<span class="n">insights</span> <span class="o">=</span> <span class="n">store</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">get_context_insights</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Session Insights (Semantica native):"</span><span class="p">)</span>
+<span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">insights</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">insights</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  </span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">v</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  </span><span class="si">{</span><span class="n">insights</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</code></pre></div>
+
+<div class="codehilite"><pre><span></span><code><span class="c1"># 直接通过 Semantica 的 AgentContext 进行先例检索</span>
+<span class="c1"># （相同的数据，无需 Agno 参与）</span>
+<span class="n">precedents</span> <span class="o">=</span> <span class="n">store</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">find_precedents_advanced</span><span class="p">(</span>
+    <span class="n">scenario</span><span class="o">=</span><span class="s2">"borderline mortgage application"</span><span class="p">,</span>
+    <span class="n">category</span><span class="o">=</span><span class="s2">"loan_approval"</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Precedent search via Semantica directly → </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">precedents</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="p">[])</span><span class="si">}</span><span class="s2"> results"</span><span class="p">)</span>
+</code></pre></div></section>
+<section id="sec-10"><h2><span class="pill-num">10</span>小结</h2><table>
+<thead>
+<tr>
+<th>内容</th>
+<th>方式</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>持久化决策历史</td>
+<td><code>AgnoContextStore</code> 包装 <code>AgentContext</code> + FAISS</td>
+</tr>
+<tr>
+<td>决策智能的工具调用</td>
+<td><code>AgnoDecisionKit</code>（record、find、trace、check、summarise）</td>
+</tr>
+<tr>
+<td>历史数据播种</td>
+<td>原生 <code>AgentContext.record_decision()</code>——无需 Agno</td>
+</tr>
+<tr>
+<td>策略规则</td>
+<td>原生 <code>PolicyEngine</code>——无需 Agno</td>
+</tr>
+<tr>
+<td>会话后分析</td>
+<td>原生 <code>AgentContext.get_context_insights()</code>——无需 Agno</td>
+</tr>
+</tbody>
+</table>
+<p>Agno 集成是一个<strong>薄封装</strong>——当你需要更精细的控制时，Semantica 的完整 API 始终可以直接访问。</p></section>
+    <nav class="pager"><a class="prev" href="15-advanced-vector-store-and-search.html"><span class="dir">← 上一篇</span><span class="ttl">高级向量存储与检索</span></a><a class="next" href="02-agno-graphrag-context.html"><span class="dir">→ 下一篇</span><span class="ttl">Agno GraphRAG 上下文</span></a></nav>
+  </main>
+</div>
+
+<footer>由 Semantica 官方 Cookbook 生成的中文说明页 · <a href="https://github.com/semantica-agi/semantica">semantica-agi/semantica</a></footer>
+
+</body>
+</html>

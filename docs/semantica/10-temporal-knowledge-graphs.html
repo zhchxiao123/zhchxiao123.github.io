@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>深入探究：时序知识图谱 · Semantica Cookbook</title>
+<style>
+
+:root {
+  --bg: #0b0e17;
+  --bg-soft: #10141f;
+  --panel: #ffffff;
+  --panel-alt: #f6f7fb;
+  --border: #e6e8f0;
+  --text: #1a1d29;
+  --text-dim: #5a5f72;
+  --primary: #6366f1;
+  --primary-dark: #4338ca;
+  --accent: #14b8a6;
+  --accent-2: #f59e0b;
+  --code-bg: #0f172a;
+  --code-text: #e2e8f0;
+  --radius: 14px;
+  --shadow: 0 10px 30px -12px rgba(30, 41, 59, 0.18);
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif;
+  color: var(--text);
+  background: var(--panel-alt);
+  line-height: 1.75;
+}
+a { color: var(--primary-dark); }
+
+/* ---------- HERO ---------- */
+.hero {
+  background: radial-gradient(1200px 600px at 15% -10%, rgba(99,102,241,0.55), transparent 60%),
+              radial-gradient(900px 500px at 90% 10%, rgba(20,184,166,0.35), transparent 55%),
+              linear-gradient(180deg, var(--bg) 0%, var(--bg-soft) 100%);
+  color: #f4f5fb;
+  padding: 64px 24px 88px;
+  position: relative;
+  overflow: hidden;
+}
+.hero-inner { max-width: 1080px; margin: 0 auto; }
+.eyebrow {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-size: 12.5px; letter-spacing: 0.12em; text-transform: uppercase;
+  color: #a5b4fc; background: rgba(99,102,241,0.15);
+  border: 1px solid rgba(165,180,252,0.35);
+  padding: 6px 14px; border-radius: 999px; margin-bottom: 22px;
+}
+.hero h1 { font-size: 40px; line-height: 1.2; margin: 0 0 16px; font-weight: 800; letter-spacing: -0.01em; }
+.hero p.lead { font-size: 17px; color: #cbd0e6; max-width: 720px; margin: 0 0 28px; }
+.hero-badges { display: flex; flex-wrap: wrap; gap: 10px; }
+.badge {
+  font-size: 13px; background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.14); color: #e2e4f5;
+  padding: 6px 12px; border-radius: 999px;
+}
+.hero a.home-link {
+  display: inline-flex; align-items: center; gap: 6px;
+  color: #a5b4fc; text-decoration: none; font-size: 13.5px; margin-bottom: 20px;
+}
+.hero a.home-link:hover { color: #fff; }
+
+/* ---------- LAYOUT ---------- */
+.layout {
+  max-width: 1200px; margin: -48px auto 0; padding: 0 24px 60px;
+  display: grid; grid-template-columns: 240px 1fr; gap: 32px; position: relative;
+}
+.toc {
+  position: sticky; top: 24px; align-self: start;
+  background: var(--panel); border: 1px solid var(--border);
+  border-radius: var(--radius); box-shadow: var(--shadow);
+  padding: 18px 16px; font-size: 13.5px;
+  max-height: calc(100vh - 48px); overflow-y: auto;
+}
+.toc h4 { margin: 0 0 10px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-dim); }
+.toc a { display: block; padding: 6px 8px; border-radius: 8px; color: var(--text-dim); text-decoration: none; margin-bottom: 2px; }
+.toc a:hover { background: var(--panel-alt); color: var(--text); }
+.toc a.active { background: var(--panel-alt); color: var(--primary-dark); font-weight: 600; }
+
+main { min-width: 0; }
+
+section {
+  background: var(--panel); border: 1px solid var(--border);
+  border-radius: var(--radius); box-shadow: var(--shadow);
+  padding: 34px 40px; margin-bottom: 24px; scroll-margin-top: 20px;
+}
+section h2 { font-size: 23px; margin: 0 0 16px; display: flex; align-items: center; gap: 10px; }
+section h2 .pill-num {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 30px; height: 30px; border-radius: 9px; flex-shrink: 0;
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  color: #fff; font-size: 14px; font-weight: 700;
+}
+h3 { font-size: 17px; margin: 26px 0 10px; }
+h4 { font-size: 15px; margin: 20px 0 8px; }
+p { margin: 0 0 14px; }
+ul, ol { margin: 0 0 16px; padding-left: 22px; }
+li { margin-bottom: 6px; }
+li > ul, li > ol { margin-top: 6px; }
+strong { color: var(--text); }
+blockquote {
+  margin: 0 0 16px; padding: 12px 18px;
+  border-left: 4px solid var(--accent); background: var(--panel-alt);
+  border-radius: 0 8px 8px 0; color: var(--text-dim);
+}
+blockquote p { margin: 0; }
+
+/* tables */
+table { width: 100%; border-collapse: collapse; font-size: 13.8px; margin: 8px 0 18px; }
+th {
+  text-align: left; font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em;
+  color: var(--text-dim); border-bottom: 1px solid var(--border); padding: 8px 10px;
+}
+td { padding: 10px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+tr:last-child td { border-bottom: none; }
+
+/* inline code */
+code {
+  background: #eef0fb; color: var(--primary-dark);
+  padding: 2px 7px; border-radius: 6px;
+  font-family: "SFMono-Regular", Menlo, Consolas, monospace; font-size: 13px;
+}
+
+/* code blocks */
+pre {
+  background: var(--code-bg); color: var(--code-text);
+  padding: 16px 18px; border-radius: 10px; overflow-x: auto;
+  font-size: 13px; line-height: 1.6;
+  font-family: "SFMono-Regular", Menlo, Consolas, monospace;
+  margin: 10px 0 18px;
+}
+pre code { background: transparent; color: inherit; padding: 0; border-radius: 0; font-size: 13px; }
+.codehilite { background: var(--code-bg); border-radius: 10px; overflow-x: auto; margin: 10px 0 18px; }
+.codehilite pre { margin: 0; padding: 16px 18px; background: transparent; }
+
+/* pager */
+.pager { display: flex; justify-content: space-between; gap: 16px; margin-top: 8px; }
+.pager a {
+  flex: 1; display: flex; flex-direction: column; gap: 4px;
+  padding: 16px 20px; border-radius: var(--radius); text-decoration: none;
+  background: var(--panel); border: 1px solid var(--border); box-shadow: var(--shadow);
+  transition: transform 0.15s, border-color 0.15s;
+}
+.pager a:hover { transform: translateY(-2px); border-color: var(--primary); }
+.pager a .dir { font-size: 12px; color: var(--text-dim); }
+.pager a .ttl { font-size: 14.5px; font-weight: 700; color: var(--text); }
+.pager a.next { text-align: right; }
+.pager a.disabled { opacity: 0.4; pointer-events: none; }
+
+footer { text-align: center; color: var(--text-dim); font-size: 13px; padding: 20px 0 40px; }
+footer a { color: var(--text-dim); }
+
+@media (max-width: 900px) {
+  .layout { grid-template-columns: 1fr; }
+  .toc { position: static; max-height: none; }
+  section { padding: 26px 22px; }
+  .hero h1 { font-size: 30px; }
+  .pager { flex-direction: column; }
+}
+
+pre { line-height: 125%; }
+td.linenos .normal { color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px; }
+span.linenos { color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px; }
+td.linenos .special { color: #000000; background-color: #ffffc0; padding-left: 5px; padding-right: 5px; }
+span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 5px; padding-right: 5px; }
+.codehilite .hll { background-color: #49483e }
+.codehilite { background: #272822; color: #F8F8F2 }
+.codehilite .c { color: #959077 } /* Comment */
+.codehilite .err { color: #ED007E; background-color: #1E0010 } /* Error */
+.codehilite .esc { color: #F8F8F2 } /* Escape */
+.codehilite .g { color: #F8F8F2 } /* Generic */
+.codehilite .k { color: #66D9EF } /* Keyword */
+.codehilite .l { color: #AE81FF } /* Literal */
+.codehilite .n { color: #F8F8F2 } /* Name */
+.codehilite .o { color: #FF4689 } /* Operator */
+.codehilite .x { color: #F8F8F2 } /* Other */
+.codehilite .p { color: #F8F8F2 } /* Punctuation */
+.codehilite .ch { color: #959077 } /* Comment.Hashbang */
+.codehilite .cm { color: #959077 } /* Comment.Multiline */
+.codehilite .cp { color: #959077 } /* Comment.Preproc */
+.codehilite .cpf { color: #959077 } /* Comment.PreprocFile */
+.codehilite .c1 { color: #959077 } /* Comment.Single */
+.codehilite .cs { color: #959077 } /* Comment.Special */
+.codehilite .gd { color: #FF4689 } /* Generic.Deleted */
+.codehilite .ge { color: #F8F8F2; font-style: italic } /* Generic.Emph */
+.codehilite .ges { color: #F8F8F2; font-weight: bold; font-style: italic } /* Generic.EmphStrong */
+.codehilite .gr { color: #FF4689 } /* Generic.Error */
+.codehilite .gh { color: #F8F8F2 } /* Generic.Heading */
+.codehilite .gi { color: #A6E22E } /* Generic.Inserted */
+.codehilite .go { color: #66D9EF } /* Generic.Output */
+.codehilite .gp { color: #FF4689; font-weight: bold } /* Generic.Prompt */
+.codehilite .gs { color: #F8F8F2; font-weight: bold } /* Generic.Strong */
+.codehilite .gu { color: #959077 } /* Generic.Subheading */
+.codehilite .gt { color: #66D9EF } /* Generic.Traceback */
+.codehilite .kc { color: #66D9EF } /* Keyword.Constant */
+.codehilite .kd { color: #66D9EF } /* Keyword.Declaration */
+.codehilite .kn { color: #FF4689 } /* Keyword.Namespace */
+.codehilite .kp { color: #66D9EF } /* Keyword.Pseudo */
+.codehilite .kr { color: #66D9EF } /* Keyword.Reserved */
+.codehilite .kt { color: #66D9EF } /* Keyword.Type */
+.codehilite .ld { color: #E6DB74 } /* Literal.Date */
+.codehilite .m { color: #AE81FF } /* Literal.Number */
+.codehilite .s { color: #E6DB74 } /* Literal.String */
+.codehilite .na { color: #A6E22E } /* Name.Attribute */
+.codehilite .nb { color: #A6E22E } /* Name.Builtin */
+.codehilite .nc { color: #A6E22E } /* Name.Class */
+.codehilite .no { color: #66D9EF } /* Name.Constant */
+.codehilite .nd { color: #A6E22E } /* Name.Decorator */
+.codehilite .ni { color: #F8F8F2 } /* Name.Entity */
+.codehilite .ne { color: #A6E22E } /* Name.Exception */
+.codehilite .nf { color: #A6E22E } /* Name.Function */
+.codehilite .nl { color: #F8F8F2 } /* Name.Label */
+.codehilite .nn { color: #F8F8F2 } /* Name.Namespace */
+.codehilite .nx { color: #A6E22E } /* Name.Other */
+.codehilite .py { color: #F8F8F2 } /* Name.Property */
+.codehilite .nt { color: #FF4689 } /* Name.Tag */
+.codehilite .nv { color: #F8F8F2 } /* Name.Variable */
+.codehilite .ow { color: #FF4689 } /* Operator.Word */
+.codehilite .pm { color: #F8F8F2 } /* Punctuation.Marker */
+.codehilite .w { color: #F8F8F2 } /* Text.Whitespace */
+.codehilite .mb { color: #AE81FF } /* Literal.Number.Bin */
+.codehilite .mf { color: #AE81FF } /* Literal.Number.Float */
+.codehilite .mh { color: #AE81FF } /* Literal.Number.Hex */
+.codehilite .mi { color: #AE81FF } /* Literal.Number.Integer */
+.codehilite .mo { color: #AE81FF } /* Literal.Number.Oct */
+.codehilite .sa { color: #E6DB74 } /* Literal.String.Affix */
+.codehilite .sb { color: #E6DB74 } /* Literal.String.Backtick */
+.codehilite .sc { color: #E6DB74 } /* Literal.String.Char */
+.codehilite .dl { color: #E6DB74 } /* Literal.String.Delimiter */
+.codehilite .sd { color: #E6DB74 } /* Literal.String.Doc */
+.codehilite .s2 { color: #E6DB74 } /* Literal.String.Double */
+.codehilite .se { color: #AE81FF } /* Literal.String.Escape */
+.codehilite .sh { color: #E6DB74 } /* Literal.String.Heredoc */
+.codehilite .si { color: #E6DB74 } /* Literal.String.Interpol */
+.codehilite .sx { color: #E6DB74 } /* Literal.String.Other */
+.codehilite .sr { color: #E6DB74 } /* Literal.String.Regex */
+.codehilite .s1 { color: #E6DB74 } /* Literal.String.Single */
+.codehilite .ss { color: #E6DB74 } /* Literal.String.Symbol */
+.codehilite .bp { color: #A6E22E } /* Name.Builtin.Pseudo */
+.codehilite .fm { color: #A6E22E } /* Name.Function.Magic */
+.codehilite .vc { color: #F8F8F2 } /* Name.Variable.Class */
+.codehilite .vg { color: #F8F8F2 } /* Name.Variable.Global */
+.codehilite .vi { color: #F8F8F2 } /* Name.Variable.Instance */
+.codehilite .vm { color: #F8F8F2 } /* Name.Variable.Magic */
+.codehilite .il { color: #AE81FF } /* Literal.Number.Integer.Long */
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="hero-inner">
+    <a class="home-link" href="index.html">← 返回 Semantica 专题首页</a>
+    <span class="eyebrow">🚀 SEMANTICA · COOKBOOK · 进阶系列</span>
+    <h1>深入探究：时序知识图谱</h1>
+    <p class="lead">Semantica 官方 Cookbook 中文翻译 · 第 29 / 37 篇</p>
+    <div class="hero-badges">
+      <span class="badge">📦 semantica</span>
+      <span class="badge">🕸️ 知识图谱</span>
+      <span class="badge">🔎 GraphRAG</span>
+    </div>
+  </div>
+</header>
+
+<div class="layout">
+  <nav class="toc">
+    <h4>目录</h4>
+    <a href="#sec-1">概览</a>
+<a href="#sec-2">安装</a>
+<a href="#sec-3">步骤 1：场景定义与数据准备</a>
+<a href="#sec-4">步骤 2：构建时序图谱</a>
+<a href="#sec-5">步骤 3：高级时序查询</a>
+<a href="#sec-6">步骤 4：图谱演变分析</a>
+<a href="#sec-7">步骤 5：时序模式检测</a>
+<a href="#sec-8">步骤 6：版本管理与比较</a>
+<a href="#sec-9">步骤 7：可视化时间线</a>
+<a href="#sec-10">小结</a>
+  </nav>
+
+  <main>
+    <section id="sec-1"><h2><span class="pill-num">1</span>概览</h2><p>本 notebook 使用 Semantica 对 <strong>时序知识图谱（Temporal Knowledge Graphs，TKG）</strong> 进行全面深入的探究。与静态知识图谱不同，TKG 能够捕捉事实、关系和实体随时间的演变。这一能力对于以下应用至关重要：</p>
+<ul>
+<li><strong>企业历史分析</strong>：追踪并购、收购和领导层更迭。</li>
+<li><strong>供应链监控</strong>：追踪产品流转和状态变化。</li>
+<li><strong>金融欺诈检测</strong>：分析交易序列。</li>
+</ul>
+<p>我们将构建一个丰富的场景，对一个科技生态系统的历史进行建模，覆盖 40 年的演变。</p>
+<h3>涵盖的关键组件</h3>
+<ol>
+<li><strong><code>GraphBuilder</code>（时序模式）</strong>：构建具有时间感知属性的知识图谱。</li>
+<li><strong><code>TemporalGraphQuery</code></strong>：执行时间点、区间和路径查询。</li>
+<li><strong><code>TemporalPatternDetector</code></strong>：识别序列和循环模式。</li>
+<li><strong><code>TemporalVersionManager</code></strong>：管理快照并比较图谱状态。</li>
+<li><strong><code>TemporalVisualizer</code></strong>：交互式时间线和演变图。</li>
+</ol>
+<p><strong>文档</strong>：<a href="https://semantica.readthedocs.io/reference/kg/">API 参考</a></p></section>
+<section id="sec-2"><h2><span class="pill-num">2</span>安装</h2><div class="codehilite"><pre><span></span><code><span class="c1"># !pip install semantica[all]</span>
+</code></pre></div>
+
+<div class="codehilite"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">semantica.kg</span><span class="w"> </span><span class="kn">import</span> <span class="n">GraphBuilder</span><span class="p">,</span> <span class="n">TemporalGraphQuery</span><span class="p">,</span> <span class="n">TemporalPatternDetector</span><span class="p">,</span> <span class="n">TemporalVersionManager</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">semantica.visualization</span><span class="w"> </span><span class="kn">import</span> <span class="n">TemporalVisualizer</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">plotly.offline</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pyo</span>
+<span class="n">pyo</span><span class="o">.</span><span class="n">init_notebook_mode</span><span class="p">(</span><span class="n">connected</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="c1"># 确保输出一致以便复现</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">random</span>
+<span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
+</code></pre></div></section>
+<section id="sec-3"><h2><span class="pill-num">3</span>步骤 1：场景定义与数据准备</h2><p>我们定义一个数据集，表示 "TechCorp" 和 "InnovateInc" 的历史，包括它们的创始人、产品以及最终的合并。</p>
+<p><strong>时序属性</strong>：
+- 实体具有 <code>founded</code>、<code>born</code>、<code>released</code> 日期。
+- 关系具有 <code>timestamp</code>（时间点事件）或 <code>valid_from</code>/<code>valid_to</code>（区间）。</p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 1. 定义带时序元数据的实体</span>
+<span class="n">entities</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="c1"># 组织</span>
+    <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="s2">"org_1"</span><span class="p">,</span> <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"Organization"</span><span class="p">,</span> <span class="s2">"name"</span><span class="p">:</span> <span class="s2">"TechCorp"</span><span class="p">,</span> <span class="s2">"properties"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"founded"</span><span class="p">:</span> <span class="s2">"1980-01-01"</span><span class="p">,</span> <span class="s2">"industry"</span><span class="p">:</span> <span class="s2">"Hardware"</span><span class="p">}},</span>
+    <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="s2">"org_2"</span><span class="p">,</span> <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"Organization"</span><span class="p">,</span> <span class="s2">"name"</span><span class="p">:</span> <span class="s2">"InnovateInc"</span><span class="p">,</span> <span class="s2">"properties"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"founded"</span><span class="p">:</span> <span class="s2">"1995-06-15"</span><span class="p">,</span> <span class="s2">"industry"</span><span class="p">:</span> <span class="s2">"Software"</span><span class="p">}},</span>
+    <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="s2">"org_3"</span><span class="p">,</span> <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"Organization"</span><span class="p">,</span> <span class="s2">"name"</span><span class="p">:</span> <span class="s2">"FutureSystems"</span><span class="p">,</span> <span class="s2">"properties"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"founded"</span><span class="p">:</span> <span class="s2">"2010-03-10"</span><span class="p">,</span> <span class="s2">"industry"</span><span class="p">:</span> <span class="s2">"AI"</span><span class="p">}},</span>
+
+    <span class="c1"># 人物</span>
+    <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="s2">"per_1"</span><span class="p">,</span> <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"Person"</span><span class="p">,</span> <span class="s2">"name"</span><span class="p">:</span> <span class="s2">"Alice Founder"</span><span class="p">,</span> <span class="s2">"properties"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"born"</span><span class="p">:</span> <span class="s2">"1955-05-20"</span><span class="p">}},</span>
+    <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="s2">"per_2"</span><span class="p">,</span> <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"Person"</span><span class="p">,</span> <span class="s2">"name"</span><span class="p">:</span> <span class="s2">"Bob Coder"</span><span class="p">,</span> <span class="s2">"properties"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"born"</span><span class="p">:</span> <span class="s2">"1970-08-12"</span><span class="p">}},</span>
+    <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="s2">"per_3"</span><span class="p">,</span> <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"Person"</span><span class="p">,</span> <span class="s2">"name"</span><span class="p">:</span> <span class="s2">"Charlie CEO"</span><span class="p">,</span> <span class="s2">"properties"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"born"</span><span class="p">:</span> <span class="s2">"1980-02-28"</span><span class="p">}},</span>
+
+    <span class="c1"># 产品</span>
+    <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="s2">"prod_1"</span><span class="p">,</span> <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"Product"</span><span class="p">,</span> <span class="s2">"name"</span><span class="p">:</span> <span class="s2">"HomePC"</span><span class="p">,</span> <span class="s2">"properties"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"released"</span><span class="p">:</span> <span class="s2">"1985-11-20"</span><span class="p">}},</span>
+    <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="s2">"prod_2"</span><span class="p">,</span> <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"Product"</span><span class="p">,</span> <span class="s2">"name"</span><span class="p">:</span> <span class="s2">"SoftOS"</span><span class="p">,</span> <span class="s2">"properties"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"released"</span><span class="p">:</span> <span class="s2">"1998-07-25"</span><span class="p">}},</span>
+    <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="s2">"prod_3"</span><span class="p">,</span> <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"Product"</span><span class="p">,</span> <span class="s2">"name"</span><span class="p">:</span> <span class="s2">"SmartAI"</span><span class="p">,</span> <span class="s2">"properties"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"released"</span><span class="p">:</span> <span class="s2">"2015-01-10"</span><span class="p">}}</span>
+<span class="p">]</span>
+
+<span class="c1"># 2. 定义时序关系</span>
+<span class="n">relationships</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="c1"># 创立事件（时间点）</span>
+    <span class="p">{</span><span class="s2">"source"</span><span class="p">:</span> <span class="s2">"per_1"</span><span class="p">,</span> <span class="s2">"target"</span><span class="p">:</span> <span class="s2">"org_1"</span><span class="p">,</span> <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"founded"</span><span class="p">,</span> <span class="s2">"timestamp"</span><span class="p">:</span> <span class="s2">"1980-01-01"</span><span class="p">,</span> <span class="s2">"properties"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"timestamp"</span><span class="p">:</span> <span class="s2">"1980-01-01"</span><span class="p">}},</span>
+    <span class="p">{</span><span class="s2">"source"</span><span class="p">:</span> <span class="s2">"per_2"</span><span class="p">,</span> <span class="s2">"target"</span><span class="p">:</span> <span class="s2">"org_2"</span><span class="p">,</span> <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"founded"</span><span class="p">,</span> <span class="s2">"timestamp"</span><span class="p">:</span> <span class="s2">"1995-06-15"</span><span class="p">,</span> <span class="s2">"properties"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"timestamp"</span><span class="p">:</span> <span class="s2">"1995-06-15"</span><span class="p">}},</span>
+
+    <span class="c1"># 任职（区间）</span>
+    <span class="p">{</span><span class="s2">"source"</span><span class="p">:</span> <span class="s2">"per_1"</span><span class="p">,</span> <span class="s2">"target"</span><span class="p">:</span> <span class="s2">"org_1"</span><span class="p">,</span> <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"ceo_of"</span><span class="p">,</span> <span class="s2">"valid_from"</span><span class="p">:</span> <span class="s2">"1980-01-01"</span><span class="p">,</span> <span class="s2">"valid_to"</span><span class="p">:</span> <span class="s2">"2000-01-01"</span><span class="p">,</span> <span class="s2">"properties"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"role"</span><span class="p">:</span> <span class="s2">"CEO"</span><span class="p">}},</span>
+    <span class="p">{</span><span class="s2">"source"</span><span class="p">:</span> <span class="s2">"per_3"</span><span class="p">,</span> <span class="s2">"target"</span><span class="p">:</span> <span class="s2">"org_1"</span><span class="p">,</span> <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"ceo_of"</span><span class="p">,</span> <span class="s2">"valid_from"</span><span class="p">:</span> <span class="s2">"2000-01-02"</span><span class="p">,</span> <span class="s2">"valid_to"</span><span class="p">:</span> <span class="s2">"2023-01-01"</span><span class="p">,</span> <span class="s2">"properties"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"role"</span><span class="p">:</span> <span class="s2">"CEO"</span><span class="p">}},</span>
+    <span class="p">{</span><span class="s2">"source"</span><span class="p">:</span> <span class="s2">"per_2"</span><span class="p">,</span> <span class="s2">"target"</span><span class="p">:</span> <span class="s2">"org_2"</span><span class="p">,</span> <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"cto_of"</span><span class="p">,</span> <span class="s2">"valid_from"</span><span class="p">:</span> <span class="s2">"1995-06-15"</span><span class="p">,</span> <span class="s2">"valid_to"</span><span class="p">:</span> <span class="s2">"2010-05-01"</span><span class="p">,</span> <span class="s2">"properties"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"role"</span><span class="p">:</span> <span class="s2">"CTO"</span><span class="p">}},</span>
+
+    <span class="c1"># 产品发布</span>
+    <span class="p">{</span><span class="s2">"source"</span><span class="p">:</span> <span class="s2">"org_1"</span><span class="p">,</span> <span class="s2">"target"</span><span class="p">:</span> <span class="s2">"prod_1"</span><span class="p">,</span> <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"launched"</span><span class="p">,</span> <span class="s2">"timestamp"</span><span class="p">:</span> <span class="s2">"1985-11-20"</span><span class="p">,</span> <span class="s2">"properties"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"timestamp"</span><span class="p">:</span> <span class="s2">"1985-11-20"</span><span class="p">}},</span>
+    <span class="p">{</span><span class="s2">"source"</span><span class="p">:</span> <span class="s2">"org_2"</span><span class="p">,</span> <span class="s2">"target"</span><span class="p">:</span> <span class="s2">"prod_2"</span><span class="p">,</span> <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"launched"</span><span class="p">,</span> <span class="s2">"timestamp"</span><span class="p">:</span> <span class="s2">"1998-07-25"</span><span class="p">,</span> <span class="s2">"properties"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"timestamp"</span><span class="p">:</span> <span class="s2">"1998-07-25"</span><span class="p">}},</span>
+    <span class="p">{</span><span class="s2">"source"</span><span class="p">:</span> <span class="s2">"org_3"</span><span class="p">,</span> <span class="s2">"target"</span><span class="p">:</span> <span class="s2">"prod_3"</span><span class="p">,</span> <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"launched"</span><span class="p">,</span> <span class="s2">"timestamp"</span><span class="p">:</span> <span class="s2">"2015-01-10"</span><span class="p">,</span> <span class="s2">"properties"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"timestamp"</span><span class="p">:</span> <span class="s2">"2015-01-10"</span><span class="p">}},</span>
+
+    <span class="c1"># 企业行为</span>
+    <span class="p">{</span><span class="s2">"source"</span><span class="p">:</span> <span class="s2">"org_1"</span><span class="p">,</span> <span class="s2">"target"</span><span class="p">:</span> <span class="s2">"org_2"</span><span class="p">,</span> <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"acquired"</span><span class="p">,</span> <span class="s2">"timestamp"</span><span class="p">:</span> <span class="s2">"2010-05-01"</span><span class="p">,</span> <span class="s2">"properties"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"amount"</span><span class="p">:</span> <span class="s2">"$5B"</span><span class="p">,</span> <span class="s2">"timestamp"</span><span class="p">:</span> <span class="s2">"2010-05-01"</span><span class="p">}},</span>
+    <span class="p">{</span><span class="s2">"source"</span><span class="p">:</span> <span class="s2">"org_1"</span><span class="p">,</span> <span class="s2">"target"</span><span class="p">:</span> <span class="s2">"org_3"</span><span class="p">,</span> <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"invested_in"</span><span class="p">,</span> <span class="s2">"timestamp"</span><span class="p">:</span> <span class="s2">"2012-08-15"</span><span class="p">,</span> <span class="s2">"properties"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"amount"</span><span class="p">:</span> <span class="s2">"$100M"</span><span class="p">,</span> <span class="s2">"timestamp"</span><span class="p">:</span> <span class="s2">"2012-08-15"</span><span class="p">}}</span>
+<span class="p">]</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Defined </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">entities</span><span class="p">)</span><span class="si">}</span><span class="s2"> entities and </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">relationships</span><span class="p">)</span><span class="si">}</span><span class="s2"> temporal relationships."</span><span class="p">)</span>
+</code></pre></div></section>
+<section id="sec-4"><h2><span class="pill-num">4</span>步骤 2：构建时序图谱</h2><p>我们使用 <code>GraphBuilder</code> 并设置 <code>enable_temporal=True</code>。这会指示构建器对 <code>timestamp</code>、<code>valid_from</code> 和 <code>valid_to</code> 等时序属性建立索引。</p>
+<div class="codehilite"><pre><span></span><code><span class="n">builder</span> <span class="o">=</span> <span class="n">GraphBuilder</span><span class="p">(</span>
+    <span class="n">enable_temporal</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">temporal_granularity</span><span class="o">=</span><span class="s2">"day"</span>  <span class="c1"># 可以是 'year'、'month'、'day'、'hour'</span>
+<span class="p">)</span>
+
+<span class="n">temporal_kg</span> <span class="o">=</span> <span class="n">builder</span><span class="o">.</span><span class="n">build</span><span class="p">(</span><span class="n">entities</span><span class="p">,</span> <span class="n">relationships</span><span class="p">)</span>
+
+<span class="c1"># 图谱对象现在包含时序索引</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Graph built successfully."</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Nodes: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">temporal_kg</span><span class="p">[</span><span class="s1">'entities'</span><span class="p">])</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Edges: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">temporal_kg</span><span class="p">[</span><span class="s1">'relationships'</span><span class="p">])</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</code></pre></div></section>
+<section id="sec-5"><h2><span class="pill-num">5</span>步骤 3：高级时序查询</h2><p>我们使用 <code>TemporalGraphQuery</code> 来提出时间敏感的问题。</p>
+<div class="codehilite"><pre><span></span><code><span class="n">query_engine</span> <span class="o">=</span> <span class="n">TemporalGraphQuery</span><span class="p">()</span>
+
+<span class="c1"># 1. 时间点查询</span>
+<span class="c1"># "1990 年 TechCorp 的 CEO 是谁？"</span>
+<span class="n">ceo_1990</span> <span class="o">=</span> <span class="n">query_engine</span><span class="o">.</span><span class="n">query_at_time</span><span class="p">(</span>
+    <span class="n">temporal_kg</span><span class="p">,</span>
+    <span class="n">query</span><span class="o">=</span><span class="s2">"Find the CEO of TechCorp"</span><span class="p">,</span>
+    <span class="n">at_time</span><span class="o">=</span><span class="s2">"1990-06-01"</span>
+<span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"CEO in 1990:"</span><span class="p">,</span> <span class="p">[</span><span class="n">e</span><span class="p">[</span><span class="s1">'id'</span><span class="p">]</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">ceo_1990</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'entities'</span><span class="p">,</span> <span class="p">[])])</span>
+
+<span class="c1"># "2015 年 TechCorp 的 CEO 是谁？"</span>
+<span class="n">ceo_2015</span> <span class="o">=</span> <span class="n">query_engine</span><span class="o">.</span><span class="n">query_at_time</span><span class="p">(</span>
+    <span class="n">temporal_kg</span><span class="p">,</span>
+    <span class="n">query</span><span class="o">=</span><span class="s2">"Find the CEO of TechCorp"</span><span class="p">,</span>
+    <span class="n">at_time</span><span class="o">=</span><span class="s2">"2015-06-01"</span>
+<span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"CEO in 2015:"</span><span class="p">,</span> <span class="p">[</span><span class="n">e</span><span class="p">[</span><span class="s1">'id'</span><span class="p">]</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">ceo_2015</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'entities'</span><span class="p">,</span> <span class="p">[])])</span>
+
+<span class="c1"># 2. 时序路径查找</span>
+<span class="c1"># "Alice（创始人）是如何与 SmartAI（2015 年发布的产品）联系起来的？"</span>
+<span class="c1"># 这需要穿越时间进行遍历：Alice -&gt; 创立 TechCorp -&gt; 投资 FutureSystems -&gt; 发布 SmartAI</span>
+<span class="n">paths</span> <span class="o">=</span> <span class="n">query_engine</span><span class="o">.</span><span class="n">find_temporal_paths</span><span class="p">(</span>
+    <span class="n">graph</span><span class="o">=</span><span class="n">temporal_kg</span><span class="p">,</span>
+    <span class="n">source</span><span class="o">=</span><span class="s2">"per_1"</span><span class="p">,</span> <span class="c1"># Alice</span>
+    <span class="n">target</span><span class="o">=</span><span class="s2">"prod_3"</span><span class="p">,</span> <span class="c1"># SmartAI</span>
+    <span class="n">start_time</span><span class="o">=</span><span class="s2">"1980-01-01"</span><span class="p">,</span>
+    <span class="n">end_time</span><span class="o">=</span><span class="s2">"2020-01-01"</span>
+<span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Found </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">paths</span><span class="p">)</span><span class="si">}</span><span class="s2"> temporal paths from Alice to SmartAI."</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">path</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">paths</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Path </span><span class="si">{</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</code></pre></div></section>
+<section id="sec-6"><h2><span class="pill-num">6</span>步骤 4：图谱演变分析</h2><p>我们可以使用 <code>analyze_evolution</code> 分析图谱属性随时间的变化。</p>
+<div class="codehilite"><pre><span></span><code><span class="n">evolution_stats</span> <span class="o">=</span> <span class="n">query_engine</span><span class="o">.</span><span class="n">analyze_evolution</span><span class="p">(</span>
+    <span class="n">temporal_kg</span><span class="p">,</span>
+    <span class="n">start_time</span><span class="o">=</span><span class="s2">"1980-01-01"</span><span class="p">,</span>
+    <span class="n">end_time</span><span class="o">=</span><span class="s2">"2025-01-01"</span><span class="p">,</span>
+    <span class="n">metrics</span><span class="o">=</span><span class="p">[</span><span class="s2">"count"</span><span class="p">,</span> <span class="s2">"diversity"</span><span class="p">,</span> <span class="s2">"stability"</span><span class="p">]</span>
+<span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Evolution Statistics (1980-2025):"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Total Relationships: </span><span class="si">{</span><span class="n">evolution_stats</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'count'</span><span class="p">,</span><span class="w"> </span><span class="s1">'N/A'</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Relationship Diversity: </span><span class="si">{</span><span class="n">evolution_stats</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'diversity'</span><span class="p">,</span><span class="w"> </span><span class="s1">'N/A'</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Graph Stability: </span><span class="si">{</span><span class="n">evolution_stats</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'stability'</span><span class="p">,</span><span class="w"> </span><span class="s1">'N/A'</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</code></pre></div></section>
+<section id="sec-7"><h2><span class="pill-num">7</span>步骤 5：时序模式检测</h2><p>我们使用 <code>TemporalPatternDetector</code> 自动查找重复出现的结构，例如序列（A -&gt; B -&gt; C）或循环。</p>
+<div class="codehilite"><pre><span></span><code><span class="n">detector</span> <span class="o">=</span> <span class="n">TemporalPatternDetector</span><span class="p">()</span>
+
+<span class="c1"># 检测序列模式（例如，创立 -&gt; 发布 -&gt; 收购）</span>
+<span class="n">sequences</span> <span class="o">=</span> <span class="n">detector</span><span class="o">.</span><span class="n">detect_temporal_patterns</span><span class="p">(</span>
+    <span class="n">temporal_kg</span><span class="p">,</span>
+    <span class="n">pattern_type</span><span class="o">=</span><span class="s2">"sequence"</span><span class="p">,</span>
+    <span class="n">min_frequency</span><span class="o">=</span><span class="mi">1</span>
+<span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Detected </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">sequences</span><span class="p">)</span><span class="si">}</span><span class="s2"> sequential patterns."</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">seq</span> <span class="ow">in</span> <span class="n">sequences</span><span class="p">[:</span><span class="mi">3</span><span class="p">]:</span> <span class="c1"># 显示前 3 个</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Pattern: </span><span class="si">{</span><span class="n">seq</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'pattern'</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Support: </span><span class="si">{</span><span class="n">seq</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'support'</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</code></pre></div></section>
+<section id="sec-8"><h2><span class="pill-num">8</span>步骤 6：版本管理与比较</h2><p>在真实场景中，知识图谱是分批更新的。<code>TemporalVersionManager</code> 负责处理这些版本。</p>
+<div class="codehilite"><pre><span></span><code><span class="n">version_manager</span> <span class="o">=</span> <span class="n">TemporalVersionManager</span><span class="p">()</span>
+
+<span class="c1"># 创建显式版本</span>
+<span class="n">v1_1990</span> <span class="o">=</span> <span class="n">version_manager</span><span class="o">.</span><span class="n">create_version</span><span class="p">(</span><span class="n">temporal_kg</span><span class="p">,</span> <span class="n">timestamp</span><span class="o">=</span><span class="s2">"1990-01-01"</span><span class="p">,</span> <span class="n">version_label</span><span class="o">=</span><span class="s2">"v1.0 (Early Days)"</span><span class="p">)</span>
+<span class="n">v2_2010</span> <span class="o">=</span> <span class="n">version_manager</span><span class="o">.</span><span class="n">create_version</span><span class="p">(</span><span class="n">temporal_kg</span><span class="p">,</span> <span class="n">timestamp</span><span class="o">=</span><span class="s2">"2010-01-01"</span><span class="p">,</span> <span class="n">version_label</span><span class="o">=</span><span class="s2">"v2.0 (Post-Merger)"</span><span class="p">)</span>
+
+<span class="c1"># 比较版本</span>
+<span class="n">diff</span> <span class="o">=</span> <span class="n">version_manager</span><span class="o">.</span><span class="n">compare_versions</span><span class="p">(</span><span class="n">v1_1990</span><span class="p">,</span> <span class="n">v2_2010</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Comparing </span><span class="si">{</span><span class="n">v1_1990</span><span class="p">[</span><span class="s1">'label'</span><span class="p">]</span><span class="si">}</span><span class="s2"> vs </span><span class="si">{</span><span class="n">v2_2010</span><span class="p">[</span><span class="s1">'label'</span><span class="p">]</span><span class="si">}</span><span class="s2">:"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"New Entities: </span><span class="si">{</span><span class="n">diff</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'entities_added'</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"New Relationships: </span><span class="si">{</span><span class="n">diff</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'relationships_added'</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</code></pre></div></section>
+<section id="sec-9"><h2><span class="pill-num">9</span>步骤 7：可视化时间线</h2><p>最后，<code>TemporalVisualizer</code> 让数据变得生动起来。我们将创建一个交互式时间线和一个快照比较。</p>
+<div class="codehilite"><pre><span></span><code><span class="n">visualizer</span> <span class="o">=</span> <span class="n">TemporalVisualizer</span><span class="p">()</span>
+
+<span class="c1"># 1. 交互式时间线</span>
+<span class="c1"># 准备用于可视化的事件（从知识图谱中提取）</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">extract_events</span><span class="p">(</span><span class="n">graph</span><span class="p">):</span>
+    <span class="n">events</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">rel</span> <span class="ow">in</span> <span class="n">graph</span><span class="p">[</span><span class="s1">'relationships'</span><span class="p">]:</span>
+        <span class="c1"># 时间点事件</span>
+        <span class="k">if</span> <span class="n">rel</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'timestamp'</span><span class="p">):</span>
+            <span class="n">events</span><span class="o">.</span><span class="n">append</span><span class="p">({</span>
+                <span class="s1">'timestamp'</span><span class="p">:</span> <span class="n">rel</span><span class="p">[</span><span class="s1">'timestamp'</span><span class="p">],</span>
+                <span class="s1">'type'</span><span class="p">:</span> <span class="n">rel</span><span class="p">[</span><span class="s1">'type'</span><span class="p">],</span>
+                <span class="s1">'label'</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">rel</span><span class="p">[</span><span class="s1">'source'</span><span class="p">]</span><span class="si">}</span><span class="s2"> -&gt; </span><span class="si">{</span><span class="n">rel</span><span class="p">[</span><span class="s1">'target'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+                <span class="s1">'entity'</span><span class="p">:</span> <span class="n">rel</span><span class="p">[</span><span class="s1">'source'</span><span class="p">]</span>
+            <span class="p">})</span>
+        <span class="c1"># 区间事件（开始）</span>
+        <span class="k">if</span> <span class="n">rel</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'valid_from'</span><span class="p">):</span>
+             <span class="n">events</span><span class="o">.</span><span class="n">append</span><span class="p">({</span>
+                <span class="s1">'timestamp'</span><span class="p">:</span> <span class="n">rel</span><span class="p">[</span><span class="s1">'valid_from'</span><span class="p">],</span>
+                <span class="s1">'type'</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">rel</span><span class="p">[</span><span class="s1">'type'</span><span class="p">]</span><span class="si">}</span><span class="s2"> (start)"</span><span class="p">,</span>
+                <span class="s1">'label'</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">rel</span><span class="p">[</span><span class="s1">'source'</span><span class="p">]</span><span class="si">}</span><span class="s2"> -&gt; </span><span class="si">{</span><span class="n">rel</span><span class="p">[</span><span class="s1">'target'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+                <span class="s1">'entity'</span><span class="p">:</span> <span class="n">rel</span><span class="p">[</span><span class="s1">'source'</span><span class="p">]</span>
+            <span class="p">})</span>
+    <span class="k">return</span> <span class="p">{</span><span class="s1">'events'</span><span class="p">:</span> <span class="n">events</span><span class="p">}</span>
+
+<span class="n">temporal_data</span> <span class="o">=</span> <span class="n">extract_events</span><span class="p">(</span><span class="n">temporal_kg</span><span class="p">)</span>
+<span class="n">timeline_fig</span> <span class="o">=</span> <span class="n">visualizer</span><span class="o">.</span><span class="n">visualize_timeline</span><span class="p">(</span><span class="n">temporal_data</span><span class="p">,</span> <span class="n">output</span><span class="o">=</span><span class="s2">"interactive"</span><span class="p">)</span>
+<span class="c1"># 在 notebook 中，这会渲染一个 Plotly 图形。</span>
+<span class="n">timeline_fig</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+
+<span class="c1"># 2. 版本历史可视化</span>
+<span class="n">history</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="p">{</span><span class="s2">"version"</span><span class="p">:</span> <span class="s2">"v1.0"</span><span class="p">,</span> <span class="s2">"timestamp"</span><span class="p">:</span> <span class="s2">"1990-01-01"</span><span class="p">,</span> <span class="s2">"changes"</span><span class="p">:</span> <span class="s2">"Founding Era"</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"version"</span><span class="p">:</span> <span class="s2">"v2.0"</span><span class="p">,</span> <span class="s2">"timestamp"</span><span class="p">:</span> <span class="s2">"2010-01-01"</span><span class="p">,</span> <span class="s2">"changes"</span><span class="p">:</span> <span class="s2">"Expansion Era"</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"version"</span><span class="p">:</span> <span class="s2">"v3.0"</span><span class="p">,</span> <span class="s2">"timestamp"</span><span class="p">:</span> <span class="s2">"2020-01-01"</span><span class="p">,</span> <span class="s2">"changes"</span><span class="p">:</span> <span class="s2">"AI Era"</span><span class="p">}</span>
+<span class="p">]</span>
+<span class="n">history_fig</span> <span class="o">=</span> <span class="n">visualizer</span><span class="o">.</span><span class="n">visualize_version_history</span><span class="p">(</span><span class="n">history</span><span class="p">,</span> <span class="n">output</span><span class="o">=</span><span class="s2">"interactive"</span><span class="p">)</span>
+<span class="n">history_fig</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Visualizations generated (render requires Jupyter environment)."</span><span class="p">)</span>
+</code></pre></div></section>
+<section id="sec-10"><h2><span class="pill-num">10</span>小结</h2><p>在本次深入探究中，我们：
+1.  <strong>建模</strong>了一个带有时序元数据的复杂企业历史。
+2.  使用 <code>GraphBuilder</code> <strong>构建</strong>了一个时间感知的知识图谱。
+3.  <strong>查询</strong>了特定的时间切片和区间以重建历史。
+4.  <strong>追踪</strong>了时序路径以理解间接连接。
+5.  <strong>分析</strong>了图谱的演变指标。
+6.  <strong>管理</strong>了版本并可视化了时间线。
+7.  使用 <code>TemporalVisualizer</code> <strong>可视化</strong>了数据。</p>
+<p>这一工作流构成了 Semantica 中时序智能应用的骨干。</p></section>
+    <nav class="pager"><a class="prev" href="09-semantic-layer-construction.html"><span class="dir">← 上一篇</span><span class="ttl">语义层构建</span></a><a class="next" href="11-advanced-context-engineering.html"><span class="dir">→ 下一篇</span><span class="ttl">高级上下文工程</span></a></nav>
+  </main>
+</div>
+
+<footer>由 Semantica 官方 Cookbook 生成的中文说明页 · <a href="https://github.com/semantica-agi/semantica">semantica-agi/semantica</a></footer>
+
+</body>
+</html>

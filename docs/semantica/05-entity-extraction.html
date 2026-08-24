@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>实体抽取 - 全面指南 · Semantica Cookbook</title>
+<style>
+
+:root {
+  --bg: #0b0e17;
+  --bg-soft: #10141f;
+  --panel: #ffffff;
+  --panel-alt: #f6f7fb;
+  --border: #e6e8f0;
+  --text: #1a1d29;
+  --text-dim: #5a5f72;
+  --primary: #6366f1;
+  --primary-dark: #4338ca;
+  --accent: #14b8a6;
+  --accent-2: #f59e0b;
+  --code-bg: #0f172a;
+  --code-text: #e2e8f0;
+  --radius: 14px;
+  --shadow: 0 10px 30px -12px rgba(30, 41, 59, 0.18);
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif;
+  color: var(--text);
+  background: var(--panel-alt);
+  line-height: 1.75;
+}
+a { color: var(--primary-dark); }
+
+/* ---------- HERO ---------- */
+.hero {
+  background: radial-gradient(1200px 600px at 15% -10%, rgba(99,102,241,0.55), transparent 60%),
+              radial-gradient(900px 500px at 90% 10%, rgba(20,184,166,0.35), transparent 55%),
+              linear-gradient(180deg, var(--bg) 0%, var(--bg-soft) 100%);
+  color: #f4f5fb;
+  padding: 64px 24px 88px;
+  position: relative;
+  overflow: hidden;
+}
+.hero-inner { max-width: 1080px; margin: 0 auto; }
+.eyebrow {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-size: 12.5px; letter-spacing: 0.12em; text-transform: uppercase;
+  color: #a5b4fc; background: rgba(99,102,241,0.15);
+  border: 1px solid rgba(165,180,252,0.35);
+  padding: 6px 14px; border-radius: 999px; margin-bottom: 22px;
+}
+.hero h1 { font-size: 40px; line-height: 1.2; margin: 0 0 16px; font-weight: 800; letter-spacing: -0.01em; }
+.hero p.lead { font-size: 17px; color: #cbd0e6; max-width: 720px; margin: 0 0 28px; }
+.hero-badges { display: flex; flex-wrap: wrap; gap: 10px; }
+.badge {
+  font-size: 13px; background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.14); color: #e2e4f5;
+  padding: 6px 12px; border-radius: 999px;
+}
+.hero a.home-link {
+  display: inline-flex; align-items: center; gap: 6px;
+  color: #a5b4fc; text-decoration: none; font-size: 13.5px; margin-bottom: 20px;
+}
+.hero a.home-link:hover { color: #fff; }
+
+/* ---------- LAYOUT ---------- */
+.layout {
+  max-width: 1200px; margin: -48px auto 0; padding: 0 24px 60px;
+  display: grid; grid-template-columns: 240px 1fr; gap: 32px; position: relative;
+}
+.toc {
+  position: sticky; top: 24px; align-self: start;
+  background: var(--panel); border: 1px solid var(--border);
+  border-radius: var(--radius); box-shadow: var(--shadow);
+  padding: 18px 16px; font-size: 13.5px;
+  max-height: calc(100vh - 48px); overflow-y: auto;
+}
+.toc h4 { margin: 0 0 10px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-dim); }
+.toc a { display: block; padding: 6px 8px; border-radius: 8px; color: var(--text-dim); text-decoration: none; margin-bottom: 2px; }
+.toc a:hover { background: var(--panel-alt); color: var(--text); }
+.toc a.active { background: var(--panel-alt); color: var(--primary-dark); font-weight: 600; }
+
+main { min-width: 0; }
+
+section {
+  background: var(--panel); border: 1px solid var(--border);
+  border-radius: var(--radius); box-shadow: var(--shadow);
+  padding: 34px 40px; margin-bottom: 24px; scroll-margin-top: 20px;
+}
+section h2 { font-size: 23px; margin: 0 0 16px; display: flex; align-items: center; gap: 10px; }
+section h2 .pill-num {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 30px; height: 30px; border-radius: 9px; flex-shrink: 0;
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  color: #fff; font-size: 14px; font-weight: 700;
+}
+h3 { font-size: 17px; margin: 26px 0 10px; }
+h4 { font-size: 15px; margin: 20px 0 8px; }
+p { margin: 0 0 14px; }
+ul, ol { margin: 0 0 16px; padding-left: 22px; }
+li { margin-bottom: 6px; }
+li > ul, li > ol { margin-top: 6px; }
+strong { color: var(--text); }
+blockquote {
+  margin: 0 0 16px; padding: 12px 18px;
+  border-left: 4px solid var(--accent); background: var(--panel-alt);
+  border-radius: 0 8px 8px 0; color: var(--text-dim);
+}
+blockquote p { margin: 0; }
+
+/* tables */
+table { width: 100%; border-collapse: collapse; font-size: 13.8px; margin: 8px 0 18px; }
+th {
+  text-align: left; font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em;
+  color: var(--text-dim); border-bottom: 1px solid var(--border); padding: 8px 10px;
+}
+td { padding: 10px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+tr:last-child td { border-bottom: none; }
+
+/* inline code */
+code {
+  background: #eef0fb; color: var(--primary-dark);
+  padding: 2px 7px; border-radius: 6px;
+  font-family: "SFMono-Regular", Menlo, Consolas, monospace; font-size: 13px;
+}
+
+/* code blocks */
+pre {
+  background: var(--code-bg); color: var(--code-text);
+  padding: 16px 18px; border-radius: 10px; overflow-x: auto;
+  font-size: 13px; line-height: 1.6;
+  font-family: "SFMono-Regular", Menlo, Consolas, monospace;
+  margin: 10px 0 18px;
+}
+pre code { background: transparent; color: inherit; padding: 0; border-radius: 0; font-size: 13px; }
+.codehilite { background: var(--code-bg); border-radius: 10px; overflow-x: auto; margin: 10px 0 18px; }
+.codehilite pre { margin: 0; padding: 16px 18px; background: transparent; }
+
+/* pager */
+.pager { display: flex; justify-content: space-between; gap: 16px; margin-top: 8px; }
+.pager a {
+  flex: 1; display: flex; flex-direction: column; gap: 4px;
+  padding: 16px 20px; border-radius: var(--radius); text-decoration: none;
+  background: var(--panel); border: 1px solid var(--border); box-shadow: var(--shadow);
+  transition: transform 0.15s, border-color 0.15s;
+}
+.pager a:hover { transform: translateY(-2px); border-color: var(--primary); }
+.pager a .dir { font-size: 12px; color: var(--text-dim); }
+.pager a .ttl { font-size: 14.5px; font-weight: 700; color: var(--text); }
+.pager a.next { text-align: right; }
+.pager a.disabled { opacity: 0.4; pointer-events: none; }
+
+footer { text-align: center; color: var(--text-dim); font-size: 13px; padding: 20px 0 40px; }
+footer a { color: var(--text-dim); }
+
+@media (max-width: 900px) {
+  .layout { grid-template-columns: 1fr; }
+  .toc { position: static; max-height: none; }
+  section { padding: 26px 22px; }
+  .hero h1 { font-size: 30px; }
+  .pager { flex-direction: column; }
+}
+
+pre { line-height: 125%; }
+td.linenos .normal { color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px; }
+span.linenos { color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px; }
+td.linenos .special { color: #000000; background-color: #ffffc0; padding-left: 5px; padding-right: 5px; }
+span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 5px; padding-right: 5px; }
+.codehilite .hll { background-color: #49483e }
+.codehilite { background: #272822; color: #F8F8F2 }
+.codehilite .c { color: #959077 } /* Comment */
+.codehilite .err { color: #ED007E; background-color: #1E0010 } /* Error */
+.codehilite .esc { color: #F8F8F2 } /* Escape */
+.codehilite .g { color: #F8F8F2 } /* Generic */
+.codehilite .k { color: #66D9EF } /* Keyword */
+.codehilite .l { color: #AE81FF } /* Literal */
+.codehilite .n { color: #F8F8F2 } /* Name */
+.codehilite .o { color: #FF4689 } /* Operator */
+.codehilite .x { color: #F8F8F2 } /* Other */
+.codehilite .p { color: #F8F8F2 } /* Punctuation */
+.codehilite .ch { color: #959077 } /* Comment.Hashbang */
+.codehilite .cm { color: #959077 } /* Comment.Multiline */
+.codehilite .cp { color: #959077 } /* Comment.Preproc */
+.codehilite .cpf { color: #959077 } /* Comment.PreprocFile */
+.codehilite .c1 { color: #959077 } /* Comment.Single */
+.codehilite .cs { color: #959077 } /* Comment.Special */
+.codehilite .gd { color: #FF4689 } /* Generic.Deleted */
+.codehilite .ge { color: #F8F8F2; font-style: italic } /* Generic.Emph */
+.codehilite .ges { color: #F8F8F2; font-weight: bold; font-style: italic } /* Generic.EmphStrong */
+.codehilite .gr { color: #FF4689 } /* Generic.Error */
+.codehilite .gh { color: #F8F8F2 } /* Generic.Heading */
+.codehilite .gi { color: #A6E22E } /* Generic.Inserted */
+.codehilite .go { color: #66D9EF } /* Generic.Output */
+.codehilite .gp { color: #FF4689; font-weight: bold } /* Generic.Prompt */
+.codehilite .gs { color: #F8F8F2; font-weight: bold } /* Generic.Strong */
+.codehilite .gu { color: #959077 } /* Generic.Subheading */
+.codehilite .gt { color: #66D9EF } /* Generic.Traceback */
+.codehilite .kc { color: #66D9EF } /* Keyword.Constant */
+.codehilite .kd { color: #66D9EF } /* Keyword.Declaration */
+.codehilite .kn { color: #FF4689 } /* Keyword.Namespace */
+.codehilite .kp { color: #66D9EF } /* Keyword.Pseudo */
+.codehilite .kr { color: #66D9EF } /* Keyword.Reserved */
+.codehilite .kt { color: #66D9EF } /* Keyword.Type */
+.codehilite .ld { color: #E6DB74 } /* Literal.Date */
+.codehilite .m { color: #AE81FF } /* Literal.Number */
+.codehilite .s { color: #E6DB74 } /* Literal.String */
+.codehilite .na { color: #A6E22E } /* Name.Attribute */
+.codehilite .nb { color: #A6E22E } /* Name.Builtin */
+.codehilite .nc { color: #A6E22E } /* Name.Class */
+.codehilite .no { color: #66D9EF } /* Name.Constant */
+.codehilite .nd { color: #A6E22E } /* Name.Decorator */
+.codehilite .ni { color: #F8F8F2 } /* Name.Entity */
+.codehilite .ne { color: #A6E22E } /* Name.Exception */
+.codehilite .nf { color: #A6E22E } /* Name.Function */
+.codehilite .nl { color: #F8F8F2 } /* Name.Label */
+.codehilite .nn { color: #F8F8F2 } /* Name.Namespace */
+.codehilite .nx { color: #A6E22E } /* Name.Other */
+.codehilite .py { color: #F8F8F2 } /* Name.Property */
+.codehilite .nt { color: #FF4689 } /* Name.Tag */
+.codehilite .nv { color: #F8F8F2 } /* Name.Variable */
+.codehilite .ow { color: #FF4689 } /* Operator.Word */
+.codehilite .pm { color: #F8F8F2 } /* Punctuation.Marker */
+.codehilite .w { color: #F8F8F2 } /* Text.Whitespace */
+.codehilite .mb { color: #AE81FF } /* Literal.Number.Bin */
+.codehilite .mf { color: #AE81FF } /* Literal.Number.Float */
+.codehilite .mh { color: #AE81FF } /* Literal.Number.Hex */
+.codehilite .mi { color: #AE81FF } /* Literal.Number.Integer */
+.codehilite .mo { color: #AE81FF } /* Literal.Number.Oct */
+.codehilite .sa { color: #E6DB74 } /* Literal.String.Affix */
+.codehilite .sb { color: #E6DB74 } /* Literal.String.Backtick */
+.codehilite .sc { color: #E6DB74 } /* Literal.String.Char */
+.codehilite .dl { color: #E6DB74 } /* Literal.String.Delimiter */
+.codehilite .sd { color: #E6DB74 } /* Literal.String.Doc */
+.codehilite .s2 { color: #E6DB74 } /* Literal.String.Double */
+.codehilite .se { color: #AE81FF } /* Literal.String.Escape */
+.codehilite .sh { color: #E6DB74 } /* Literal.String.Heredoc */
+.codehilite .si { color: #E6DB74 } /* Literal.String.Interpol */
+.codehilite .sx { color: #E6DB74 } /* Literal.String.Other */
+.codehilite .sr { color: #E6DB74 } /* Literal.String.Regex */
+.codehilite .s1 { color: #E6DB74 } /* Literal.String.Single */
+.codehilite .ss { color: #E6DB74 } /* Literal.String.Symbol */
+.codehilite .bp { color: #A6E22E } /* Name.Builtin.Pseudo */
+.codehilite .fm { color: #A6E22E } /* Name.Function.Magic */
+.codehilite .vc { color: #F8F8F2 } /* Name.Variable.Class */
+.codehilite .vg { color: #F8F8F2 } /* Name.Variable.Global */
+.codehilite .vi { color: #F8F8F2 } /* Name.Variable.Instance */
+.codehilite .vm { color: #F8F8F2 } /* Name.Variable.Magic */
+.codehilite .il { color: #AE81FF } /* Literal.Number.Integer.Long */
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="hero-inner">
+    <a class="home-link" href="index.html">← 返回 Semantica 专题首页</a>
+    <span class="eyebrow">🌱 SEMANTICA · COOKBOOK · 入门系列</span>
+    <h1>实体抽取 - 全面指南</h1>
+    <p class="lead">Semantica 官方 Cookbook 中文翻译 · 第 5 / 37 篇</p>
+    <div class="hero-badges">
+      <span class="badge">📦 semantica</span>
+      <span class="badge">🕸️ 知识图谱</span>
+      <span class="badge">🔎 GraphRAG</span>
+    </div>
+  </div>
+</header>
+
+<div class="layout">
+  <nav class="toc">
+    <h4>目录</h4>
+    <a href="#sec-1">概览</a>
+<a href="#sec-2">安装</a>
+<a href="#sec-3">步骤 1：使用 NERExtractor 进行基础实体抽取</a>
+<a href="#sec-4">步骤 2：在上下文中可视化实体</a>
+<a href="#sec-5">步骤 3：不同的抽取方法</a>
+<a href="#sec-6">步骤 4：使用 NamedEntityRecognizer 进行高级实体识别</a>
+<a href="#sec-7">步骤 5：实体分类</a>
+<a href="#sec-8">步骤 6：置信度打分</a>
+<a href="#sec-9">步骤 7：自定义实体检测</a>
+<a href="#sec-10">步骤 8：批处理</a>
+<a href="#sec-11">步骤 9：最佳实践与技巧</a>
+<a href="#sec-12">小结</a>
+  </nav>
+
+  <main>
+    <section id="sec-1"><h2><span class="pill-num">1</span>概览</h2><p>本 notebook 提供了一份使用 Semantica 强大的 NER（命名实体识别）模块从文本中抽取命名实体的<strong>全面指南</strong>。你将学习使用多种抽取器、方法和高级功能来识别和分类文本中的实体。</p>
+<p><strong>文档</strong>：<a href="https://semantica.readthedocs.io/reference/semantic_extract/">API 参考</a></p>
+<h3>学习目标</h3>
+<p>学完本 notebook 后，你将能够：</p>
+<ul>
+<li>使用 <code>NERExtractor</code> 和 <code>NamedEntityRecognizer</code> 抽取实体</li>
+<li>了解不同的抽取方法（pattern、regex、ML、HuggingFace、LLM）</li>
+<li>使用 <code>EntityClassifier</code> 对实体进行分类和分组</li>
+<li>使用 <code>EntityConfidenceScorer</code> 评估抽取质量</li>
+<li>使用 <code>CustomEntityDetector</code> 创建自定义实体模式</li>
+<li>配置抽取参数以获得最佳结果</li>
+<li>高效处理多个文档</li>
+<li>优雅地处理边界情况和错误</li>
+</ul>
+<h3>你将学到什么</h3>
+<table>
+<thead>
+<tr>
+<th>组件</th>
+<th>用途</th>
+<th>使用时机</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>NERExtractor</code></td>
+<td>核心实体抽取</td>
+<td>快速、简单的抽取</td>
+</tr>
+<tr>
+<td><code>NamedEntityRecognizer</code></td>
+<td>带配置的高级 NER</td>
+<td>需要精细控制时</td>
+</tr>
+<tr>
+<td><code>EntityClassifier</code></td>
+<td>对实体进行分类和分组</td>
+<td>组织已抽取的实体</td>
+</tr>
+<tr>
+<td><code>EntityConfidenceScorer</code></td>
+<td>对实体置信度打分</td>
+<td>质量评估</td>
+</tr>
+<tr>
+<td><code>CustomEntityDetector</code></td>
+<td>领域特定实体</td>
+<td>需要自定义模式时</td>
+</tr>
+</tbody>
+</table>
+<hr /></section>
+<section id="sec-2"><h2><span class="pill-num">2</span>安装</h2><p>从 PyPI 安装 Semantica：</p>
+<div class="codehilite"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>semantica
+<span class="c1"># 或安装所有可选依赖：</span>
+pip<span class="w"> </span>install<span class="w"> </span>semantica<span class="o">[</span>all<span class="o">]</span>
+</code></pre></div>
+
+<hr />
+<div class="codehilite"><pre><span></span><code><span class="err">!</span><span class="n">pip</span> <span class="n">install</span> <span class="n">semantica</span>
+</code></pre></div></section>
+<section id="sec-3"><h2><span class="pill-num">3</span>步骤 1：使用 NERExtractor 进行基础实体抽取</h2><p>让我们从使用 <code>NERExtractor</code> 的最简单方法开始。该类提供了一个用于从文本中抽取命名实体的直接接口。</p>
+<h3>什么是 NERExtractor？</h3>
+<p><code>NERExtractor</code> 是核心实体抽取类，它：
+- 识别命名实体（人物、组织、地点、日期等）
+- 返回包含文本、类型、位置和置信度的实体对象
+- 支持多种抽取方法
+- 开箱即用，具有合理的默认值</p>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">semantica.semantic_extract</span><span class="w"> </span><span class="kn">import</span> <span class="n">NERExtractor</span>
+
+<span class="c1"># 初始化抽取器</span>
+<span class="n">ner_extractor</span> <span class="o">=</span> <span class="n">NERExtractor</span><span class="p">()</span>
+
+<span class="c1"># 包含各种实体类型的示例文本</span>
+<span class="n">text</span> <span class="o">=</span> <span class="s2">"""</span>
+<span class="s2">Apple Inc. is a technology company founded by Steve Jobs, Steve Wozniak, and Ronald Wayne </span>
+<span class="s2">in Cupertino, California on April 1, 1976. The company's current CEO is Tim Cook, who took </span>
+<span class="s2">over from Steve Jobs in August 2011. Apple is headquartered at One Apple Park Way in Cupertino.</span>
+<span class="s2">"""</span>
+
+<span class="c1"># 抽取实体</span>
+<span class="n">entities</span> <span class="o">=</span> <span class="n">ner_extractor</span><span class="o">.</span><span class="n">extract</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">" Extracted </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">entities</span><span class="p">)</span><span class="si">}</span><span class="s2"> entities:</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"-"</span> <span class="o">*</span> <span class="mi">80</span><span class="p">)</span>
+
+<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">entity</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">entities</span><span class="p">,</span> <span class="mi">1</span><span class="p">):</span>
+    <span class="c1"># 同时处理 dict 和对象两种格式</span>
+    <span class="n">entity_text</span> <span class="o">=</span> <span class="n">entity</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'text'</span><span class="p">,</span> <span class="n">entity</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'entity'</span><span class="p">,</span> <span class="s1">''</span><span class="p">))</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">entity</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="k">else</span> <span class="n">entity</span><span class="o">.</span><span class="n">text</span>
+    <span class="n">entity_type</span> <span class="o">=</span> <span class="n">entity</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'type'</span><span class="p">,</span> <span class="n">entity</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'label'</span><span class="p">,</span> <span class="s1">'Unknown'</span><span class="p">))</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">entity</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="k">else</span> <span class="n">entity</span><span class="o">.</span><span class="n">label</span>
+    <span class="n">confidence</span> <span class="o">=</span> <span class="n">entity</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'confidence'</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">entity</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="k">else</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">entity</span><span class="p">,</span> <span class="s1">'confidence'</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">i</span><span class="si">:</span><span class="s2">2d</span><span class="si">}</span><span class="s2">. </span><span class="si">{</span><span class="n">entity_text</span><span class="si">:</span><span class="s2">30s</span><span class="si">}</span><span class="s2"> | Type: </span><span class="si">{</span><span class="n">entity_type</span><span class="si">:</span><span class="s2">12s</span><span class="si">}</span><span class="s2"> | Confidence: </span><span class="si">{</span><span class="n">confidence</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">"-"</span> <span class="o">*</span> <span class="mi">80</span><span class="p">)</span>
+</code></pre></div>
+
+<h3>理解实体对象</h3>
+<p>每个抽取出的实体包含：</p>
+<table>
+<thead>
+<tr>
+<th>属性</th>
+<th>描述</th>
+<th>示例</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>text</code></td>
+<td>实体文本</td>
+<td>"Apple Inc."</td>
+</tr>
+<tr>
+<td><code>label/type</code></td>
+<td>实体类别</td>
+<td>"ORG"（组织）</td>
+</tr>
+<tr>
+<td><code>start_char</code></td>
+<td>起始位置</td>
+<td>0</td>
+</tr>
+<tr>
+<td><code>end_char</code></td>
+<td>结束位置</td>
+<td>10</td>
+</tr>
+<tr>
+<td><code>confidence</code></td>
+<td>抽取置信度（0-1）</td>
+<td>0.95</td>
+</tr>
+<tr>
+<td><code>metadata</code></td>
+<td>附加信息</td>
+<td>{"method": "ml"}</td>
+</tr>
+</tbody>
+</table>
+<h3>常见实体类型</h3>
+<ul>
+<li><strong>PERSON</strong>：人物，包括虚构角色</li>
+<li><strong>ORG</strong>：公司、机构、组织</li>
+<li><strong>GPE</strong>：国家、城市、州（地缘政治实体）</li>
+<li><strong>LOC</strong>：非 GPE 地点、山脉、水体</li>
+<li><strong>DATE</strong>：绝对或相对日期或时间段</li>
+<li><strong>TIME</strong>：小于一天的时间</li>
+<li><strong>MONEY</strong>：货币金额</li>
+<li><strong>PERCENT</strong>：百分比值</li>
+</ul></section>
+<section id="sec-4"><h2><span class="pill-num">4</span>步骤 2：在上下文中可视化实体</h2><p>让我们创建一个简单的可视化，以查看在原始文本中高亮显示的实体。</p>
+<div class="codehilite"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">highlight_entities</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">entities</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    创建一个带有实体标记的简单文本可视化。</span>
+<span class="sd">    """</span>
+    <span class="c1"># 按类型对实体进行分组</span>
+    <span class="n">entity_types</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">entity</span> <span class="ow">in</span> <span class="n">entities</span><span class="p">:</span>
+        <span class="n">entity_text</span> <span class="o">=</span> <span class="n">entity</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'text'</span><span class="p">,</span> <span class="n">entity</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'entity'</span><span class="p">,</span> <span class="s1">''</span><span class="p">))</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">entity</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="k">else</span> <span class="n">entity</span><span class="o">.</span><span class="n">text</span>
+        <span class="n">entity_type</span> <span class="o">=</span> <span class="n">entity</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'type'</span><span class="p">,</span> <span class="n">entity</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'label'</span><span class="p">,</span> <span class="s1">'Unknown'</span><span class="p">))</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">entity</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="k">else</span> <span class="n">entity</span><span class="o">.</span><span class="n">label</span>
+
+        <span class="k">if</span> <span class="n">entity_type</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">entity_types</span><span class="p">:</span>
+            <span class="n">entity_types</span><span class="p">[</span><span class="n">entity_type</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">entity_types</span><span class="p">[</span><span class="n">entity_type</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">entity_text</span><span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2"> Entity Visualization:</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"="</span> <span class="o">*</span> <span class="mi">80</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">entity_type</span><span class="p">,</span> <span class="n">entity_list</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">entity_types</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
+        <span class="n">unique_entities</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">entity_list</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="si">{</span><span class="n">entity_type</span><span class="si">}</span><span class="s2">:"</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">ent</span> <span class="ow">in</span> <span class="n">unique_entities</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  • </span><span class="si">{</span><span class="n">ent</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">"</span> <span class="o">+</span> <span class="s2">"="</span> <span class="o">*</span> <span class="mi">80</span><span class="p">)</span>
+
+<span class="c1"># 可视化已抽取的实体</span>
+<span class="n">highlight_entities</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">entities</span><span class="p">)</span>
+</code></pre></div></section>
+<section id="sec-5"><h2><span class="pill-num">5</span>步骤 3：不同的抽取方法</h2><p>Semantica 支持多种抽取方法，每种方法各有优势：</p>
+<h3>方法对比</h3>
+<table>
+<thead>
+<tr>
+<th>方法</th>
+<th>速度</th>
+<th>准确性</th>
+<th>使用场景</th>
+<th>所需条件</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>pattern</strong></td>
+<td></td>
+<td>⭐⭐</td>
+<td>简单、可预测的模式</td>
+<td>无</td>
+</tr>
+<tr>
+<td><strong>regex</strong></td>
+<td></td>
+<td>⭐⭐⭐</td>
+<td>自定义模式、ID、代码</td>
+<td>正则知识</td>
+</tr>
+<tr>
+<td><strong>ml</strong>（spaCy）</td>
+<td></td>
+<td>⭐⭐⭐⭐</td>
+<td>通用文本、多语言</td>
+<td>spaCy 模型</td>
+</tr>
+<tr>
+<td><strong>huggingface</strong></td>
+<td></td>
+<td>⭐⭐⭐⭐⭐</td>
+<td>领域特定、微调</td>
+<td>HF 模型</td>
+</tr>
+<tr>
+<td><strong>llm</strong></td>
+<td></td>
+<td>⭐⭐⭐⭐⭐</td>
+<td>复杂、自定义类型</td>
+<td>API 密钥</td>
+</tr>
+</tbody>
+</table>
+<p>让我们尝试不同的方法：</p>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">semantica.semantic_extract</span><span class="w"> </span><span class="kn">import</span> <span class="n">NERExtractor</span>
+
+<span class="n">sample_text</span> <span class="o">=</span> <span class="s2">"Apple Inc. was founded by Steve Jobs in Cupertino, California in 1976."</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">" Comparing Extraction Methods:</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"="</span> <span class="o">*</span> <span class="mi">80</span><span class="p">)</span>
+
+<span class="c1"># 尝试不同的方法</span>
+<span class="n">methods_to_try</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"pattern"</span><span class="p">,</span> <span class="s2">"regex"</span><span class="p">,</span> <span class="s2">"ml"</span><span class="p">]</span>
+
+<span class="k">for</span> <span class="n">method_name</span> <span class="ow">in</span> <span class="n">methods_to_try</span><span class="p">:</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2"> Method: </span><span class="si">{</span><span class="n">method_name</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"-"</span> <span class="o">*</span> <span class="mi">40</span><span class="p">)</span>
+
+        <span class="n">extractor</span> <span class="o">=</span> <span class="n">NERExtractor</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="n">method_name</span><span class="p">)</span>
+        <span class="n">entities</span> <span class="o">=</span> <span class="n">extractor</span><span class="o">.</span><span class="n">extract</span><span class="p">(</span><span class="n">sample_text</span><span class="p">)</span>
+
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Found </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">entities</span><span class="p">)</span><span class="si">}</span><span class="s2"> entities:"</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">entity</span> <span class="ow">in</span> <span class="n">entities</span><span class="p">[:</span><span class="mi">5</span><span class="p">]:</span>  <span class="c1"># 显示前 5 个</span>
+            <span class="n">entity_text</span> <span class="o">=</span> <span class="n">entity</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'text'</span><span class="p">,</span> <span class="n">entity</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'entity'</span><span class="p">,</span> <span class="s1">''</span><span class="p">))</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">entity</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="k">else</span> <span class="n">entity</span><span class="o">.</span><span class="n">text</span>
+            <span class="n">entity_type</span> <span class="o">=</span> <span class="n">entity</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'type'</span><span class="p">,</span> <span class="n">entity</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'label'</span><span class="p">,</span> <span class="s1">'Unknown'</span><span class="p">))</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">entity</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="k">else</span> <span class="n">entity</span><span class="o">.</span><span class="n">label</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  • </span><span class="si">{</span><span class="n">entity_text</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">entity_type</span><span class="si">}</span><span class="s2">)"</span><span class="p">)</span>
+
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  ️  Method '</span><span class="si">{</span><span class="n">method_name</span><span class="si">}</span><span class="s2">' not available: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)[:</span><span class="mi">50</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">"</span> <span class="o">+</span> <span class="s2">"="</span> <span class="o">*</span> <span class="mi">80</span><span class="p">)</span>
+</code></pre></div></section>
+<section id="sec-6"><h2><span class="pill-num">6</span>步骤 4：使用 NamedEntityRecognizer 进行高级实体识别</h2><p><code>NamedEntityRecognizer</code> 通过配置参数对抽取过程提供更多控制。</p>
+<h3>关键参数：</h3>
+<ul>
+<li><strong><code>methods</code></strong>：要使用的抽取方法列表（例如 <code>["spacy", "rule-based"]</code>）</li>
+<li><strong><code>confidence_threshold</code></strong>：最低置信度分数（0.0-1.0，默认：0.5）</li>
+<li><strong><code>merge_overlapping</code></strong>：是否合并重叠的实体（默认：True）</li>
+<li><strong><code>include_standard_types</code></strong>：包含标准实体类型（PERSON、ORG、LOC 等）</li>
+</ul>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">semantica.semantic_extract</span><span class="w"> </span><span class="kn">import</span> <span class="n">NamedEntityRecognizer</span>
+
+<span class="c1"># 使用自定义配置创建识别器</span>
+<span class="n">ner</span> <span class="o">=</span> <span class="n">NamedEntityRecognizer</span><span class="p">(</span>
+    <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s2">"spacy"</span><span class="p">],</span>  <span class="c1"># 使用 spaCy 进行基于 ML 的抽取</span>
+    <span class="n">confidence_threshold</span><span class="o">=</span><span class="mf">0.7</span><span class="p">,</span>  <span class="c1"># 只保留高置信度的实体</span>
+    <span class="n">merge_overlapping</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>  <span class="c1"># 合并重叠的实体提及</span>
+    <span class="n">include_standard_types</span><span class="o">=</span><span class="kc">True</span>  <span class="c1"># 包含标准实体类型</span>
+<span class="p">)</span>
+
+<span class="c1"># 用于批处理的示例文本</span>
+<span class="n">texts</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">"Tim Cook is the CEO of Apple Inc., based in Cupertino."</span><span class="p">,</span>
+    <span class="s2">"Microsoft Corporation, founded by Bill Gates, is headquartered in Redmond, Washington."</span><span class="p">,</span>
+    <span class="s2">"Amazon was founded by Jeff Bezos in Seattle in 1994."</span><span class="p">,</span>
+    <span class="s2">"Google was started by Larry Page and Sergey Brin at Stanford University."</span>
+<span class="p">]</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">" Advanced Entity Recognition Results:</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"="</span> <span class="o">*</span> <span class="mi">80</span><span class="p">)</span>
+
+<span class="n">all_entities</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">text</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">texts</span><span class="p">,</span> <span class="mi">1</span><span class="p">):</span>
+    <span class="n">entities</span> <span class="o">=</span> <span class="n">ner</span><span class="o">.</span><span class="n">extract_entities</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+    <span class="n">all_entities</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">entities</span><span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2"> Text </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">text</span><span class="p">[:</span><span class="mi">60</span><span class="p">]</span><span class="si">}</span><span class="s2">..."</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"   Found </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">entities</span><span class="p">)</span><span class="si">}</span><span class="s2"> entities:"</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">entity</span> <span class="ow">in</span> <span class="n">entities</span><span class="p">:</span>
+        <span class="n">entity_text</span> <span class="o">=</span> <span class="n">entity</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'text'</span><span class="p">,</span> <span class="n">entity</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'entity'</span><span class="p">,</span> <span class="s1">''</span><span class="p">))</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">entity</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="k">else</span> <span class="n">entity</span><span class="o">.</span><span class="n">text</span>
+        <span class="n">entity_type</span> <span class="o">=</span> <span class="n">entity</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'type'</span><span class="p">,</span> <span class="n">entity</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'label'</span><span class="p">,</span> <span class="s1">'Unknown'</span><span class="p">))</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">entity</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="k">else</span> <span class="n">entity</span><span class="o">.</span><span class="n">label</span>
+        <span class="n">confidence</span> <span class="o">=</span> <span class="n">entity</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'confidence'</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">entity</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="k">else</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">entity</span><span class="p">,</span> <span class="s1">'confidence'</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"     • </span><span class="si">{</span><span class="n">entity_text</span><span class="si">:</span><span class="s2">25s</span><span class="si">}</span><span class="s2"> | </span><span class="si">{</span><span class="n">entity_type</span><span class="si">:</span><span class="s2">10s</span><span class="si">}</span><span class="s2"> | Confidence: </span><span class="si">{</span><span class="n">confidence</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2"> Total entities extracted: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">all_entities</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"="</span> <span class="o">*</span> <span class="mi">80</span><span class="p">)</span>
+</code></pre></div></section>
+<section id="sec-7"><h2><span class="pill-num">7</span>步骤 5：实体分类</h2><p>使用 <code>EntityClassifier</code> 按类型对实体进行分类和分组，并消歧相似的实体。</p>
+<h3>什么是 EntityClassifier？</h3>
+<p><code>EntityClassifier</code> 可以帮助你：
+- 按类型<strong>对实体进行分类</strong>（规范化诸如 "ORG" 与 "ORGANIZATION" 之类的变体）
+- 按类别<strong>对实体进行分组</strong>以便分析
+- 当存在多个候选时<strong>对实体进行消歧</strong>
+- 跨不同抽取方法<strong>标准化实体类型</strong></p>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">semantica.semantic_extract</span><span class="w"> </span><span class="kn">import</span> <span class="n">EntityClassifier</span>
+
+<span class="c1"># 初始化分类器</span>
+<span class="n">classifier</span> <span class="o">=</span> <span class="n">EntityClassifier</span><span class="p">()</span>
+
+<span class="c1"># 对之前抽取的实体进行分类</span>
+<span class="n">classified</span> <span class="o">=</span> <span class="n">classifier</span><span class="o">.</span><span class="n">classify_entities</span><span class="p">(</span><span class="n">all_entities</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">"️  Entity Classification Results:</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"="</span> <span class="o">*</span> <span class="mi">80</span><span class="p">)</span>
+
+<span class="k">for</span> <span class="n">entity_type</span><span class="p">,</span> <span class="n">entity_list</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">classified</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="si">{</span><span class="n">entity_type</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">entity_list</span><span class="p">)</span><span class="si">}</span><span class="s2"> entities):"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"-"</span> <span class="o">*</span> <span class="mi">40</span><span class="p">)</span>
+
+    <span class="c1"># 获取唯一的实体文本</span>
+    <span class="n">unique_entities</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">entity</span> <span class="ow">in</span> <span class="n">entity_list</span><span class="p">:</span>
+        <span class="n">entity_text</span> <span class="o">=</span> <span class="n">entity</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'text'</span><span class="p">,</span> <span class="n">entity</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'entity'</span><span class="p">,</span> <span class="s1">''</span><span class="p">))</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">entity</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="k">else</span> <span class="n">entity</span><span class="o">.</span><span class="n">text</span>
+        <span class="n">unique_entities</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">entity_text</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">entity_text</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">unique_entities</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  • </span><span class="si">{</span><span class="n">entity_text</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">"</span> <span class="o">+</span> <span class="s2">"="</span> <span class="o">*</span> <span class="mi">80</span><span class="p">)</span>
+</code></pre></div></section>
+<section id="sec-8"><h2><span class="pill-num">8</span>步骤 6：置信度打分</h2><p>使用 <code>EntityConfidenceScorer</code> 评估并改进已抽取实体的置信度分数。</p>
+<h3>为什么要进行置信度打分？</h3>
+<p>置信度分数可以帮助你：
+- <strong>过滤低质量的抽取结果</strong>（例如，只保留置信度 &gt; 0.8 的实体）
+- <strong>对实体进行优先级排序</strong>，以便人工审核或验证
+- <strong>评估不同方法或文本的抽取质量</strong>
+- <strong>做出明智的决策</strong>，决定使用哪些实体</p>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">semantica.semantic_extract</span><span class="w"> </span><span class="kn">import</span> <span class="n">EntityConfidenceScorer</span>
+
+<span class="c1"># 初始化置信度打分器</span>
+<span class="n">scorer</span> <span class="o">=</span> <span class="n">EntityConfidenceScorer</span><span class="p">()</span>
+
+<span class="c1"># 对实体打分</span>
+<span class="n">scored_entities</span> <span class="o">=</span> <span class="n">scorer</span><span class="o">.</span><span class="n">score_entities</span><span class="p">(</span><span class="n">all_entities</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">" Entity Confidence Scoring:</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"="</span> <span class="o">*</span> <span class="mi">80</span><span class="p">)</span>
+
+<span class="c1"># 按置信度等级分组</span>
+<span class="n">high_confidence</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">medium_confidence</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">low_confidence</span> <span class="o">=</span> <span class="p">[]</span>
+
+<span class="k">for</span> <span class="n">entity</span> <span class="ow">in</span> <span class="n">scored_entities</span><span class="p">:</span>
+    <span class="n">confidence</span> <span class="o">=</span> <span class="n">entity</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'confidence'</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">entity</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="k">else</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">entity</span><span class="p">,</span> <span class="s1">'confidence'</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">confidence</span> <span class="o">&gt;=</span> <span class="mf">0.8</span><span class="p">:</span>
+        <span class="n">high_confidence</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">entity</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">confidence</span> <span class="o">&gt;=</span> <span class="mf">0.5</span><span class="p">:</span>
+        <span class="n">medium_confidence</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">entity</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">low_confidence</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">entity</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">" High Confidence (≥0.8): </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">high_confidence</span><span class="p">)</span><span class="si">}</span><span class="s2"> entities"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"️  Medium Confidence (0.5-0.8): </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">medium_confidence</span><span class="p">)</span><span class="si">}</span><span class="s2"> entities"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">" Low Confidence (&lt;0.5): </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">low_confidence</span><span class="p">)</span><span class="si">}</span><span class="s2"> entities"</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2"> Confidence Distribution:"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"-"</span> <span class="o">*</span> <span class="mi">40</span><span class="p">)</span>
+
+<span class="c1"># 展示每个类别的部分示例</span>
+<span class="k">if</span> <span class="n">high_confidence</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">High Confidence Examples:"</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">entity</span> <span class="ow">in</span> <span class="n">high_confidence</span><span class="p">[:</span><span class="mi">3</span><span class="p">]:</span>
+        <span class="n">entity_text</span> <span class="o">=</span> <span class="n">entity</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'text'</span><span class="p">,</span> <span class="n">entity</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'entity'</span><span class="p">,</span> <span class="s1">''</span><span class="p">))</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">entity</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="k">else</span> <span class="n">entity</span><span class="o">.</span><span class="n">text</span>
+        <span class="n">entity_type</span> <span class="o">=</span> <span class="n">entity</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'type'</span><span class="p">,</span> <span class="n">entity</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'label'</span><span class="p">,</span> <span class="s1">'Unknown'</span><span class="p">))</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">entity</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="k">else</span> <span class="n">entity</span><span class="o">.</span><span class="n">label</span>
+        <span class="n">confidence</span> <span class="o">=</span> <span class="n">entity</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'confidence'</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">entity</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="k">else</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">entity</span><span class="p">,</span> <span class="s1">'confidence'</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  • </span><span class="si">{</span><span class="n">entity_text</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">entity_type</span><span class="si">}</span><span class="s2">) - </span><span class="si">{</span><span class="n">confidence</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">"</span> <span class="o">+</span> <span class="s2">"="</span> <span class="o">*</span> <span class="mi">80</span><span class="p">)</span>
+</code></pre></div></section>
+<section id="sec-9"><h2><span class="pill-num">9</span>步骤 7：自定义实体检测</h2><p>使用 <code>CustomEntityDetector</code> 定义领域特定的实体模式。</p>
+<h3>何时使用自定义模式？</h3>
+<p>自定义模式适用于：
+- <strong>领域特定实体</strong>（例如产品代码、发票编号）
+- <strong>结构化标识符</strong>（例如电子邮件地址、电话号码）
+- <strong>行业特定术语</strong>（例如医疗代码、法律引用）
+- 标准 NER 无法识别的<strong>自定义格式</strong></p>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">semantica.semantic_extract</span><span class="w"> </span><span class="kn">import</span> <span class="n">CustomEntityDetector</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+
+<span class="c1"># 定义自定义模式</span>
+<span class="n">custom_patterns</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"EMAIL"</span><span class="p">:</span> <span class="sa">r</span><span class="s1">'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'</span><span class="p">,</span>
+    <span class="s2">"PHONE"</span><span class="p">:</span> <span class="sa">r</span><span class="s1">'\b\d</span><span class="si">{3}</span><span class="s1">[-.]?\d</span><span class="si">{3}</span><span class="s1">[-.]?\d</span><span class="si">{4}</span><span class="s1">\b'</span><span class="p">,</span>
+    <span class="s2">"PRODUCT_CODE"</span><span class="p">:</span> <span class="sa">r</span><span class="s1">'\b[A-Z]{2,3}-\d{4,6}\b'</span><span class="p">,</span>
+    <span class="s2">"URL"</span><span class="p">:</span> <span class="sa">r</span><span class="s1">'https?://[^\s]+'</span>
+<span class="p">}</span>
+
+<span class="c1"># 初始化自定义检测器</span>
+<span class="n">custom_detector</span> <span class="o">=</span> <span class="n">CustomEntityDetector</span><span class="p">(</span><span class="n">patterns</span><span class="o">=</span><span class="n">custom_patterns</span><span class="p">)</span>
+
+<span class="c1"># 包含自定义实体的示例文本</span>
+<span class="n">custom_text</span> <span class="o">=</span> <span class="s2">"""</span>
+<span class="s2">For support, contact support@apple.com or call 1-800-692-7753.</span>
+<span class="s2">Order product SKU-12345 from https://store.apple.com.</span>
+<span class="s2">Technical inquiries: tech@apple.com or visit our website.</span>
+<span class="s2">"""</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">" Custom Entity Detection:</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"="</span> <span class="o">*</span> <span class="mi">80</span><span class="p">)</span>
+
+<span class="k">for</span> <span class="n">entity_type</span> <span class="ow">in</span> <span class="n">custom_patterns</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+    <span class="n">entities</span> <span class="o">=</span> <span class="n">custom_detector</span><span class="o">.</span><span class="n">detect_custom_entities</span><span class="p">(</span><span class="n">custom_text</span><span class="p">,</span> <span class="n">entity_type</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">entities</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="si">{</span><span class="n">entity_type</span><span class="si">}</span><span class="s2">:"</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">entity</span> <span class="ow">in</span> <span class="n">entities</span><span class="p">:</span>
+            <span class="n">entity_text</span> <span class="o">=</span> <span class="n">entity</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'text'</span><span class="p">,</span> <span class="n">entity</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'entity'</span><span class="p">,</span> <span class="s1">''</span><span class="p">))</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">entity</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="k">else</span> <span class="n">entity</span><span class="o">.</span><span class="n">text</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  • </span><span class="si">{</span><span class="n">entity_text</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">"</span> <span class="o">+</span> <span class="s2">"="</span> <span class="o">*</span> <span class="mi">80</span><span class="p">)</span>
+</code></pre></div></section>
+<section id="sec-10"><h2><span class="pill-num">10</span>步骤 8：批处理</h2><p>使用批处理能力高效处理多个文档。</p>
+<h3>批处理的好处：</h3>
+<ul>
+<li><strong>性能</strong>：一次调用处理多个文档</li>
+<li><strong>一致性</strong>：对所有文档应用相同的配置</li>
+<li><strong>效率</strong>：减少初始化带来的开销</li>
+<li><strong>可扩展性</strong>：处理大规模文档集合</li>
+</ul>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 示例文档集合</span>
+<span class="n">documents</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">"Apple Inc. released the iPhone 15 in September 2023."</span><span class="p">,</span>
+    <span class="s2">"Microsoft announced Azure AI updates at Build 2023 in Seattle."</span><span class="p">,</span>
+    <span class="s2">"Google's Sundar Pichai spoke at I/O 2023 in Mountain View, California."</span><span class="p">,</span>
+    <span class="s2">"Tesla's Elon Musk unveiled the Cybertruck in Austin, Texas."</span><span class="p">,</span>
+    <span class="s2">"Amazon Web Services launched new features in Northern Virginia."</span>
+<span class="p">]</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">" Batch Processing Results:</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"="</span> <span class="o">*</span> <span class="mi">80</span><span class="p">)</span>
+
+<span class="c1"># 处理所有文档</span>
+<span class="n">batch_results</span> <span class="o">=</span> <span class="n">ner</span><span class="o">.</span><span class="n">process_batch</span><span class="p">(</span><span class="n">documents</span><span class="p">)</span>
+
+<span class="c1"># 分析结果</span>
+<span class="n">total_entities</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="n">entity_type_counts</span> <span class="o">=</span> <span class="p">{}</span>
+
+<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">doc</span><span class="p">,</span> <span class="n">entities</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">documents</span><span class="p">,</span> <span class="n">batch_results</span><span class="p">),</span> <span class="mi">1</span><span class="p">):</span>
+    <span class="n">total_entities</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="n">entities</span><span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2"> Document </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">:"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"   Text: </span><span class="si">{</span><span class="n">doc</span><span class="p">[:</span><span class="mi">50</span><span class="p">]</span><span class="si">}</span><span class="s2">..."</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"   Entities: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">entities</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">entity</span> <span class="ow">in</span> <span class="n">entities</span><span class="p">:</span>
+        <span class="n">entity_type</span> <span class="o">=</span> <span class="n">entity</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'type'</span><span class="p">,</span> <span class="n">entity</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'label'</span><span class="p">,</span> <span class="s1">'Unknown'</span><span class="p">))</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">entity</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="k">else</span> <span class="n">entity</span><span class="o">.</span><span class="n">label</span>
+        <span class="n">entity_type_counts</span><span class="p">[</span><span class="n">entity_type</span><span class="p">]</span> <span class="o">=</span> <span class="n">entity_type_counts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">entity_type</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2"> Batch Processing Summary:"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"-"</span> <span class="o">*</span> <span class="mi">40</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Documents processed: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">documents</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Total entities: </span><span class="si">{</span><span class="n">total_entities</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Average per document: </span><span class="si">{</span><span class="n">total_entities</span><span class="o">/</span><span class="nb">len</span><span class="p">(</span><span class="n">documents</span><span class="p">)</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2"> Entity Type Distribution:"</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">entity_type</span><span class="p">,</span> <span class="n">count</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">entity_type_counts</span><span class="o">.</span><span class="n">items</span><span class="p">(),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  </span><span class="si">{</span><span class="n">entity_type</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">count</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">"</span> <span class="o">+</span> <span class="s2">"="</span> <span class="o">*</span> <span class="mi">80</span><span class="p">)</span>
+</code></pre></div></section>
+<section id="sec-11"><h2><span class="pill-num">11</span>步骤 9：最佳实践与技巧</h2><h3>选择合适的方法</h3>
+<ol>
+<li>对于通用文本，<strong>从 ML（spaCy）开始</strong></li>
+<li>对于结构化数据（ID、代码），<strong>使用 patterns/regex</strong></li>
+<li>对于领域特定需求，<strong>尝试 HuggingFace</strong></li>
+<li>对于复杂、自定义的实体类型，<strong>考虑 LLM</strong></li>
+</ol>
+<h3>优化性能</h3>
+<ul>
+<li><strong>设置合适的置信度阈值</strong>（生产环境为 0.7-0.8）</li>
+<li>对多个文档<strong>使用批处理</strong></li>
+<li><strong>启用 merge_overlapping</strong> 以减少重复</li>
+<li><strong>缓存抽取器</strong>而不是重新创建它们</li>
+</ul>
+<h3>需要避免的常见陷阱</h3>
+<ul>
+<li><strong>不要</strong>使用非常低的置信度阈值（&lt; 0.5）</li>
+<li><strong>不要</strong>在循环中一次处理一个文档</li>
+<li><strong>不要</strong>忽略实体元数据（其中包含有用信息）</li>
+<li><strong>不要</strong>忘记处理抽取错误</li>
+</ul>
+<h3>何时使用每个类</h3>
+<table>
+<thead>
+<tr>
+<th>使用场景</th>
+<th>推荐类</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>快速抽取</td>
+<td><code>NERExtractor</code></td>
+</tr>
+<tr>
+<td>精细控制</td>
+<td><code>NamedEntityRecognizer</code></td>
+</tr>
+<tr>
+<td>实体分组</td>
+<td><code>EntityClassifier</code></td>
+</tr>
+<tr>
+<td>质量评估</td>
+<td><code>EntityConfidenceScorer</code></td>
+</tr>
+<tr>
+<td>领域特定</td>
+<td><code>CustomEntityDetector</code></td>
+</tr>
+</tbody>
+</table></section>
+<section id="sec-12"><h2><span class="pill-num">12</span>小结</h2><h3>你学到了什么</h3>
+<p>在本 notebook 中，你学会了如何：</p>
+<p>使用 <code>NERExtractor</code> 和 <code>NamedEntityRecognizer</code> 抽取实体<br />
+对比不同的抽取方法（pattern、regex、ML、HuggingFace、LLM）<br />
+使用 <code>EntityClassifier</code> 对实体进行分类和分组<br />
+使用 <code>EntityConfidenceScorer</code> 对实体置信度打分<br />
+使用 <code>CustomEntityDetector</code> 创建自定义模式<br />
+批量处理文档以提高效率<br />
+应用生产环境的最佳实践  </p>
+<h3>关键要点</h3>
+<ol>
+<li><strong>多种方法可用</strong>：根据你的需求选择（速度 vs 准确性）</li>
+<li><strong>配置很重要</strong>：调整参数以获得最佳结果</li>
+<li><strong>置信度是关键</strong>：使用阈值过滤低质量的抽取结果</li>
+<li><strong>自定义模式有效</strong>：适用于领域特定实体</li>
+<li><strong>批处理可扩展</strong>：高效处理多个文档</li>
+</ol>
+<h3>下一步</h3>
+<p><strong>下一篇 Notebook</strong>：<a href="06-relation-extraction.html">06-relation-extraction.html</a><br />
+学习如何抽取你所识别实体之间的关系！</p>
+<p><strong>延伸阅读</strong>：
+- <a href="https://semantica.readthedocs.io/reference/semantic_extract/">Semantic Extract API 参考</a>
+- <a href="../advanced/01-advanced-extraction.html">高级抽取技术</a>
+- <a href="07-building-knowledge-graphs.html">构建知识图谱</a></p>
+<hr />
+<p><strong>有问题或疑问？</strong> 请查看我们的 <a href="https://github.com/Hawksight-AI/semantica">GitHub 仓库</a>或<a href="https://semantica.readthedocs.io">文档</a>。</p></section>
+    <nav class="pager"><a class="prev" href="04-data-normalization.html"><span class="dir">← 上一篇</span><span class="ttl">数据规范化</span></a><a class="next" href="06-relation-extraction.html"><span class="dir">→ 下一篇</span><span class="ttl">关系抽取</span></a></nav>
+  </main>
+</div>
+
+<footer>由 Semantica 官方 Cookbook 生成的中文说明页 · <a href="https://github.com/semantica-agi/semantica">semantica-agi/semantica</a></footer>
+
+</body>
+</html>

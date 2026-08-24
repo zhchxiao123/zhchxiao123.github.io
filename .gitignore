@@ -32,3 +32,5 @@ assets/js/dist
 .claude/settings.local.json
 
 .coderfleet-*
+# Semantica cookbook working files (intermediate translation + generation scripts)
+.semantica-work/

@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agno × Semantica：多智能体共享上下文 · Semantica Cookbook</title>
+<style>
+
+:root {
+  --bg: #0b0e17;
+  --bg-soft: #10141f;
+  --panel: #ffffff;
+  --panel-alt: #f6f7fb;
+  --border: #e6e8f0;
+  --text: #1a1d29;
+  --text-dim: #5a5f72;
+  --primary: #6366f1;
+  --primary-dark: #4338ca;
+  --accent: #14b8a6;
+  --accent-2: #f59e0b;
+  --code-bg: #0f172a;
+  --code-text: #e2e8f0;
+  --radius: 14px;
+  --shadow: 0 10px 30px -12px rgba(30, 41, 59, 0.18);
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif;
+  color: var(--text);
+  background: var(--panel-alt);
+  line-height: 1.75;
+}
+a { color: var(--primary-dark); }
+
+/* ---------- HERO ---------- */
+.hero {
+  background: radial-gradient(1200px 600px at 15% -10%, rgba(99,102,241,0.55), transparent 60%),
+              radial-gradient(900px 500px at 90% 10%, rgba(20,184,166,0.35), transparent 55%),
+              linear-gradient(180deg, var(--bg) 0%, var(--bg-soft) 100%);
+  color: #f4f5fb;
+  padding: 64px 24px 88px;
+  position: relative;
+  overflow: hidden;
+}
+.hero-inner { max-width: 1080px; margin: 0 auto; }
+.eyebrow {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-size: 12.5px; letter-spacing: 0.12em; text-transform: uppercase;
+  color: #a5b4fc; background: rgba(99,102,241,0.15);
+  border: 1px solid rgba(165,180,252,0.35);
+  padding: 6px 14px; border-radius: 999px; margin-bottom: 22px;
+}
+.hero h1 { font-size: 40px; line-height: 1.2; margin: 0 0 16px; font-weight: 800; letter-spacing: -0.01em; }
+.hero p.lead { font-size: 17px; color: #cbd0e6; max-width: 720px; margin: 0 0 28px; }
+.hero-badges { display: flex; flex-wrap: wrap; gap: 10px; }
+.badge {
+  font-size: 13px; background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.14); color: #e2e4f5;
+  padding: 6px 12px; border-radius: 999px;
+}
+.hero a.home-link {
+  display: inline-flex; align-items: center; gap: 6px;
+  color: #a5b4fc; text-decoration: none; font-size: 13.5px; margin-bottom: 20px;
+}
+.hero a.home-link:hover { color: #fff; }
+
+/* ---------- LAYOUT ---------- */
+.layout {
+  max-width: 1200px; margin: -48px auto 0; padding: 0 24px 60px;
+  display: grid; grid-template-columns: 240px 1fr; gap: 32px; position: relative;
+}
+.toc {
+  position: sticky; top: 24px; align-self: start;
+  background: var(--panel); border: 1px solid var(--border);
+  border-radius: var(--radius); box-shadow: var(--shadow);
+  padding: 18px 16px; font-size: 13.5px;
+  max-height: calc(100vh - 48px); overflow-y: auto;
+}
+.toc h4 { margin: 0 0 10px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-dim); }
+.toc a { display: block; padding: 6px 8px; border-radius: 8px; color: var(--text-dim); text-decoration: none; margin-bottom: 2px; }
+.toc a:hover { background: var(--panel-alt); color: var(--text); }
+.toc a.active { background: var(--panel-alt); color: var(--primary-dark); font-weight: 600; }
+
+main { min-width: 0; }
+
+section {
+  background: var(--panel); border: 1px solid var(--border);
+  border-radius: var(--radius); box-shadow: var(--shadow);
+  padding: 34px 40px; margin-bottom: 24px; scroll-margin-top: 20px;
+}
+section h2 { font-size: 23px; margin: 0 0 16px; display: flex; align-items: center; gap: 10px; }
+section h2 .pill-num {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 30px; height: 30px; border-radius: 9px; flex-shrink: 0;
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  color: #fff; font-size: 14px; font-weight: 700;
+}
+h3 { font-size: 17px; margin: 26px 0 10px; }
+h4 { font-size: 15px; margin: 20px 0 8px; }
+p { margin: 0 0 14px; }
+ul, ol { margin: 0 0 16px; padding-left: 22px; }
+li { margin-bottom: 6px; }
+li > ul, li > ol { margin-top: 6px; }
+strong { color: var(--text); }
+blockquote {
+  margin: 0 0 16px; padding: 12px 18px;
+  border-left: 4px solid var(--accent); background: var(--panel-alt);
+  border-radius: 0 8px 8px 0; color: var(--text-dim);
+}
+blockquote p { margin: 0; }
+
+/* tables */
+table { width: 100%; border-collapse: collapse; font-size: 13.8px; margin: 8px 0 18px; }
+th {
+  text-align: left; font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em;
+  color: var(--text-dim); border-bottom: 1px solid var(--border); padding: 8px 10px;
+}
+td { padding: 10px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+tr:last-child td { border-bottom: none; }
+
+/* inline code */
+code {
+  background: #eef0fb; color: var(--primary-dark);
+  padding: 2px 7px; border-radius: 6px;
+  font-family: "SFMono-Regular", Menlo, Consolas, monospace; font-size: 13px;
+}
+
+/* code blocks */
+pre {
+  background: var(--code-bg); color: var(--code-text);
+  padding: 16px 18px; border-radius: 10px; overflow-x: auto;
+  font-size: 13px; line-height: 1.6;
+  font-family: "SFMono-Regular", Menlo, Consolas, monospace;
+  margin: 10px 0 18px;
+}
+pre code { background: transparent; color: inherit; padding: 0; border-radius: 0; font-size: 13px; }
+.codehilite { background: var(--code-bg); border-radius: 10px; overflow-x: auto; margin: 10px 0 18px; }
+.codehilite pre { margin: 0; padding: 16px 18px; background: transparent; }
+
+/* pager */
+.pager { display: flex; justify-content: space-between; gap: 16px; margin-top: 8px; }
+.pager a {
+  flex: 1; display: flex; flex-direction: column; gap: 4px;
+  padding: 16px 20px; border-radius: var(--radius); text-decoration: none;
+  background: var(--panel); border: 1px solid var(--border); box-shadow: var(--shadow);
+  transition: transform 0.15s, border-color 0.15s;
+}
+.pager a:hover { transform: translateY(-2px); border-color: var(--primary); }
+.pager a .dir { font-size: 12px; color: var(--text-dim); }
+.pager a .ttl { font-size: 14.5px; font-weight: 700; color: var(--text); }
+.pager a.next { text-align: right; }
+.pager a.disabled { opacity: 0.4; pointer-events: none; }
+
+footer { text-align: center; color: var(--text-dim); font-size: 13px; padding: 20px 0 40px; }
+footer a { color: var(--text-dim); }
+
+@media (max-width: 900px) {
+  .layout { grid-template-columns: 1fr; }
+  .toc { position: static; max-height: none; }
+  section { padding: 26px 22px; }
+  .hero h1 { font-size: 30px; }
+  .pager { flex-direction: column; }
+}
+
+pre { line-height: 125%; }
+td.linenos .normal { color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px; }
+span.linenos { color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px; }
+td.linenos .special { color: #000000; background-color: #ffffc0; padding-left: 5px; padding-right: 5px; }
+span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 5px; padding-right: 5px; }
+.codehilite .hll { background-color: #49483e }
+.codehilite { background: #272822; color: #F8F8F2 }
+.codehilite .c { color: #959077 } /* Comment */
+.codehilite .err { color: #ED007E; background-color: #1E0010 } /* Error */
+.codehilite .esc { color: #F8F8F2 } /* Escape */
+.codehilite .g { color: #F8F8F2 } /* Generic */
+.codehilite .k { color: #66D9EF } /* Keyword */
+.codehilite .l { color: #AE81FF } /* Literal */
+.codehilite .n { color: #F8F8F2 } /* Name */
+.codehilite .o { color: #FF4689 } /* Operator */
+.codehilite .x { color: #F8F8F2 } /* Other */
+.codehilite .p { color: #F8F8F2 } /* Punctuation */
+.codehilite .ch { color: #959077 } /* Comment.Hashbang */
+.codehilite .cm { color: #959077 } /* Comment.Multiline */
+.codehilite .cp { color: #959077 } /* Comment.Preproc */
+.codehilite .cpf { color: #959077 } /* Comment.PreprocFile */
+.codehilite .c1 { color: #959077 } /* Comment.Single */
+.codehilite .cs { color: #959077 } /* Comment.Special */
+.codehilite .gd { color: #FF4689 } /* Generic.Deleted */
+.codehilite .ge { color: #F8F8F2; font-style: italic } /* Generic.Emph */
+.codehilite .ges { color: #F8F8F2; font-weight: bold; font-style: italic } /* Generic.EmphStrong */
+.codehilite .gr { color: #FF4689 } /* Generic.Error */
+.codehilite .gh { color: #F8F8F2 } /* Generic.Heading */
+.codehilite .gi { color: #A6E22E } /* Generic.Inserted */
+.codehilite .go { color: #66D9EF } /* Generic.Output */
+.codehilite .gp { color: #FF4689; font-weight: bold } /* Generic.Prompt */
+.codehilite .gs { color: #F8F8F2; font-weight: bold } /* Generic.Strong */
+.codehilite .gu { color: #959077 } /* Generic.Subheading */
+.codehilite .gt { color: #66D9EF } /* Generic.Traceback */
+.codehilite .kc { color: #66D9EF } /* Keyword.Constant */
+.codehilite .kd { color: #66D9EF } /* Keyword.Declaration */
+.codehilite .kn { color: #FF4689 } /* Keyword.Namespace */
+.codehilite .kp { color: #66D9EF } /* Keyword.Pseudo */
+.codehilite .kr { color: #66D9EF } /* Keyword.Reserved */
+.codehilite .kt { color: #66D9EF } /* Keyword.Type */
+.codehilite .ld { color: #E6DB74 } /* Literal.Date */
+.codehilite .m { color: #AE81FF } /* Literal.Number */
+.codehilite .s { color: #E6DB74 } /* Literal.String */
+.codehilite .na { color: #A6E22E } /* Name.Attribute */
+.codehilite .nb { color: #A6E22E } /* Name.Builtin */
+.codehilite .nc { color: #A6E22E } /* Name.Class */
+.codehilite .no { color: #66D9EF } /* Name.Constant */
+.codehilite .nd { color: #A6E22E } /* Name.Decorator */
+.codehilite .ni { color: #F8F8F2 } /* Name.Entity */
+.codehilite .ne { color: #A6E22E } /* Name.Exception */
+.codehilite .nf { color: #A6E22E } /* Name.Function */
+.codehilite .nl { color: #F8F8F2 } /* Name.Label */
+.codehilite .nn { color: #F8F8F2 } /* Name.Namespace */
+.codehilite .nx { color: #A6E22E } /* Name.Other */
+.codehilite .py { color: #F8F8F2 } /* Name.Property */
+.codehilite .nt { color: #FF4689 } /* Name.Tag */
+.codehilite .nv { color: #F8F8F2 } /* Name.Variable */
+.codehilite .ow { color: #FF4689 } /* Operator.Word */
+.codehilite .pm { color: #F8F8F2 } /* Punctuation.Marker */
+.codehilite .w { color: #F8F8F2 } /* Text.Whitespace */
+.codehilite .mb { color: #AE81FF } /* Literal.Number.Bin */
+.codehilite .mf { color: #AE81FF } /* Literal.Number.Float */
+.codehilite .mh { color: #AE81FF } /* Literal.Number.Hex */
+.codehilite .mi { color: #AE81FF } /* Literal.Number.Integer */
+.codehilite .mo { color: #AE81FF } /* Literal.Number.Oct */
+.codehilite .sa { color: #E6DB74 } /* Literal.String.Affix */
+.codehilite .sb { color: #E6DB74 } /* Literal.String.Backtick */
+.codehilite .sc { color: #E6DB74 } /* Literal.String.Char */
+.codehilite .dl { color: #E6DB74 } /* Literal.String.Delimiter */
+.codehilite .sd { color: #E6DB74 } /* Literal.String.Doc */
+.codehilite .s2 { color: #E6DB74 } /* Literal.String.Double */
+.codehilite .se { color: #AE81FF } /* Literal.String.Escape */
+.codehilite .sh { color: #E6DB74 } /* Literal.String.Heredoc */
+.codehilite .si { color: #E6DB74 } /* Literal.String.Interpol */
+.codehilite .sx { color: #E6DB74 } /* Literal.String.Other */
+.codehilite .sr { color: #E6DB74 } /* Literal.String.Regex */
+.codehilite .s1 { color: #E6DB74 } /* Literal.String.Single */
+.codehilite .ss { color: #E6DB74 } /* Literal.String.Symbol */
+.codehilite .bp { color: #A6E22E } /* Name.Builtin.Pseudo */
+.codehilite .fm { color: #A6E22E } /* Name.Function.Magic */
+.codehilite .vc { color: #F8F8F2 } /* Name.Variable.Class */
+.codehilite .vg { color: #F8F8F2 } /* Name.Variable.Global */
+.codehilite .vi { color: #F8F8F2 } /* Name.Variable.Instance */
+.codehilite .vm { color: #F8F8F2 } /* Name.Variable.Magic */
+.codehilite .il { color: #AE81FF } /* Literal.Number.Integer.Long */
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="hero-inner">
+    <a class="home-link" href="index.html">← 返回 Semantica 专题首页</a>
+    <span class="eyebrow">🔌 SEMANTICA · COOKBOOK · 集成系列</span>
+    <h1>Agno × Semantica：多智能体共享上下文</h1>
+    <p class="lead">Semantica 官方 Cookbook 中文翻译 · 第 37 / 37 篇</p>
+    <div class="hero-badges">
+      <span class="badge">📦 semantica</span>
+      <span class="badge">🕸️ 知识图谱</span>
+      <span class="badge">🔎 GraphRAG</span>
+    </div>
+  </div>
+</header>
+
+<div class="layout">
+  <nav class="toc">
+    <h4>目录</h4>
+    <a href="#sec-1">架构</a>
+<a href="#sec-2">安装</a>
+<a href="#sec-3">1. 导入</a>
+<a href="#sec-4">2. 构建共享的 Semantica 后端</a>
+<a href="#sec-5">3. 绑定智能体角色</a>
+<a href="#sec-6">4. 预加载竞争情报</a>
+<a href="#sec-7">5. 构建智能体专属工具</a>
+<a href="#sec-8">6. 模拟智能体协作</a>
+<a href="#sec-9">7. 验证共享记忆池</a>
+<a href="#sec-10">8. 接入 Agno Team（需要 API 密钥）</a>
+<a href="#sec-11">9. 使用 Semantica 进行会话后分析</a>
+<a href="#sec-12">小结</a>
+  </nav>
+
+  <main>
+    <section id="overview"><div class="intro"><p>本 notebook 展示一个 Agno <strong>Team</strong> 中的专家智能体如何共享同一个 <code>ContextGraph</code>，从而：</p>
+<ul>
+<li>永不做出相互矛盾的决策</li>
+<li>复用彼此抽取的知识，而无需耦合实现</li>
+<li>在所有智能体之间维护完整的因果审计轨迹</li>
+</ul>
+<p><strong>场景：</strong> 一个由三个专家智能体组成的产品策略团队：</p>
+<table>
+<thead>
+<tr>
+<th>智能体</th>
+<th>角色</th>
+<th>工具</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Researcher</code></td>
+<td>从文本中抽取竞争情报</td>
+<td><code>AgnoKGToolkit</code></td>
+</tr>
+<tr>
+<td><code>Analyst</code></td>
+<td>评估机会并记录决策</td>
+<td><code>AgnoDecisionKit</code></td>
+</tr>
+<tr>
+<td><code>Strategist</code></td>
+<td>将两者综合为一份建议</td>
+<td>两者</td>
+</tr>
+</tbody>
+</table>
+<hr /></div></section>
+<section id="sec-1"><h2><span class="pill-num">1</span>架构</h2><div class="codehilite"><pre><span></span><code>AgnoSharedContext（单个 ContextGraph + VectorStore）
+   │
+   ├── bind_agent("researcher")  → AgnoContextStore（角色作用域）
+   ├── bind_agent("analyst")     → AgnoContextStore（角色作用域）
+   └── bind_agent("strategist")  → AgnoContextStore（角色作用域）
+
+Agno Team
+   ├── Researcher  memory=researcher_store  tools=[AgnoKGToolkit(context=shared)]
+   ├── Analyst     memory=analyst_store     tools=[AgnoDecisionKit(context=shared)]
+   └── Strategist  memory=strategist_store  tools=[AgnoKGToolkit, AgnoDecisionKit]
+</code></pre></div></section>
+<section id="sec-2"><h2><span class="pill-num">2</span>安装</h2><div class="codehilite"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>semantica<span class="o">[</span>agno<span class="o">]</span>
+</code></pre></div></section>
+<section id="sec-3"><h2><span class="pill-num">3</span>1. 导入</h2><div class="codehilite"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">sys</span><span class="o">,</span><span class="w"> </span><span class="nn">os</span><span class="o">,</span><span class="w"> </span><span class="nn">json</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="s2">"../../"</span><span class="p">))</span>
+
+<span class="c1"># ── Semantica 核心 ───────────────────────────────────────────────────────────</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">semantica.context</span><span class="w"> </span><span class="kn">import</span> <span class="n">ContextGraph</span><span class="p">,</span> <span class="n">AgentContext</span><span class="p">,</span> <span class="n">CausalChainAnalyzer</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">semantica.vector_store</span><span class="w"> </span><span class="kn">import</span> <span class="n">VectorStore</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">semantica.semantic_extract</span><span class="w"> </span><span class="kn">import</span> <span class="n">NERExtractor</span><span class="p">,</span> <span class="n">RelationExtractor</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">semantica.reasoning</span><span class="w"> </span><span class="kn">import</span> <span class="n">Reasoner</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">semantica.kg</span><span class="w"> </span><span class="kn">import</span> <span class="n">GraphBuilder</span><span class="p">,</span> <span class="n">GraphAnalyzer</span><span class="p">,</span> <span class="n">CentralityCalculator</span>
+
+<span class="c1"># ── Agno 集成 ─────────────────────────────────────────────────────────</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">integrations.agno</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">AgnoSharedContext</span><span class="p">,</span>
+    <span class="n">AgnoDecisionKit</span><span class="p">,</span>
+    <span class="n">AgnoKGToolkit</span><span class="p">,</span>
+    <span class="n">AGNO_AVAILABLE</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Semantica imports OK"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Agno installed: </span><span class="si">{</span><span class="n">AGNO_AVAILABLE</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</code></pre></div></section>
+<section id="sec-4"><h2><span class="pill-num">4</span>2. 构建共享的 Semantica 后端</h2><p>单个 <code>VectorStore</code> 和 <code>ContextGraph</code> 支撑整个团队。所有智能体都读写同一个存储——角色作用域由 <code>AgnoSharedContext</code> 自动应用。</p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># ── 单个共享后端 ───────────────────────────────────────────────────</span>
+<span class="n">shared_vector_store</span> <span class="o">=</span> <span class="n">VectorStore</span><span class="p">(</span><span class="n">backend</span><span class="o">=</span><span class="s2">"faiss"</span><span class="p">,</span> <span class="n">dimension</span><span class="o">=</span><span class="mi">768</span><span class="p">)</span>
+<span class="n">shared_graph</span> <span class="o">=</span> <span class="n">ContextGraph</span><span class="p">(</span><span class="n">advanced_analytics</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Shared VectorStore (FAISS) ready"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Shared ContextGraph ready"</span><span class="p">)</span>
+
+<span class="c1"># ── AgnoSharedContext：团队协调器 ───────────────────────────────────</span>
+<span class="n">shared</span> <span class="o">=</span> <span class="n">AgnoSharedContext</span><span class="p">(</span>
+    <span class="n">vector_store</span><span class="o">=</span><span class="n">shared_vector_store</span><span class="p">,</span>
+    <span class="n">knowledge_graph</span><span class="o">=</span><span class="n">shared_graph</span><span class="p">,</span>
+    <span class="n">decision_tracking</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">session_id</span><span class="o">=</span><span class="s2">"product_strategy_team_q1_2026"</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">AgnoSharedContext ready — session: </span><span class="si">{</span><span class="n">shared</span><span class="o">.</span><span class="n">session_id</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</code></pre></div></section>
+<section id="sec-5"><h2><span class="pill-num">5</span>3. 绑定智能体角色</h2><p>每个智能体通过 <code>bind_agent()</code> 获得一个<strong>角色作用域</strong>的 <code>AgnoContextStore</code>。所有智能体共享同一个底层图谱，但它们的写入会打上各自角色的标签以便过滤。</p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 绑定每个智能体角色——幂等，可安全地多次调用</span>
+<span class="n">researcher_store</span>  <span class="o">=</span> <span class="n">shared</span><span class="o">.</span><span class="n">bind_agent</span><span class="p">(</span><span class="s2">"researcher"</span><span class="p">)</span>
+<span class="n">analyst_store</span>     <span class="o">=</span> <span class="n">shared</span><span class="o">.</span><span class="n">bind_agent</span><span class="p">(</span><span class="s2">"analyst"</span><span class="p">)</span>
+<span class="n">strategist_store</span>  <span class="o">=</span> <span class="n">shared</span><span class="o">.</span><span class="n">bind_agent</span><span class="p">(</span><span class="s2">"strategist"</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Agent roles bound:"</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">role</span> <span class="ow">in</span> <span class="n">shared</span><span class="o">.</span><span class="n">bound_roles</span><span class="p">:</span>
+    <span class="n">store</span> <span class="o">=</span> <span class="n">shared</span><span class="o">.</span><span class="n">bind_agent</span><span class="p">(</span><span class="n">role</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  </span><span class="si">{</span><span class="n">role</span><span class="si">:</span><span class="s2">15s</span><span class="si">}</span><span class="s2"> → session=</span><span class="si">{</span><span class="n">store</span><span class="o">.</span><span class="n">session_id</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+<span class="c1"># 验证所有角色看到的是同一个底层 knowledge_graph</span>
+<span class="k">assert</span> <span class="n">researcher_store</span><span class="o">.</span><span class="n">_ctx</span> <span class="ow">is</span> <span class="n">analyst_store</span><span class="o">.</span><span class="n">_ctx</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">All agents share the same AgentContext ✓"</span><span class="p">)</span>
+</code></pre></div></section>
+<section id="sec-6"><h2><span class="pill-num">6</span>4. 预加载竞争情报</h2><p>使用<strong>原生 Semantica API</strong>，我们将竞争格局加载到共享图谱中。这代表团队从先前研究会话中积累的知识。</p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 竞争情报文档</span>
+<span class="n">COMPETITIVE_INTEL</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="p">{</span>
+        <span class="s2">"source"</span><span class="p">:</span> <span class="s2">"market_research_q4_2025"</span><span class="p">,</span>
+        <span class="s2">"text"</span><span class="p">:</span> <span class="p">(</span>
+            <span class="s2">"Competitor Alpha launched a new SaaS analytics platform in Q4 2025. "</span>
+            <span class="s2">"The product targets mid-market enterprises with annual revenue between "</span>
+            <span class="s2">"$50M–$500M and has attracted 200 paying customers within 3 months. "</span>
+            <span class="s2">"Pricing is $2,000/seat/year with volume discounts at 50+ seats. "</span>
+            <span class="s2">"Alpha raised a $80M Series C led by Sequoia Capital in November 2025."</span>
+        <span class="p">),</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s2">"source"</span><span class="p">:</span> <span class="s2">"customer_interviews_q4_2025"</span><span class="p">,</span>
+        <span class="s2">"text"</span><span class="p">:</span> <span class="p">(</span>
+            <span class="s2">"Customer interviews reveal strong demand for AI-powered anomaly detection "</span>
+            <span class="s2">"in financial reporting workflows. 78</span><span class="si">% o</span><span class="s2">f CFOs surveyed cite 'time to insight' "</span>
+            <span class="s2">"as the top pain point — currently averaging 14 days per reporting cycle. "</span>
+            <span class="s2">"Competitor Alpha scores poorly on integration depth (NPS: 24) while "</span>
+            <span class="s2">"our legacy product scores 41. Customers value our data governance features "</span>
+            <span class="s2">"but want a modern UI and sub-second query times."</span>
+        <span class="p">),</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s2">"source"</span><span class="p">:</span> <span class="s2">"technology_scan_q4_2025"</span><span class="p">,</span>
+        <span class="s2">"text"</span><span class="p">:</span> <span class="p">(</span>
+            <span class="s2">"Emerging technologies for consideration: LLM-native analytics interfaces "</span>
+            <span class="s2">"reduce time-to-insight by 60</span><span class="si">% i</span><span class="s2">n pilot studies (Stanford HAI, 2025). "</span>
+            <span class="s2">"Graph-based anomaly detection outperforms time-series approaches for "</span>
+            <span class="s2">"multi-entity financial fraud by 34% (ACM SIGMOD 2025). "</span>
+            <span class="s2">"Vector database adoption in enterprise analytics grew 120% YoY. "</span>
+            <span class="s2">"Apache Arrow and DuckDB emerging as standards for in-process OLAP."</span>
+        <span class="p">),</span>
+    <span class="p">},</span>
+<span class="p">]</span>
+
+<span class="c1"># 直接使用 Semantica NER + RelationExtractor 进行丰富的抽取</span>
+<span class="n">ner</span> <span class="o">=</span> <span class="n">NERExtractor</span><span class="p">()</span>
+<span class="n">rel_extractor</span> <span class="o">=</span> <span class="n">RelationExtractor</span><span class="p">(</span><span class="n">confidence_threshold</span><span class="o">=</span><span class="mf">0.55</span><span class="p">)</span>
+<span class="n">graph_builder</span> <span class="o">=</span> <span class="n">GraphBuilder</span><span class="p">(</span><span class="n">merge_entities</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="k">for</span> <span class="n">doc</span> <span class="ow">in</span> <span class="n">COMPETITIVE_INTEL</span><span class="p">:</span>
+    <span class="n">text</span> <span class="o">=</span> <span class="n">doc</span><span class="p">[</span><span class="s1">'text'</span><span class="p">]</span>
+    <span class="n">entities</span> <span class="o">=</span> <span class="n">ner</span><span class="o">.</span><span class="n">extract_entities</span><span class="p">(</span><span class="n">text</span><span class="p">)</span> <span class="ow">or</span> <span class="p">[]</span>
+    <span class="n">relations</span> <span class="o">=</span> <span class="n">rel_extractor</span><span class="o">.</span><span class="n">extract_relations</span><span class="p">(</span><span class="n">text</span><span class="p">)</span> <span class="ow">or</span> <span class="p">[]</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"[</span><span class="si">{</span><span class="n">doc</span><span class="p">[</span><span class="s1">'source'</span><span class="p">]</span><span class="si">}</span><span class="s2">]"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  Entities: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">entities</span><span class="p">)</span><span class="si">}</span><span class="s2">, Relations: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">relations</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="c1"># 存储到共享上下文中，供所有智能体访问</span>
+    <span class="n">shared</span><span class="o">.</span><span class="n">_context</span><span class="o">.</span><span class="n">store</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">conversation_id</span><span class="o">=</span><span class="n">doc</span><span class="p">[</span><span class="s1">'source'</span><span class="p">])</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Competitive intelligence loaded into shared context"</span><span class="p">)</span>
+</code></pre></div></section>
+<section id="sec-7"><h2><span class="pill-num">7</span>5. 构建智能体专属工具</h2><p>每个工具包都指向<strong>共享上下文</strong>，这样跨智能体的工具调用会修改和读取同一个图谱。</p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># Researcher 的 KG 工具包——从原始文本构建知识</span>
+<span class="n">researcher_kg_kit</span> <span class="o">=</span> <span class="n">AgnoKGToolkit</span><span class="p">(</span>
+    <span class="n">ner_extractor</span><span class="o">=</span><span class="n">ner</span><span class="p">,</span>
+    <span class="n">relation_extractor</span><span class="o">=</span><span class="n">rel_extractor</span><span class="p">,</span>
+    <span class="n">reasoner</span><span class="o">=</span><span class="n">Reasoner</span><span class="p">(),</span>
+    <span class="n">context</span><span class="o">=</span><span class="n">shared</span><span class="o">.</span><span class="n">knowledge_graph</span><span class="p">,</span>   <span class="c1"># 共享图谱</span>
+<span class="p">)</span>
+
+<span class="c1"># Analyst 的决策工具包——记录评估并查找先例</span>
+<span class="n">analyst_decision_kit</span> <span class="o">=</span> <span class="n">AgnoDecisionKit</span><span class="p">(</span>
+    <span class="n">context</span><span class="o">=</span><span class="n">shared</span><span class="o">.</span><span class="n">_context</span><span class="p">,</span>           <span class="c1"># 共享 AgentContext</span>
+    <span class="n">max_precedents</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
+    <span class="n">causal_depth</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+    <span class="n">enable_policy_check</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="c1"># Strategist 两者兼有</span>
+<span class="n">strategist_kg_kit</span> <span class="o">=</span> <span class="n">AgnoKGToolkit</span><span class="p">(</span>
+    <span class="n">ner_extractor</span><span class="o">=</span><span class="n">ner</span><span class="p">,</span>
+    <span class="n">relation_extractor</span><span class="o">=</span><span class="n">rel_extractor</span><span class="p">,</span>
+    <span class="n">reasoner</span><span class="o">=</span><span class="n">Reasoner</span><span class="p">(),</span>
+    <span class="n">context</span><span class="o">=</span><span class="n">shared</span><span class="o">.</span><span class="n">knowledge_graph</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">strategist_decision_kit</span> <span class="o">=</span> <span class="n">AgnoDecisionKit</span><span class="p">(</span>
+    <span class="n">context</span><span class="o">=</span><span class="n">shared</span><span class="o">.</span><span class="n">_context</span><span class="p">,</span>
+    <span class="n">max_precedents</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Researcher toolkit:  </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">researcher_kg_kit</span><span class="o">.</span><span class="n">_tools</span><span class="p">)</span><span class="si">}</span><span class="s2"> tools"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Analyst toolkit:     </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">analyst_decision_kit</span><span class="o">.</span><span class="n">_tools</span><span class="p">)</span><span class="si">}</span><span class="s2"> tools"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Strategist toolkits: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">strategist_kg_kit</span><span class="o">.</span><span class="n">_tools</span><span class="p">)</span><span class="si">}</span><span class="s2"> + </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">strategist_decision_kit</span><span class="o">.</span><span class="n">_tools</span><span class="p">)</span><span class="si">}</span><span class="s2"> tools"</span><span class="p">)</span>
+</code></pre></div></section>
+<section id="sec-8"><h2><span class="pill-num">8</span>6. 模拟智能体协作</h2><p>我们直接模拟各智能体的推理步骤，展示共享上下文如何在角色之间传播知识。</p>
+<div class="codehilite"><pre><span></span><code><span class="nb">print</span><span class="p">(</span><span class="s2">"="</span> <span class="o">*</span> <span class="mi">65</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"RESEARCHER AGENT TURN"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"="</span> <span class="o">*</span> <span class="mi">65</span><span class="p">)</span>
+
+<span class="c1"># Researcher 从新的竞争情报中抽取实体</span>
+<span class="n">new_intel</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"Competitor Beta just closed a strategic partnership with Microsoft Azure, "</span>
+    <span class="s2">"integrating their anomaly detection engine natively into Azure Synapse Analytics. "</span>
+    <span class="s2">"This gives Beta access to Microsoft's 300,000+ enterprise customer base. "</span>
+    <span class="s2">"Beta's CEO Sarah Chen announced the deal at Gartner Data &amp; Analytics Summit."</span>
+<span class="p">)</span>
+
+<span class="c1"># 步骤 1：抽取实体</span>
+<span class="n">entities_result</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">researcher_kg_kit</span><span class="o">.</span><span class="n">extract_entities</span><span class="p">(</span><span class="n">new_intel</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">[researcher] extracted </span><span class="si">{</span><span class="n">entities_result</span><span class="p">[</span><span class="s1">'count'</span><span class="p">]</span><span class="si">}</span><span class="s2"> entities:"</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">entities_result</span><span class="p">[</span><span class="s1">'entities'</span><span class="p">]:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  </span><span class="si">{</span><span class="n">e</span><span class="p">[</span><span class="s1">'name'</span><span class="p">]</span><span class="si">:</span><span class="s2">30s</span><span class="si">}</span><span class="s2">  type=</span><span class="si">{</span><span class="n">e</span><span class="p">[</span><span class="s1">'type'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+<span class="c1"># 步骤 2：抽取关系</span>
+<span class="n">relations_result</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">researcher_kg_kit</span><span class="o">.</span><span class="n">extract_relations</span><span class="p">(</span><span class="n">new_intel</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">[researcher] extracted </span><span class="si">{</span><span class="n">relations_result</span><span class="p">[</span><span class="s1">'count'</span><span class="p">]</span><span class="si">}</span><span class="s2"> relations"</span><span class="p">)</span>
+
+<span class="c1"># 步骤 3：添加到共享图谱——现在对所有智能体可见</span>
+<span class="n">add_result</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">researcher_kg_kit</span><span class="o">.</span><span class="n">add_to_graph</span><span class="p">(</span>
+    <span class="n">entities</span><span class="o">=</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">([</span>
+        <span class="p">{</span><span class="s2">"name"</span><span class="p">:</span> <span class="s2">"Competitor Beta"</span><span class="p">,</span> <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"COMPANY"</span><span class="p">},</span>
+        <span class="p">{</span><span class="s2">"name"</span><span class="p">:</span> <span class="s2">"Microsoft Azure"</span><span class="p">,</span> <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"COMPANY"</span><span class="p">},</span>
+        <span class="p">{</span><span class="s2">"name"</span><span class="p">:</span> <span class="s2">"Azure Synapse Analytics"</span><span class="p">,</span> <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"PRODUCT"</span><span class="p">},</span>
+        <span class="p">{</span><span class="s2">"name"</span><span class="p">:</span> <span class="s2">"Sarah Chen"</span><span class="p">,</span> <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"PERSON"</span><span class="p">},</span>
+        <span class="p">{</span><span class="s2">"name"</span><span class="p">:</span> <span class="s2">"Gartner Data &amp; Analytics Summit"</span><span class="p">,</span> <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"EVENT"</span><span class="p">},</span>
+    <span class="p">]),</span>
+    <span class="n">relations</span><span class="o">=</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">([</span>
+        <span class="p">{</span><span class="s2">"source"</span><span class="p">:</span> <span class="s2">"Competitor Beta"</span><span class="p">,</span> <span class="s2">"relation"</span><span class="p">:</span> <span class="s2">"PARTNERSHIP_WITH"</span><span class="p">,</span> <span class="s2">"target"</span><span class="p">:</span> <span class="s2">"Microsoft Azure"</span><span class="p">},</span>
+        <span class="p">{</span><span class="s2">"source"</span><span class="p">:</span> <span class="s2">"Competitor Beta"</span><span class="p">,</span> <span class="s2">"relation"</span><span class="p">:</span> <span class="s2">"INTEGRATES_WITH"</span><span class="p">,</span> <span class="s2">"target"</span><span class="p">:</span> <span class="s2">"Azure Synapse Analytics"</span><span class="p">},</span>
+        <span class="p">{</span><span class="s2">"source"</span><span class="p">:</span> <span class="s2">"Sarah Chen"</span><span class="p">,</span> <span class="s2">"relation"</span><span class="p">:</span> <span class="s2">"CEO_OF"</span><span class="p">,</span> <span class="s2">"target"</span><span class="p">:</span> <span class="s2">"Competitor Beta"</span><span class="p">},</span>
+    <span class="p">]),</span>
+<span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">[researcher] added </span><span class="si">{</span><span class="n">add_result</span><span class="p">[</span><span class="s1">'nodes_added'</span><span class="p">]</span><span class="si">}</span><span class="s2"> nodes, </span><span class="si">{</span><span class="n">add_result</span><span class="p">[</span><span class="s1">'edges_added'</span><span class="p">]</span><span class="si">}</span><span class="s2"> edges to SHARED graph"</span><span class="p">)</span>
+</code></pre></div>
+
+<div class="codehilite"><pre><span></span><code><span class="nb">print</span><span class="p">(</span><span class="s2">"="</span> <span class="o">*</span> <span class="mi">65</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"ANALYST AGENT TURN (sees researcher's graph additions)"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"="</span> <span class="o">*</span> <span class="mi">65</span><span class="p">)</span>
+
+<span class="c1"># Analyst 查询 Researcher 刚刚填充的图谱</span>
+<span class="n">competitor_query</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">analyst_decision_kit</span><span class="o">.</span><span class="n">find_precedents</span><span class="p">(</span>
+    <span class="n">scenario</span><span class="o">=</span><span class="s2">"competitor partnership with cloud hyperscaler threatens market position"</span><span class="p">,</span>
+    <span class="n">limit</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+<span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">[analyst] find_precedents → </span><span class="si">{</span><span class="n">competitor_query</span><span class="p">[</span><span class="s1">'count'</span><span class="p">]</span><span class="si">}</span><span class="s2"> similar past strategic responses found"</span><span class="p">)</span>
+
+<span class="c1"># Analyst 记录一个战略评估决策</span>
+<span class="n">eval_json</span> <span class="o">=</span> <span class="n">analyst_decision_kit</span><span class="o">.</span><span class="n">record_decision</span><span class="p">(</span>
+    <span class="n">category</span><span class="o">=</span><span class="s2">"strategic_response"</span><span class="p">,</span>
+    <span class="n">scenario</span><span class="o">=</span><span class="p">(</span>
+        <span class="s2">"Competitor Beta + Microsoft Azure partnership gives Beta access to "</span>
+        <span class="s2">"300k enterprise customers via Azure Synapse native integration"</span>
+    <span class="p">),</span>
+    <span class="n">reasoning</span><span class="o">=</span><span class="p">(</span>
+        <span class="s2">"Threat level: HIGH. Beta's Azure native integration removes our "</span>
+        <span class="s2">"integration advantage. Existing NPS lead (41 vs 24) remains but "</span>
+        <span class="s2">"distribution disadvantage is critical. Recommend accelerated cloud-native "</span>
+        <span class="s2">"partnership evaluation, specifically AWS Marketplace + Snowflake Native App."</span>
+    <span class="p">),</span>
+    <span class="n">outcome</span><span class="o">=</span><span class="s2">"escalate_to_strategy"</span><span class="p">,</span>
+    <span class="n">confidence</span><span class="o">=</span><span class="mf">0.85</span><span class="p">,</span>
+    <span class="n">entities</span><span class="o">=</span><span class="s2">"Competitor Beta, Microsoft Azure, AWS Marketplace, Snowflake"</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">eval_result</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">eval_json</span><span class="p">)</span>
+<span class="n">analyst_decision_id</span> <span class="o">=</span> <span class="n">eval_result</span><span class="p">[</span><span class="s1">'decision_id'</span><span class="p">]</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">[analyst] recorded evaluation → decision_id: </span><span class="si">{</span><span class="n">analyst_decision_id</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</code></pre></div>
+
+<div class="codehilite"><pre><span></span><code><span class="nb">print</span><span class="p">(</span><span class="s2">"="</span> <span class="o">*</span> <span class="mi">65</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"STRATEGIST AGENT TURN (sees both researcher + analyst work)"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"="</span> <span class="o">*</span> <span class="mi">65</span><span class="p">)</span>
+
+<span class="c1"># Strategist 查询图谱以获取完整的竞争图景</span>
+<span class="n">related</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">strategist_kg_kit</span><span class="o">.</span><span class="n">find_related</span><span class="p">(</span><span class="s2">"Competitor Beta"</span><span class="p">,</span> <span class="n">hops</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">[strategist] 'Competitor Beta' 2-hop neighbourhood: </span><span class="si">{</span><span class="n">related</span><span class="p">[</span><span class="s1">'count'</span><span class="p">]</span><span class="si">}</span><span class="s2"> entity/entities"</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">entity</span> <span class="ow">in</span> <span class="n">related</span><span class="p">[</span><span class="s1">'related'</span><span class="p">]:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  → </span><span class="si">{</span><span class="n">entity</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+<span class="c1"># Strategist 追踪 Analyst 所做的决策</span>
+<span class="n">causal</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">strategist_decision_kit</span><span class="o">.</span><span class="n">trace_causal_chain</span><span class="p">(</span><span class="n">analyst_decision_id</span><span class="p">,</span> <span class="n">depth</span><span class="o">=</span><span class="mi">3</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">[strategist] causal chain for analyst decision: </span><span class="si">{</span><span class="n">causal</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+<span class="c1"># Strategist 记录最终的战略建议</span>
+<span class="n">strategy_json</span> <span class="o">=</span> <span class="n">strategist_decision_kit</span><span class="o">.</span><span class="n">record_decision</span><span class="p">(</span>
+    <span class="n">category</span><span class="o">=</span><span class="s2">"product_strategy"</span><span class="p">,</span>
+    <span class="n">scenario</span><span class="o">=</span><span class="s2">"Q1 2026 product strategy: respond to Beta+Azure threat"</span><span class="p">,</span>
+    <span class="n">reasoning</span><span class="o">=</span><span class="p">(</span>
+        <span class="s2">"Based on researcher's KG (Beta+Azure integration, 300k customer reach) "</span>
+        <span class="s2">"and analyst's evaluation (threat level HIGH, escalated decision). "</span>
+        <span class="s2">"Strategy: (1) Accelerate AWS Marketplace listing by Q2 2026. "</span>
+        <span class="s2">"(2) Launch Snowflake Native App by Q3 2026. "</span>
+        <span class="s2">"(3) Invest $2M in UI modernisation to widen NPS lead. "</span>
+        <span class="s2">"(4) Fast-track LLM-native analytics interface (60% time-to-insight improvement per HAI study). "</span>
+        <span class="s2">"Existing NPS advantage (41 vs 24) provides 18-month window before Beta catches up."</span>
+    <span class="p">),</span>
+    <span class="n">outcome</span><span class="o">=</span><span class="s2">"approved"</span><span class="p">,</span>
+    <span class="n">confidence</span><span class="o">=</span><span class="mf">0.88</span><span class="p">,</span>
+    <span class="n">entities</span><span class="o">=</span><span class="s2">"AWS Marketplace, Snowflake, LLM Analytics, Q2 2026, Q3 2026"</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">strategy_result</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">strategy_json</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">[strategist] final recommendation recorded → </span><span class="si">{</span><span class="n">strategy_result</span><span class="p">[</span><span class="s1">'decision_id'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</code></pre></div></section>
+<section id="sec-9"><h2><span class="pill-num">9</span>7. 验证共享记忆池</h2><p>一个智能体写入的记忆可被所有其他智能体读取。</p>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">integrations.agno.context_store</span><span class="w"> </span><span class="kn">import</span> <span class="n">_MemoryRow</span> <span class="k">as</span> <span class="n">MemoryRow</span>
+
+<span class="c1"># Researcher 写入一条记忆</span>
+<span class="n">researcher_row</span> <span class="o">=</span> <span class="n">MemoryRow</span><span class="p">(</span>
+    <span class="n">memory</span><span class="o">=</span><span class="s2">"Beta + Azure partnership announced at Gartner Summit — threat level HIGH"</span><span class="p">,</span>
+    <span class="n">user_id</span><span class="o">=</span><span class="s2">"researcher"</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">researcher_store</span><span class="o">.</span><span class="n">upsert_memory</span><span class="p">(</span><span class="n">researcher_row</span><span class="p">)</span>
+
+<span class="c1"># Analyst 写入一条记忆</span>
+<span class="n">analyst_row</span> <span class="o">=</span> <span class="n">MemoryRow</span><span class="p">(</span>
+    <span class="n">memory</span><span class="o">=</span><span class="s2">"NPS advantage (41 vs 24) gives 18-month window — accelerate cloud partnerships"</span><span class="p">,</span>
+    <span class="n">user_id</span><span class="o">=</span><span class="s2">"analyst"</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">analyst_store</span><span class="o">.</span><span class="n">upsert_memory</span><span class="p">(</span><span class="n">analyst_row</span><span class="p">)</span>
+
+<span class="c1"># Strategist 读取来自两个智能体的所有记忆</span>
+<span class="n">strategist_memories</span> <span class="o">=</span> <span class="n">strategist_store</span><span class="o">.</span><span class="n">read_memories</span><span class="p">()</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Strategist sees </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">strategist_memories</span><span class="p">)</span><span class="si">}</span><span class="s2"> shared memory item(s):"</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">strategist_memories</span><span class="p">:</span>
+    <span class="n">uid</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="s1">'user_id'</span><span class="p">,</span> <span class="s1">'?'</span><span class="p">)</span>
+    <span class="n">text</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="s1">'memory'</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">m</span><span class="p">))</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  [</span><span class="si">{</span><span class="n">uid</span><span class="si">:</span><span class="s2">12s</span><span class="si">}</span><span class="s2">] </span><span class="si">{</span><span class="n">text</span><span class="p">[:</span><span class="mi">80</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</code></pre></div></section>
+<section id="sec-10"><h2><span class="pill-num">10</span>8. 接入 Agno Team（需要 API 密钥）</h2><div class="codehilite"><pre><span></span><code><span class="k">if</span> <span class="n">AGNO_AVAILABLE</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">agno.agent</span><span class="w"> </span><span class="kn">import</span> <span class="n">Agent</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">agno.team</span><span class="w"> </span><span class="kn">import</span> <span class="n">Team</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">agno.memory</span><span class="w"> </span><span class="kn">import</span> <span class="n">AgentMemory</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">agno.models.openai</span><span class="w"> </span><span class="kn">import</span> <span class="n">OpenAIChat</span>
+
+    <span class="n">researcher_agent</span> <span class="o">=</span> <span class="n">Agent</span><span class="p">(</span>
+        <span class="n">name</span><span class="o">=</span><span class="s2">"Researcher"</span><span class="p">,</span>
+        <span class="n">model</span><span class="o">=</span><span class="n">OpenAIChat</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="s2">"gpt-4o"</span><span class="p">),</span>
+        <span class="n">memory</span><span class="o">=</span><span class="n">AgentMemory</span><span class="p">(</span><span class="n">db</span><span class="o">=</span><span class="n">researcher_store</span><span class="p">),</span>
+        <span class="n">tools</span><span class="o">=</span><span class="p">[</span><span class="n">researcher_kg_kit</span><span class="p">],</span>
+        <span class="n">show_tool_calls</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">"You are a competitive intelligence researcher. "</span>
+            <span class="s2">"Use extract_entities, extract_relations, and add_to_graph "</span>
+            <span class="s2">"to build a structured knowledge graph from market intelligence. "</span>
+            <span class="s2">"Always add discoveries to the shared graph."</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+
+    <span class="n">analyst_agent</span> <span class="o">=</span> <span class="n">Agent</span><span class="p">(</span>
+        <span class="n">name</span><span class="o">=</span><span class="s2">"Analyst"</span><span class="p">,</span>
+        <span class="n">model</span><span class="o">=</span><span class="n">OpenAIChat</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="s2">"gpt-4o"</span><span class="p">),</span>
+        <span class="n">memory</span><span class="o">=</span><span class="n">AgentMemory</span><span class="p">(</span><span class="n">db</span><span class="o">=</span><span class="n">analyst_store</span><span class="p">),</span>
+        <span class="n">tools</span><span class="o">=</span><span class="p">[</span><span class="n">analyst_decision_kit</span><span class="p">],</span>
+        <span class="n">show_tool_calls</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">"You are a strategic analyst. Use find_precedents to check historical "</span>
+            <span class="s2">"responses to similar threats, then record_decision with your evaluation. "</span>
+            <span class="s2">"Always check if a similar situation was handled before acting."</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+
+    <span class="n">strategist_agent</span> <span class="o">=</span> <span class="n">Agent</span><span class="p">(</span>
+        <span class="n">name</span><span class="o">=</span><span class="s2">"Strategist"</span><span class="p">,</span>
+        <span class="n">model</span><span class="o">=</span><span class="n">OpenAIChat</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="s2">"gpt-4o"</span><span class="p">),</span>
+        <span class="n">memory</span><span class="o">=</span><span class="n">AgentMemory</span><span class="p">(</span><span class="n">db</span><span class="o">=</span><span class="n">strategist_store</span><span class="p">),</span>
+        <span class="n">tools</span><span class="o">=</span><span class="p">[</span><span class="n">strategist_kg_kit</span><span class="p">,</span> <span class="n">strategist_decision_kit</span><span class="p">],</span>
+        <span class="n">show_tool_calls</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">"You are the Chief Strategy Officer. Synthesise the researcher's knowledge "</span>
+            <span class="s2">"graph and the analyst's decision record into a concrete product strategy. "</span>
+            <span class="s2">"Use find_related to explore the competitive graph, then record_decision "</span>
+            <span class="s2">"with the final approved strategy."</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+
+    <span class="n">strategy_team</span> <span class="o">=</span> <span class="n">Team</span><span class="p">(</span>
+        <span class="n">name</span><span class="o">=</span><span class="s2">"Product Strategy Team"</span><span class="p">,</span>
+        <span class="n">agents</span><span class="o">=</span><span class="p">[</span><span class="n">researcher_agent</span><span class="p">,</span> <span class="n">analyst_agent</span><span class="p">,</span> <span class="n">strategist_agent</span><span class="p">],</span>
+        <span class="n">mode</span><span class="o">=</span><span class="s2">"coordinate"</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">strategy_team</span><span class="o">.</span><span class="n">print_response</span><span class="p">(</span>
+        <span class="s2">"Competitor Beta just announced a native Azure integration. "</span>
+        <span class="s2">"Analyse the competitive landscape and recommend our Q1 2026 product strategy."</span>
+    <span class="p">)</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"[Agno not installed — skipping live team run]"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">()</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"Expected team coordination flow:"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"  1. Researcher: extract_entities + add_to_graph (Beta+Azure)"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"  2. Analyst: find_precedents + record_decision (threat=HIGH, escalate)"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"  3. Strategist: find_related + trace_causal_chain + record_decision (final strategy)"</span><span class="p">)</span>
+</code></pre></div></section>
+<section id="sec-11"><h2><span class="pill-num">11</span>9. 使用 Semantica 进行会话后分析</h2><p>团队会话结束后，使用<strong>原生 Semantica API</strong> 进行跨智能体审计、分析和因果链审查。</p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 来自 AgnoSharedContext 的团队级洞察</span>
+<span class="n">insights</span> <span class="o">=</span> <span class="n">shared</span><span class="o">.</span><span class="n">get_shared_insights</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Team session insights:"</span><span class="p">)</span>
+<span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">insights</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">insights</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  </span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">v</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  </span><span class="si">{</span><span class="n">insights</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Bound agent roles: </span><span class="si">{</span><span class="n">shared</span><span class="o">.</span><span class="n">bound_roles</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</code></pre></div>
+
+<div class="codehilite"><pre><span></span><code><span class="c1"># 查找所有跨智能体的战略决策</span>
+<span class="n">all_strategic</span> <span class="o">=</span> <span class="n">shared</span><span class="o">.</span><span class="n">find_precedents</span><span class="p">(</span>
+    <span class="n">scenario</span><span class="o">=</span><span class="s2">"cloud partnership competitive response"</span><span class="p">,</span>
+    <span class="n">category</span><span class="o">=</span><span class="s2">"strategic_response"</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Cross-agent strategic precedents: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">all_strategic</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="p">[])</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</code></pre></div>
+
+<div class="codehilite"><pre><span></span><code><span class="c1"># 对共享知识图谱进行图谱分析（Semantica 原生）</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="n">analyzer</span> <span class="o">=</span> <span class="n">GraphAnalyzer</span><span class="p">()</span>
+    <span class="n">analysis</span> <span class="o">=</span> <span class="n">analyzer</span><span class="o">.</span><span class="n">analyze_graph</span><span class="p">(</span><span class="n">shared</span><span class="o">.</span><span class="n">knowledge_graph</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"Shared knowledge graph analysis:"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">analysis</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">analysis</span><span class="o">.</span><span class="n">items</span><span class="p">())[:</span><span class="mi">6</span><span class="p">]:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  </span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">v</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  </span><span class="si">{</span><span class="n">analysis</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"GraphAnalyzer: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</code></pre></div>
+
+<div class="codehilite"><pre><span></span><code><span class="c1"># 竞争情报图谱中哪些实体最中心？</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="n">centrality</span> <span class="o">=</span> <span class="n">CentralityCalculator</span><span class="p">()</span>
+    <span class="n">scores</span> <span class="o">=</span> <span class="n">centrality</span><span class="o">.</span><span class="n">calculate_degree_centrality</span><span class="p">(</span><span class="n">shared</span><span class="o">.</span><span class="n">knowledge_graph</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"Most central entities in shared graph:"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">scores</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="n">top</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">scores</span><span class="o">.</span><span class="n">items</span><span class="p">(),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">)[:</span><span class="mi">5</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">entity</span><span class="p">,</span> <span class="n">score</span> <span class="ow">in</span> <span class="n">top</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  </span><span class="si">{</span><span class="n">entity</span><span class="si">:</span><span class="s2">35s</span><span class="si">}</span><span class="s2"> centrality=</span><span class="si">{</span><span class="n">score</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  </span><span class="si">{</span><span class="n">scores</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"CentralityCalculator: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</code></pre></div>
+
+<div class="codehilite"><pre><span></span><code><span class="c1"># 直接进行 Semantica 因果链分析（无需 Agno）</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="n">causal_analyzer</span> <span class="o">=</span> <span class="n">CausalChainAnalyzer</span><span class="p">(</span><span class="n">graph_store</span><span class="o">=</span><span class="n">shared</span><span class="o">.</span><span class="n">knowledge_graph</span><span class="p">)</span>
+    <span class="c1"># 查询本次会话期间做出的所有决策</span>
+    <span class="n">decisions</span> <span class="o">=</span> <span class="n">shared</span><span class="o">.</span><span class="n">knowledge_graph</span><span class="o">.</span><span class="n">find_precedents</span><span class="p">(</span><span class="n">category</span><span class="o">=</span><span class="s2">"product_strategy"</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Product strategy decisions in shared graph: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">decisions</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="p">[])</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="p">(</span><span class="n">decisions</span> <span class="ow">or</span> <span class="p">[])[:</span><span class="mi">3</span><span class="p">]:</span>
+        <span class="n">scenario</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'scenario'</span><span class="p">,</span> <span class="s1">''</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="k">else</span> <span class="nb">str</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
+        <span class="n">outcome</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'outcome'</span><span class="p">,</span> <span class="s1">''</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="k">else</span> <span class="s1">''</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  [</span><span class="si">{</span><span class="n">outcome</span><span class="si">:</span><span class="s2">20s</span><span class="si">}</span><span class="s2">] </span><span class="si">{</span><span class="n">scenario</span><span class="p">[:</span><span class="mi">70</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"CausalChainAnalyzer: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</code></pre></div></section>
+<section id="sec-12"><h2><span class="pill-num">12</span>小结</h2><table>
+<thead>
+<tr>
+<th>模式</th>
+<th>实现</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>单个共享知识图谱</td>
+<td><code>AgnoSharedContext(vector_store, knowledge_graph)</code></td>
+</tr>
+<tr>
+<td>角色作用域记忆</td>
+<td><code>shared.bind_agent("researcher")</code> → <code>_AgentScopedStore</code></td>
+</tr>
+<tr>
+<td>跨智能体记忆可见性</td>
+<td>所有存储都从 <code>shared._shared_memories</code> 读取</td>
+</tr>
+<tr>
+<td>KG 工具共享</td>
+<td><code>AgnoKGToolkit(context=shared.knowledge_graph)</code></td>
+</tr>
+<tr>
+<td>决策工具共享</td>
+<td><code>AgnoDecisionKit(context=shared._context)</code></td>
+</tr>
+<tr>
+<td>线程安全的绑定</td>
+<td><code>AgnoSharedContext._lock</code>（RLock）</td>
+</tr>
+<tr>
+<td>会话后分析</td>
+<td><code>GraphAnalyzer</code>、<code>CentralityCalculator</code>、<code>CausalChainAnalyzer</code>——均为 Semantica 原生</td>
+</tr>
+</tbody>
+</table>
+<p><strong>关键设计规则：</strong> 每个智能体都通过不同的角色作用域存储写入<strong>同一个底层图谱</strong>。Agno 集成是一个薄路由层——Semantica 的全部能力在任何时候都可以直接使用。</p></section>
+    <nav class="pager"><a class="prev" href="02-agno-graphrag-context.html"><span class="dir">← 上一篇</span><span class="ttl">Agno GraphRAG 上下文</span></a><a class="disabled"><span class="dir">—</span><span class="ttl">—</span></a></nav>
+  </main>
+</div>
+
+<footer>由 Semantica 官方 Cookbook 生成的中文说明页 · <a href="https://github.com/semantica-agi/semantica">semantica-agi/semantica</a></footer>
+
+</body>
+</html>

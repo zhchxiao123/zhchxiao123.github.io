@@ -1,0 +1,967 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>分块与切分 - 全面指南 · Semantica Cookbook</title>
+<style>
+
+:root {
+  --bg: #0b0e17;
+  --bg-soft: #10141f;
+  --panel: #ffffff;
+  --panel-alt: #f6f7fb;
+  --border: #e6e8f0;
+  --text: #1a1d29;
+  --text-dim: #5a5f72;
+  --primary: #6366f1;
+  --primary-dark: #4338ca;
+  --accent: #14b8a6;
+  --accent-2: #f59e0b;
+  --code-bg: #0f172a;
+  --code-text: #e2e8f0;
+  --radius: 14px;
+  --shadow: 0 10px 30px -12px rgba(30, 41, 59, 0.18);
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif;
+  color: var(--text);
+  background: var(--panel-alt);
+  line-height: 1.75;
+}
+a { color: var(--primary-dark); }
+
+/* ---------- HERO ---------- */
+.hero {
+  background: radial-gradient(1200px 600px at 15% -10%, rgba(99,102,241,0.55), transparent 60%),
+              radial-gradient(900px 500px at 90% 10%, rgba(20,184,166,0.35), transparent 55%),
+              linear-gradient(180deg, var(--bg) 0%, var(--bg-soft) 100%);
+  color: #f4f5fb;
+  padding: 64px 24px 88px;
+  position: relative;
+  overflow: hidden;
+}
+.hero-inner { max-width: 1080px; margin: 0 auto; }
+.eyebrow {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-size: 12.5px; letter-spacing: 0.12em; text-transform: uppercase;
+  color: #a5b4fc; background: rgba(99,102,241,0.15);
+  border: 1px solid rgba(165,180,252,0.35);
+  padding: 6px 14px; border-radius: 999px; margin-bottom: 22px;
+}
+.hero h1 { font-size: 40px; line-height: 1.2; margin: 0 0 16px; font-weight: 800; letter-spacing: -0.01em; }
+.hero p.lead { font-size: 17px; color: #cbd0e6; max-width: 720px; margin: 0 0 28px; }
+.hero-badges { display: flex; flex-wrap: wrap; gap: 10px; }
+.badge {
+  font-size: 13px; background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.14); color: #e2e4f5;
+  padding: 6px 12px; border-radius: 999px;
+}
+.hero a.home-link {
+  display: inline-flex; align-items: center; gap: 6px;
+  color: #a5b4fc; text-decoration: none; font-size: 13.5px; margin-bottom: 20px;
+}
+.hero a.home-link:hover { color: #fff; }
+
+/* ---------- LAYOUT ---------- */
+.layout {
+  max-width: 1200px; margin: -48px auto 0; padding: 0 24px 60px;
+  display: grid; grid-template-columns: 240px 1fr; gap: 32px; position: relative;
+}
+.toc {
+  position: sticky; top: 24px; align-self: start;
+  background: var(--panel); border: 1px solid var(--border);
+  border-radius: var(--radius); box-shadow: var(--shadow);
+  padding: 18px 16px; font-size: 13.5px;
+  max-height: calc(100vh - 48px); overflow-y: auto;
+}
+.toc h4 { margin: 0 0 10px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-dim); }
+.toc a { display: block; padding: 6px 8px; border-radius: 8px; color: var(--text-dim); text-decoration: none; margin-bottom: 2px; }
+.toc a:hover { background: var(--panel-alt); color: var(--text); }
+.toc a.active { background: var(--panel-alt); color: var(--primary-dark); font-weight: 600; }
+
+main { min-width: 0; }
+
+section {
+  background: var(--panel); border: 1px solid var(--border);
+  border-radius: var(--radius); box-shadow: var(--shadow);
+  padding: 34px 40px; margin-bottom: 24px; scroll-margin-top: 20px;
+}
+section h2 { font-size: 23px; margin: 0 0 16px; display: flex; align-items: center; gap: 10px; }
+section h2 .pill-num {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 30px; height: 30px; border-radius: 9px; flex-shrink: 0;
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  color: #fff; font-size: 14px; font-weight: 700;
+}
+h3 { font-size: 17px; margin: 26px 0 10px; }
+h4 { font-size: 15px; margin: 20px 0 8px; }
+p { margin: 0 0 14px; }
+ul, ol { margin: 0 0 16px; padding-left: 22px; }
+li { margin-bottom: 6px; }
+li > ul, li > ol { margin-top: 6px; }
+strong { color: var(--text); }
+blockquote {
+  margin: 0 0 16px; padding: 12px 18px;
+  border-left: 4px solid var(--accent); background: var(--panel-alt);
+  border-radius: 0 8px 8px 0; color: var(--text-dim);
+}
+blockquote p { margin: 0; }
+
+/* tables */
+table { width: 100%; border-collapse: collapse; font-size: 13.8px; margin: 8px 0 18px; }
+th {
+  text-align: left; font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em;
+  color: var(--text-dim); border-bottom: 1px solid var(--border); padding: 8px 10px;
+}
+td { padding: 10px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+tr:last-child td { border-bottom: none; }
+
+/* inline code */
+code {
+  background: #eef0fb; color: var(--primary-dark);
+  padding: 2px 7px; border-radius: 6px;
+  font-family: "SFMono-Regular", Menlo, Consolas, monospace; font-size: 13px;
+}
+
+/* code blocks */
+pre {
+  background: var(--code-bg); color: var(--code-text);
+  padding: 16px 18px; border-radius: 10px; overflow-x: auto;
+  font-size: 13px; line-height: 1.6;
+  font-family: "SFMono-Regular", Menlo, Consolas, monospace;
+  margin: 10px 0 18px;
+}
+pre code { background: transparent; color: inherit; padding: 0; border-radius: 0; font-size: 13px; }
+.codehilite { background: var(--code-bg); border-radius: 10px; overflow-x: auto; margin: 10px 0 18px; }
+.codehilite pre { margin: 0; padding: 16px 18px; background: transparent; }
+
+/* pager */
+.pager { display: flex; justify-content: space-between; gap: 16px; margin-top: 8px; }
+.pager a {
+  flex: 1; display: flex; flex-direction: column; gap: 4px;
+  padding: 16px 20px; border-radius: var(--radius); text-decoration: none;
+  background: var(--panel); border: 1px solid var(--border); box-shadow: var(--shadow);
+  transition: transform 0.15s, border-color 0.15s;
+}
+.pager a:hover { transform: translateY(-2px); border-color: var(--primary); }
+.pager a .dir { font-size: 12px; color: var(--text-dim); }
+.pager a .ttl { font-size: 14.5px; font-weight: 700; color: var(--text); }
+.pager a.next { text-align: right; }
+.pager a.disabled { opacity: 0.4; pointer-events: none; }
+
+footer { text-align: center; color: var(--text-dim); font-size: 13px; padding: 20px 0 40px; }
+footer a { color: var(--text-dim); }
+
+@media (max-width: 900px) {
+  .layout { grid-template-columns: 1fr; }
+  .toc { position: static; max-height: none; }
+  section { padding: 26px 22px; }
+  .hero h1 { font-size: 30px; }
+  .pager { flex-direction: column; }
+}
+
+pre { line-height: 125%; }
+td.linenos .normal { color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px; }
+span.linenos { color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px; }
+td.linenos .special { color: #000000; background-color: #ffffc0; padding-left: 5px; padding-right: 5px; }
+span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 5px; padding-right: 5px; }
+.codehilite .hll { background-color: #49483e }
+.codehilite { background: #272822; color: #F8F8F2 }
+.codehilite .c { color: #959077 } /* Comment */
+.codehilite .err { color: #ED007E; background-color: #1E0010 } /* Error */
+.codehilite .esc { color: #F8F8F2 } /* Escape */
+.codehilite .g { color: #F8F8F2 } /* Generic */
+.codehilite .k { color: #66D9EF } /* Keyword */
+.codehilite .l { color: #AE81FF } /* Literal */
+.codehilite .n { color: #F8F8F2 } /* Name */
+.codehilite .o { color: #FF4689 } /* Operator */
+.codehilite .x { color: #F8F8F2 } /* Other */
+.codehilite .p { color: #F8F8F2 } /* Punctuation */
+.codehilite .ch { color: #959077 } /* Comment.Hashbang */
+.codehilite .cm { color: #959077 } /* Comment.Multiline */
+.codehilite .cp { color: #959077 } /* Comment.Preproc */
+.codehilite .cpf { color: #959077 } /* Comment.PreprocFile */
+.codehilite .c1 { color: #959077 } /* Comment.Single */
+.codehilite .cs { color: #959077 } /* Comment.Special */
+.codehilite .gd { color: #FF4689 } /* Generic.Deleted */
+.codehilite .ge { color: #F8F8F2; font-style: italic } /* Generic.Emph */
+.codehilite .ges { color: #F8F8F2; font-weight: bold; font-style: italic } /* Generic.EmphStrong */
+.codehilite .gr { color: #FF4689 } /* Generic.Error */
+.codehilite .gh { color: #F8F8F2 } /* Generic.Heading */
+.codehilite .gi { color: #A6E22E } /* Generic.Inserted */
+.codehilite .go { color: #66D9EF } /* Generic.Output */
+.codehilite .gp { color: #FF4689; font-weight: bold } /* Generic.Prompt */
+.codehilite .gs { color: #F8F8F2; font-weight: bold } /* Generic.Strong */
+.codehilite .gu { color: #959077 } /* Generic.Subheading */
+.codehilite .gt { color: #66D9EF } /* Generic.Traceback */
+.codehilite .kc { color: #66D9EF } /* Keyword.Constant */
+.codehilite .kd { color: #66D9EF } /* Keyword.Declaration */
+.codehilite .kn { color: #FF4689 } /* Keyword.Namespace */
+.codehilite .kp { color: #66D9EF } /* Keyword.Pseudo */
+.codehilite .kr { color: #66D9EF } /* Keyword.Reserved */
+.codehilite .kt { color: #66D9EF } /* Keyword.Type */
+.codehilite .ld { color: #E6DB74 } /* Literal.Date */
+.codehilite .m { color: #AE81FF } /* Literal.Number */
+.codehilite .s { color: #E6DB74 } /* Literal.String */
+.codehilite .na { color: #A6E22E } /* Name.Attribute */
+.codehilite .nb { color: #A6E22E } /* Name.Builtin */
+.codehilite .nc { color: #A6E22E } /* Name.Class */
+.codehilite .no { color: #66D9EF } /* Name.Constant */
+.codehilite .nd { color: #A6E22E } /* Name.Decorator */
+.codehilite .ni { color: #F8F8F2 } /* Name.Entity */
+.codehilite .ne { color: #A6E22E } /* Name.Exception */
+.codehilite .nf { color: #A6E22E } /* Name.Function */
+.codehilite .nl { color: #F8F8F2 } /* Name.Label */
+.codehilite .nn { color: #F8F8F2 } /* Name.Namespace */
+.codehilite .nx { color: #A6E22E } /* Name.Other */
+.codehilite .py { color: #F8F8F2 } /* Name.Property */
+.codehilite .nt { color: #FF4689 } /* Name.Tag */
+.codehilite .nv { color: #F8F8F2 } /* Name.Variable */
+.codehilite .ow { color: #FF4689 } /* Operator.Word */
+.codehilite .pm { color: #F8F8F2 } /* Punctuation.Marker */
+.codehilite .w { color: #F8F8F2 } /* Text.Whitespace */
+.codehilite .mb { color: #AE81FF } /* Literal.Number.Bin */
+.codehilite .mf { color: #AE81FF } /* Literal.Number.Float */
+.codehilite .mh { color: #AE81FF } /* Literal.Number.Hex */
+.codehilite .mi { color: #AE81FF } /* Literal.Number.Integer */
+.codehilite .mo { color: #AE81FF } /* Literal.Number.Oct */
+.codehilite .sa { color: #E6DB74 } /* Literal.String.Affix */
+.codehilite .sb { color: #E6DB74 } /* Literal.String.Backtick */
+.codehilite .sc { color: #E6DB74 } /* Literal.String.Char */
+.codehilite .dl { color: #E6DB74 } /* Literal.String.Delimiter */
+.codehilite .sd { color: #E6DB74 } /* Literal.String.Doc */
+.codehilite .s2 { color: #E6DB74 } /* Literal.String.Double */
+.codehilite .se { color: #AE81FF } /* Literal.String.Escape */
+.codehilite .sh { color: #E6DB74 } /* Literal.String.Heredoc */
+.codehilite .si { color: #E6DB74 } /* Literal.String.Interpol */
+.codehilite .sx { color: #E6DB74 } /* Literal.String.Other */
+.codehilite .sr { color: #E6DB74 } /* Literal.String.Regex */
+.codehilite .s1 { color: #E6DB74 } /* Literal.String.Single */
+.codehilite .ss { color: #E6DB74 } /* Literal.String.Symbol */
+.codehilite .bp { color: #A6E22E } /* Name.Builtin.Pseudo */
+.codehilite .fm { color: #A6E22E } /* Name.Function.Magic */
+.codehilite .vc { color: #F8F8F2 } /* Name.Variable.Class */
+.codehilite .vg { color: #F8F8F2 } /* Name.Variable.Global */
+.codehilite .vi { color: #F8F8F2 } /* Name.Variable.Instance */
+.codehilite .vm { color: #F8F8F2 } /* Name.Variable.Magic */
+.codehilite .il { color: #AE81FF } /* Literal.Number.Integer.Long */
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="hero-inner">
+    <a class="home-link" href="index.html">← 返回 Semantica 专题首页</a>
+    <span class="eyebrow">🌱 SEMANTICA · COOKBOOK · 入门系列</span>
+    <h1>分块与切分 - 全面指南</h1>
+    <p class="lead">Semantica 官方 Cookbook 中文翻译 · 第 11 / 37 篇</p>
+    <div class="hero-badges">
+      <span class="badge">📦 semantica</span>
+      <span class="badge">🕸️ 知识图谱</span>
+      <span class="badge">🔎 GraphRAG</span>
+    </div>
+  </div>
+</header>
+
+<div class="layout">
+  <nav class="toc">
+    <h4>目录</h4>
+    <a href="#sec-1">概览</a>
+<a href="#sec-2">安装</a>
+<a href="#sec-3">步骤 1：使用 TextSplitter 进行基础分块</a>
+<a href="#sec-4">步骤 2：标准切分方法</a>
+<a href="#sec-5">步骤 3：基于 Token 的切分</a>
+<a href="#sec-6">步骤 4：语义分块</a>
+<a href="#sec-7">步骤 5：面向 GraphRAG 的实体感知分块</a>
+<a href="#sec-8">步骤 6：关系感知分块</a>
+<a href="#sec-9">步骤 7：结构化分块</a>
+<a href="#sec-10">History</a>
+<a href="#sec-11">Products</a>
+<a href="#sec-12">步骤 8：层级分块</a>
+<a href="#sec-13">步骤 9：滑动窗口分块</a>
+<a href="#sec-14">步骤 10：表格分块</a>
+<a href="#sec-15">步骤 11：溯源跟踪</a>
+<a href="#sec-16">步骤 13：方法对比</a>
+<a href="#sec-17">步骤 14：最佳实践</a>
+<a href="#sec-18">小结</a>
+  </nav>
+
+  <main>
+    <section id="sec-1"><h2><span class="pill-num">1</span>概览</h2><p>本 notebook 对 Semantica 的 split 模块进行了<strong>全面讲解</strong>，演示了所有分块策略和方法，以实现最优的文档处理。你将学习使用 15 种以上的切分方法，包括标准、语义和知识图谱感知的方法。</p>
+<p><strong>文档</strong>：<a href="https://semantica.readthedocs.io/reference/split/">API Reference</a></p>
+<h3>学习目标</h3>
+<p>学完本 notebook 后，你将能够：</p>
+<ul>
+<li>使用 <code>TextSplitter</code> 的多种方法</li>
+<li>应用标准切分方法（递归、token、句子、段落）</li>
+<li>使用语义分块以实现主题连贯性</li>
+<li>应用 KG 感知的分块（实体感知、关系感知、基于图）</li>
+<li>使用专用分块器（结构化、滑动窗口、表格、层级）</li>
+<li>使用 <code>ProvenanceTracker</code> 跟踪溯源</li>
+<li>为你的用例选择合适的方法</li>
+</ul>
+<h3>你将学到什么</h3>
+<table>
+<thead>
+<tr>
+<th>组件</th>
+<th>用途</th>
+<th>何时使用</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>TextSplitter</code></td>
+<td>统一切分器</td>
+<td>所有分块需求</td>
+</tr>
+<tr>
+<td><code>SemanticChunker</code></td>
+<td>语义边界</td>
+<td>基于主题的分块</td>
+</tr>
+<tr>
+<td><code>EntityAwareChunker</code></td>
+<td>保留实体</td>
+<td>GraphRAG 工作流</td>
+</tr>
+<tr>
+<td><code>RelationAwareChunker</code></td>
+<td>保留三元组</td>
+<td>KG 构建</td>
+</tr>
+<tr>
+<td><code>StructuralChunker</code></td>
+<td>文档结构</td>
+<td>格式化文档</td>
+</tr>
+<tr>
+<td><code>HierarchicalChunker</code></td>
+<td>多层级分块</td>
+<td>大型文档</td>
+</tr>
+</tbody>
+</table>
+<hr /></section>
+<section id="sec-2"><h2><span class="pill-num">2</span>安装</h2><p>从 PyPI 安装 Semantica：</p>
+<div class="codehilite"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>semantica
+<span class="c1"># 或安装所有可选依赖：</span>
+pip<span class="w"> </span>install<span class="w"> </span>semantica<span class="o">[</span>all<span class="o">]</span>
+</code></pre></div>
+
+<hr />
+<div class="codehilite"><pre><span></span><code><span class="err">!</span><span class="n">pip</span> <span class="n">install</span> <span class="o">-</span><span class="n">q</span> <span class="n">semantica</span>
+</code></pre></div></section>
+<section id="sec-3"><h2><span class="pill-num">3</span>步骤 1：使用 TextSplitter 进行基础分块</h2><p>让我们从统一的 <code>TextSplitter</code> 接口开始，它提供了对所有分块方法的访问。</p>
+<h3>什么是 TextSplitter？</h3>
+<p><code>TextSplitter</code> 是一个统一接口，支持 15 种以上的分块方法：
+- <strong>标准</strong>：recursive、token、sentence、paragraph、character、word
+- <strong>语义</strong>：semantic_transformer、llm、huggingface、nltk
+- <strong>KG/本体</strong>：entity_aware、relation_aware、graph_based、ontology_aware
+- <strong>高级</strong>：hierarchical、structural、sliding_window、table</p>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">semantica.split</span><span class="w"> </span><span class="kn">import</span> <span class="n">TextSplitter</span>
+
+<span class="c1"># 示例长文本</span>
+<span class="n">text</span> <span class="o">=</span> <span class="s2">"""</span>
+<span class="s2">Apple Inc. is a technology company founded by Steve Jobs, Steve Wozniak, and Ronald Wayne </span>
+<span class="s2">in Cupertino, California on April 1, 1976. The company's current CEO is Tim Cook, who took </span>
+<span class="s2">over from Steve Jobs in August 2011. Apple is headquartered at One Apple Park Way in Cupertino.</span>
+
+<span class="s2">Apple develops and sells consumer electronics, computer software, and online services. The company's </span>
+<span class="s2">hardware products include the iPhone smartphone, the iPad tablet computer, the Mac personal computer, </span>
+<span class="s2">the iPod portable media player, the Apple Watch smartwatch, the Apple TV digital media player, and the </span>
+<span class="s2">HomePod smart speaker.</span>
+
+<span class="s2">Apple's software includes the macOS and iOS operating systems, the iTunes media player, the Safari web </span>
+<span class="s2">browser, and the iLife and iWork creativity and productivity suites. Its online services include the </span>
+<span class="s2">iTunes Store, the iOS App Store and Mac App Store, Apple Music, and iCloud.</span>
+<span class="s2">"""</span>
+
+<span class="c1"># 基础递归切分</span>
+<span class="n">splitter</span> <span class="o">=</span> <span class="n">TextSplitter</span><span class="p">(</span>
+    <span class="n">method</span><span class="o">=</span><span class="s2">"recursive"</span><span class="p">,</span>
+    <span class="n">chunk_size</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span>
+    <span class="n">chunk_overlap</span><span class="o">=</span><span class="mi">50</span>
+<span class="p">)</span>
+
+<span class="n">chunks</span> <span class="o">=</span> <span class="n">splitter</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Split into </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">chunks</span><span class="p">)</span><span class="si">}</span><span class="s2"> chunks using recursive method</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"="</span> <span class="o">*</span> <span class="mi">80</span><span class="p">)</span>
+
+<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">chunks</span><span class="p">,</span> <span class="mi">1</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Chunk </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">:"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  Length: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">chunk</span><span class="o">.</span><span class="n">text</span><span class="p">)</span><span class="si">}</span><span class="s2"> characters"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  Start: </span><span class="si">{</span><span class="n">chunk</span><span class="o">.</span><span class="n">start_index</span><span class="si">}</span><span class="s2">, End: </span><span class="si">{</span><span class="n">chunk</span><span class="o">.</span><span class="n">end_index</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  Text: </span><span class="si">{</span><span class="n">chunk</span><span class="o">.</span><span class="n">text</span><span class="p">[:</span><span class="mi">100</span><span class="p">]</span><span class="si">}</span><span class="s2">..."</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">"</span> <span class="o">+</span> <span class="s2">"="</span> <span class="o">*</span> <span class="mi">80</span><span class="p">)</span>
+</code></pre></div></section>
+<section id="sec-4"><h2><span class="pill-num">4</span>步骤 2：标准切分方法</h2><p>让我们比较不同的标准切分方法。</p>
+<h3>方法对比</h3>
+<table>
+<thead>
+<tr>
+<th>方法</th>
+<th>最适合</th>
+<th>速度</th>
+<th>准确性</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>recursive</strong></td>
+<td>通用文本</td>
+<td>快</td>
+<td>良好</td>
+</tr>
+<tr>
+<td><strong>sentence</strong></td>
+<td>连贯的分块</td>
+<td>中等</td>
+<td>非常好</td>
+</tr>
+<tr>
+<td><strong>token</strong></td>
+<td>LLM 上下文</td>
+<td>中等</td>
+<td>优秀</td>
+</tr>
+<tr>
+<td><strong>paragraph</strong></td>
+<td>自然断点</td>
+<td>快</td>
+<td>良好</td>
+</tr>
+</tbody>
+</table>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 比较不同方法</span>
+<span class="n">methods</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"recursive"</span><span class="p">,</span> <span class="s2">"sentence"</span><span class="p">,</span> <span class="s2">"paragraph"</span><span class="p">]</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Comparing Standard Splitting Methods:</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"="</span> <span class="o">*</span> <span class="mi">80</span><span class="p">)</span>
+
+<span class="k">for</span> <span class="n">method</span> <span class="ow">in</span> <span class="n">methods</span><span class="p">:</span>
+    <span class="n">splitter</span> <span class="o">=</span> <span class="n">TextSplitter</span><span class="p">(</span>
+        <span class="n">method</span><span class="o">=</span><span class="n">method</span><span class="p">,</span>
+        <span class="n">chunk_size</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span>
+        <span class="n">chunk_overlap</span><span class="o">=</span><span class="mi">50</span>
+    <span class="p">)</span>
+
+    <span class="n">chunks</span> <span class="o">=</span> <span class="n">splitter</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Method: </span><span class="si">{</span><span class="n">method</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"-"</span> <span class="o">*</span> <span class="mi">40</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  Chunks created: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">chunks</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  Avg chunk size: </span><span class="si">{</span><span class="nb">sum</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">text</span><span class="p">)</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">c</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">chunks</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="nb">len</span><span class="p">(</span><span class="n">chunks</span><span class="p">)</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2"> chars"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  First chunk: </span><span class="si">{</span><span class="n">chunks</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">text</span><span class="p">[:</span><span class="mi">80</span><span class="p">]</span><span class="si">}</span><span class="s2">..."</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">"</span> <span class="o">+</span> <span class="s2">"="</span> <span class="o">*</span> <span class="mi">80</span><span class="p">)</span>
+</code></pre></div></section>
+<section id="sec-5"><h2><span class="pill-num">5</span>步骤 3：基于 Token 的切分</h2><p>基于 token 的切分对于需要遵守 token 限制的 LLM 应用至关重要。</p>
+<h3>为什么基于 Token？</h3>
+<ul>
+<li><strong>LLM 上下文窗口</strong>：GPT-4 有 8K/32K 的 token 限制</li>
+<li><strong>准确计数</strong>：字符数 ≠ token 数</li>
+<li><strong>成本优化</strong>：token 决定 API 成本</li>
+</ul>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">semantica.split</span><span class="w"> </span><span class="kn">import</span> <span class="n">split_by_tokens</span>
+
+<span class="c1"># 基于 token 的切分</span>
+<span class="n">chunks</span> <span class="o">=</span> <span class="n">split_by_tokens</span><span class="p">(</span>
+    <span class="n">text</span><span class="p">,</span>
+    <span class="n">chunk_size</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>  <span class="c1"># 100 个 token</span>
+    <span class="n">chunk_overlap</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span>
+    <span class="n">tokenizer</span><span class="o">=</span><span class="s2">"tiktoken"</span><span class="p">,</span>
+    <span class="n">model</span><span class="o">=</span><span class="s2">"gpt-4"</span>
+<span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Token-Based Splitting Results:</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"="</span> <span class="o">*</span> <span class="mi">80</span><span class="p">)</span>
+
+<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">chunks</span><span class="p">,</span> <span class="mi">1</span><span class="p">):</span>
+    <span class="n">token_count</span> <span class="o">=</span> <span class="n">chunk</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'token_count'</span><span class="p">,</span> <span class="s1">'N/A'</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Chunk </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">:"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  Tokens: </span><span class="si">{</span><span class="n">token_count</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  Characters: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">chunk</span><span class="o">.</span><span class="n">text</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  Ratio: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">chunk</span><span class="o">.</span><span class="n">text</span><span class="p">)</span><span class="o">/</span><span class="n">token_count</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">token_count</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="s1">'N/A'</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">'N/A'</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> chars/token"</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">"</span> <span class="o">+</span> <span class="s2">"="</span> <span class="o">*</span> <span class="mi">80</span><span class="p">)</span>
+</code></pre></div></section>
+<section id="sec-6"><h2><span class="pill-num">6</span>步骤 4：语义分块</h2><p>语义分块使用嵌入，基于语义边界创建分块。</p>
+<h3>工作原理</h3>
+<ol>
+<li>将文本切分为句子</li>
+<li>为每个句子生成嵌入</li>
+<li>计算相邻句子之间的相似度</li>
+<li>在相似度低于阈值处创建边界</li>
+</ol>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">semantica.split</span><span class="w"> </span><span class="kn">import</span> <span class="n">SemanticChunker</span>
+
+<span class="c1"># 语义分块</span>
+<span class="n">semantic_chunker</span> <span class="o">=</span> <span class="n">SemanticChunker</span><span class="p">(</span>
+    <span class="n">chunk_size</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span>
+    <span class="n">chunk_overlap</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span>
+    <span class="n">embedding_model</span><span class="o">=</span><span class="s2">"all-MiniLM-L6-v2"</span><span class="p">,</span>
+    <span class="n">similarity_threshold</span><span class="o">=</span><span class="mf">0.7</span>
+<span class="p">)</span>
+
+<span class="n">chunks</span> <span class="o">=</span> <span class="n">semantic_chunker</span><span class="o">.</span><span class="n">chunk</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Semantic Chunking Results:</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"="</span> <span class="o">*</span> <span class="mi">80</span><span class="p">)</span>
+
+<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">chunks</span><span class="p">,</span> <span class="mi">1</span><span class="p">):</span>
+    <span class="n">coherence</span> <span class="o">=</span> <span class="n">chunk</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'coherence_score'</span><span class="p">,</span> <span class="s1">'N/A'</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Chunk </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">:"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  Length: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">chunk</span><span class="o">.</span><span class="n">text</span><span class="p">)</span><span class="si">}</span><span class="s2"> chars"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  Coherence: </span><span class="si">{</span><span class="n">coherence</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  Text: </span><span class="si">{</span><span class="n">chunk</span><span class="o">.</span><span class="n">text</span><span class="p">[:</span><span class="mi">100</span><span class="p">]</span><span class="si">}</span><span class="s2">..."</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">"</span> <span class="o">+</span> <span class="s2">"="</span> <span class="o">*</span> <span class="mi">80</span><span class="p">)</span>
+</code></pre></div></section>
+<section id="sec-7"><h2><span class="pill-num">7</span>步骤 5：面向 GraphRAG 的实体感知分块</h2><p>实体感知分块保留实体边界，这对 GraphRAG 工作流至关重要。</p>
+<h3>为什么实体感知？</h3>
+<ul>
+<li><strong>保留实体</strong>：不要把 "Steve Jobs" 切分到不同分块中</li>
+<li><strong>更好的抽取</strong>：完整的实体可提升 NER 准确性</li>
+<li><strong>GraphRAG</strong>：对知识图谱构建至关重要</li>
+</ul>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">semantica.split</span><span class="w"> </span><span class="kn">import</span> <span class="n">EntityAwareChunker</span>
+
+<span class="c1"># 实体感知分块</span>
+<span class="n">entity_chunker</span> <span class="o">=</span> <span class="n">EntityAwareChunker</span><span class="p">(</span>
+    <span class="n">chunk_size</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span>
+    <span class="n">chunk_overlap</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span>
+    <span class="n">ner_method</span><span class="o">=</span><span class="s2">"ml"</span><span class="p">,</span>  <span class="c1"># "ml"（spaCy）、"pattern" 或 "llm"</span>
+    <span class="n">preserve_entities</span><span class="o">=</span><span class="kc">True</span>
+<span class="p">)</span>
+
+<span class="n">chunks</span> <span class="o">=</span> <span class="n">entity_chunker</span><span class="o">.</span><span class="n">chunk</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Entity-Aware Chunking Results:</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"="</span> <span class="o">*</span> <span class="mi">80</span><span class="p">)</span>
+
+<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">chunks</span><span class="p">,</span> <span class="mi">1</span><span class="p">):</span>
+    <span class="n">entities</span> <span class="o">=</span> <span class="n">chunk</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'entities'</span><span class="p">,</span> <span class="p">[])</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Chunk </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">:"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  Length: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">chunk</span><span class="o">.</span><span class="n">text</span><span class="p">)</span><span class="si">}</span><span class="s2"> chars"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  Entities: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">entities</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">entities</span><span class="p">:</span>
+        <span class="c1"># 同时处理 Entity 对象和字典</span>
+        <span class="n">entity_texts</span> <span class="o">=</span> <span class="p">[</span><span class="n">e</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'text'</span><span class="p">,</span> <span class="n">e</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'entity'</span><span class="p">,</span> <span class="s1">''</span><span class="p">))</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="k">else</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">entities</span><span class="p">[:</span><span class="mi">3</span><span class="p">]]</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  Sample entities: </span><span class="si">{</span><span class="n">entity_texts</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">"</span> <span class="o">+</span> <span class="s2">"="</span> <span class="o">*</span> <span class="mi">80</span><span class="p">)</span>
+</code></pre></div></section>
+<section id="sec-8"><h2><span class="pill-num">8</span>步骤 6：关系感知分块</h2><p>关系感知分块在分块内保留关系三元组。</p>
+<h3>为什么关系感知？</h3>
+<ul>
+<li><strong>保留三元组</strong>：将（主语、谓语、宾语）保持在一起</li>
+<li><strong>KG 构建</strong>：更适合构建知识图谱</li>
+<li><strong>上下文</strong>：关系需要完整的上下文</li>
+</ul>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">semantica.split</span><span class="w"> </span><span class="kn">import</span> <span class="n">RelationAwareChunker</span>
+
+<span class="c1"># 关系感知分块</span>
+<span class="n">relation_chunker</span> <span class="o">=</span> <span class="n">RelationAwareChunker</span><span class="p">(</span>
+    <span class="n">chunk_size</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span>
+    <span class="n">chunk_overlap</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span>
+    <span class="n">preserve_triplets</span><span class="o">=</span><span class="kc">True</span>
+<span class="p">)</span>
+
+<span class="n">chunks</span> <span class="o">=</span> <span class="n">relation_chunker</span><span class="o">.</span><span class="n">chunk</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Relation-Aware Chunking Results:</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"="</span> <span class="o">*</span> <span class="mi">80</span><span class="p">)</span>
+
+<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">chunks</span><span class="p">,</span> <span class="mi">1</span><span class="p">):</span>
+    <span class="n">triplets</span> <span class="o">=</span> <span class="n">chunk</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'triplets'</span><span class="p">,</span> <span class="p">[])</span>
+    <span class="n">relationships</span> <span class="o">=</span> <span class="n">chunk</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'relationships'</span><span class="p">,</span> <span class="p">[])</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Chunk </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">:"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  Length: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">chunk</span><span class="o">.</span><span class="n">text</span><span class="p">)</span><span class="si">}</span><span class="s2"> chars"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  Triplets: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">triplets</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  Relationships: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">relationships</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">"</span> <span class="o">+</span> <span class="s2">"="</span> <span class="o">*</span> <span class="mi">80</span><span class="p">)</span>
+</code></pre></div></section>
+<section id="sec-9"><h2><span class="pill-num">9</span>步骤 7：结构化分块</h2><p>结构化分块尊重文档结构，如标题、段落和列表。</p>
+<h3>何时使用？</h3>
+<ul>
+<li><strong>格式化文档</strong>：Markdown、HTML、结构化文本</li>
+<li><strong>保留层级</strong>：将章节保持在一起</li>
+<li><strong>更好的上下文</strong>：标题提供上下文</li>
+</ul>
+<p>```python
+from semantica.split import StructuralChunker</p>
+<h1>带结构的 Markdown 文本</h1>
+<p>markdown_text = """</p>
+<h1>Apple Inc.</h1></section>
+<section id="sec-10"><h2><span class="pill-num">10</span>History</h2><p>Apple Inc. was founded by Steve Jobs, Steve Wozniak, and Ronald Wayne in 1976.</p></section>
+<section id="sec-11"><h2><span class="pill-num">11</span>Products</h2><h3>Hardware</h3>
+<ul>
+<li>iPhone</li>
+<li>iPad</li>
+<li>Mac</li>
+</ul>
+<h3>Software</h3>
+<ul>
+<li>macOS</li>
+<li>iOS</li>
+<li>Safari
+"""</li>
+</ul>
+<h1>结构化分块</h1>
+<p>structural_chunker = StructuralChunker(
+    respect_headings=True,
+    respect_paragraphs=True,
+    respect_lists=True,
+    max_chunk_size=500
+)</p>
+<p>chunks = structural_chunker.chunk(markdown_text)</p>
+<p>print("Structural Chunking Results:\n")
+print("=" * 80)</p>
+<p>for i, chunk in enumerate(chunks, 1):
+    section = chunk.metadata.get('section_title', 'N/A')
+    level = chunk.metadata.get('heading_level', 'N/A')</p>
+<div class="codehilite"><pre><span></span><code>print(f"\nChunk {i}:")
+print(f"  Section: {section}")
+print(f"  Level: {level}")
+print(f"  Text: {chunk.text[:80]}...")
+</code></pre></div>
+
+<p>print("\n" + "=" * 80)
+```</p></section>
+<section id="sec-12"><h2><span class="pill-num">12</span>步骤 8：层级分块</h2><p>层级分块为大型文档创建多层级分块。</p>
+<h3>优势</h3>
+<ul>
+<li><strong>多粒度</strong>：文档 → 章节 → 段落</li>
+<li><strong>更好的导航</strong>：父子关系</li>
+<li><strong>灵活的检索</strong>：在不同层级进行查询</li>
+</ul>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">semantica.split</span><span class="w"> </span><span class="kn">import</span> <span class="n">HierarchicalChunker</span>
+
+<span class="c1"># 层级分块</span>
+<span class="n">hierarchical_chunker</span> <span class="o">=</span> <span class="n">HierarchicalChunker</span><span class="p">(</span>
+    <span class="n">chunk_sizes</span><span class="o">=</span><span class="p">[</span><span class="mi">400</span><span class="p">,</span> <span class="mi">200</span><span class="p">,</span> <span class="mi">100</span><span class="p">],</span>  <span class="c1"># 3 个层级</span>
+    <span class="n">chunk_overlaps</span><span class="o">=</span><span class="p">[</span><span class="mi">80</span><span class="p">,</span> <span class="mi">40</span><span class="p">,</span> <span class="mi">20</span><span class="p">],</span>
+    <span class="n">create_parent_chunks</span><span class="o">=</span><span class="kc">True</span>
+<span class="p">)</span>
+
+<span class="n">chunks</span> <span class="o">=</span> <span class="n">hierarchical_chunker</span><span class="o">.</span><span class="n">chunk</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Hierarchical Chunking Results:</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"="</span> <span class="o">*</span> <span class="mi">80</span><span class="p">)</span>
+
+<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">chunks</span><span class="p">,</span> <span class="mi">1</span><span class="p">):</span>
+    <span class="n">level</span> <span class="o">=</span> <span class="n">chunk</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'level'</span><span class="p">,</span> <span class="s1">'N/A'</span><span class="p">)</span>
+    <span class="n">parent_id</span> <span class="o">=</span> <span class="n">chunk</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'parent_id'</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="n">child_ids</span> <span class="o">=</span> <span class="n">chunk</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'child_ids'</span><span class="p">,</span> <span class="p">[])</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Chunk </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">:"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  Level: </span><span class="si">{</span><span class="n">level</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  Length: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">chunk</span><span class="o">.</span><span class="n">text</span><span class="p">)</span><span class="si">}</span><span class="s2"> chars"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  Parent: </span><span class="si">{</span><span class="n">parent_id</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">parent_id</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">'None (root)'</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  Children: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">child_ids</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">"</span> <span class="o">+</span> <span class="s2">"="</span> <span class="o">*</span> <span class="mi">80</span><span class="p">)</span>
+</code></pre></div></section>
+<section id="sec-13"><h2><span class="pill-num">13</span>步骤 9：滑动窗口分块</h2><p>滑动窗口创建重叠的固定大小分块。</p>
+<h3>用例</h3>
+<ul>
+<li><strong>密集检索</strong>：确保不遗漏任何信息</li>
+<li><strong>固定上下文</strong>：一致的分块大小</li>
+<li><strong>重叠控制</strong>：精确的重叠管理</li>
+</ul>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">semantica.split</span><span class="w"> </span><span class="kn">import</span> <span class="n">SlidingWindowChunker</span>
+
+<span class="c1"># 滑动窗口分块</span>
+<span class="n">sliding_chunker</span> <span class="o">=</span> <span class="n">SlidingWindowChunker</span><span class="p">(</span>
+    <span class="n">chunk_size</span><span class="o">=</span><span class="mi">150</span><span class="p">,</span>
+    <span class="n">overlap</span><span class="o">=</span><span class="mi">50</span>
+<span class="p">)</span>
+
+<span class="n">chunks</span> <span class="o">=</span> <span class="n">sliding_chunker</span><span class="o">.</span><span class="n">chunk</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Sliding Window Chunking Results:</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"="</span> <span class="o">*</span> <span class="mi">80</span><span class="p">)</span>
+
+<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">chunks</span><span class="p">,</span> <span class="mi">1</span><span class="p">):</span>
+    <span class="c1"># 手动计算重叠</span>
+    <span class="n">overlap</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">if</span> <span class="n">i</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">prev_chunk</span> <span class="o">=</span> <span class="n">chunks</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
+        <span class="n">overlap</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">prev_chunk</span><span class="o">.</span><span class="n">end_index</span> <span class="o">-</span> <span class="n">chunk</span><span class="o">.</span><span class="n">start_index</span><span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Window </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">:"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  Position: </span><span class="si">{</span><span class="n">chunk</span><span class="o">.</span><span class="n">start_index</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="n">chunk</span><span class="o">.</span><span class="n">end_index</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  Length: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">chunk</span><span class="o">.</span><span class="n">text</span><span class="p">)</span><span class="si">}</span><span class="s2"> chars"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  Overlap with previous: </span><span class="si">{</span><span class="n">overlap</span><span class="si">}</span><span class="s2"> chars"</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">"</span> <span class="o">+</span> <span class="s2">"="</span> <span class="o">*</span> <span class="mi">80</span><span class="p">)</span>
+</code></pre></div></section>
+<section id="sec-14"><h2><span class="pill-num">14</span>步骤 10：表格分块</h2><p>表格分块在切分大型表格时保留表格结构。</p>
+<h3>特性</h3>
+<ul>
+<li><strong>保留表头</strong>：在每个分块中保留列标题</li>
+<li><strong>按行切分</strong>：按行切分，而非按字符</li>
+<li><strong>上下文包含</strong>：包含周围文本</li>
+</ul>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">semantica.split</span><span class="w"> </span><span class="kn">import</span> <span class="n">TableChunker</span>
+
+<span class="c1"># 带表格的文本</span>
+<span class="n">text_with_table</span> <span class="o">=</span> <span class="s2">"""</span>
+<span class="s2">Apple's product lineup includes:</span>
+
+<span class="s2">| Product | Category | Release Year |</span>
+<span class="s2">|---------|----------|-------------|</span>
+<span class="s2">| iPhone | Smartphone | 2007 |</span>
+<span class="s2">| iPad | Tablet | 2010 |</span>
+<span class="s2">| Mac | Computer | 1984 |</span>
+<span class="s2">| Apple Watch | Wearable | 2015 |</span>
+<span class="s2">| AirPods | Audio | 2016 |</span>
+
+<span class="s2">These products have revolutionized their respective categories.</span>
+<span class="s2">"""</span>
+
+<span class="c1"># 表格分块</span>
+<span class="n">table_chunker</span> <span class="o">=</span> <span class="n">TableChunker</span><span class="p">(</span>
+    <span class="n">preserve_headers</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">max_rows_per_chunk</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+    <span class="n">include_context</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">table_format</span><span class="o">=</span><span class="s2">"markdown"</span>
+<span class="p">)</span>
+
+<span class="n">chunks</span> <span class="o">=</span> <span class="n">table_chunker</span><span class="o">.</span><span class="n">chunk</span><span class="p">(</span><span class="n">text_with_table</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Table Chunking Results:</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"="</span> <span class="o">*</span> <span class="mi">80</span><span class="p">)</span>
+
+<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">chunks</span><span class="p">,</span> <span class="mi">1</span><span class="p">):</span>
+    <span class="n">is_table</span> <span class="o">=</span> <span class="n">chunk</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'is_table'</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Chunk </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">:"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  Type: </span><span class="si">{</span><span class="s1">'Table'</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">is_table</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">'Text'</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">is_table</span><span class="p">:</span>
+        <span class="n">rows</span> <span class="o">=</span> <span class="n">chunk</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'row_count'</span><span class="p">,</span> <span class="s1">'N/A'</span><span class="p">)</span>
+        <span class="n">cols</span> <span class="o">=</span> <span class="n">chunk</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'column_count'</span><span class="p">,</span> <span class="s1">'N/A'</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  Rows: </span><span class="si">{</span><span class="n">rows</span><span class="si">}</span><span class="s2">, Columns: </span><span class="si">{</span><span class="n">cols</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  Content: </span><span class="si">{</span><span class="n">chunk</span><span class="o">.</span><span class="n">text</span><span class="p">[:</span><span class="mi">100</span><span class="p">]</span><span class="si">}</span><span class="s2">..."</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">"</span> <span class="o">+</span> <span class="s2">"="</span> <span class="o">*</span> <span class="mi">80</span><span class="p">)</span>
+</code></pre></div></section>
+<section id="sec-15"><h2><span class="pill-num">15</span>步骤 11：溯源跟踪</h2><p>跟踪分块来源，用于数据血缘和调试。</p>
+<h3>为什么跟踪溯源？</h3>
+<ul>
+<li><strong>数据血缘</strong>：知道分块来自哪里</li>
+<li><strong>调试</strong>：将问题追溯到来源</li>
+<li><strong>合规</strong>：某些用例需要</li>
+</ul>
+<div class="codehilite"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">importlib</span>
+
+<span class="c1"># 1. 确保本地包在路径中</span>
+<span class="n">project_root</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">(),</span> <span class="s2">"../.."</span><span class="p">))</span>
+<span class="k">if</span> <span class="n">project_root</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="p">:</span>
+    <span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">project_root</span><span class="p">)</span>
+
+<span class="c1"># 2. 强制卸载模块以确保干净地重新加载</span>
+<span class="n">modules_to_unload</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s1">'semantica.split.semantic_chunker'</span><span class="p">,</span> 
+    <span class="s1">'semantica.split.splitter'</span><span class="p">,</span> 
+    <span class="s1">'semantica.split.provenance_tracker'</span><span class="p">,</span>
+    <span class="s1">'semantica.split'</span>
+<span class="p">]</span>
+<span class="k">for</span> <span class="n">module</span> <span class="ow">in</span> <span class="n">modules_to_unload</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">module</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="p">:</span>
+        <span class="k">del</span> <span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="p">[</span><span class="n">module</span><span class="p">]</span>
+
+<span class="c1"># 3. 导入全新的模块</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">semantica.split.semantic_chunker</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">semantica.split.splitter</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">semantica.split.provenance_tracker</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">semantica.split</span><span class="w"> </span><span class="kn">import</span> <span class="n">ProvenanceTracker</span><span class="p">,</span> <span class="n">TextSplitter</span>
+
+<span class="c1"># 4. 验证 Chunk 类具有 id 字段</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">semantica.split.semantic_chunker</span><span class="w"> </span><span class="kn">import</span> <span class="n">Chunk</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Chunk class fields: </span><span class="si">{</span><span class="n">Chunk</span><span class="o">.</span><span class="vm">__annotations__</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="k">if</span> <span class="s1">'id'</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">Chunk</span><span class="o">.</span><span class="vm">__annotations__</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"WARNING: Chunk class still missing 'id' field. Kernel restart required."</span><span class="p">)</span>
+
+<span class="c1"># 创建分块</span>
+<span class="n">splitter</span> <span class="o">=</span> <span class="n">TextSplitter</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="s2">"recursive"</span><span class="p">,</span> <span class="n">chunk_size</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span> <span class="n">chunk_overlap</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
+<span class="n">chunks</span> <span class="o">=</span> <span class="n">splitter</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+
+<span class="c1"># 跟踪溯源</span>
+<span class="n">tracker</span> <span class="o">=</span> <span class="n">ProvenanceTracker</span><span class="p">()</span>
+
+<span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="n">chunks</span><span class="p">:</span>
+    <span class="n">tracker</span><span class="o">.</span><span class="n">track_chunk</span><span class="p">(</span>
+        <span class="n">chunk</span><span class="o">=</span><span class="n">chunk</span><span class="p">,</span>
+        <span class="n">source_document</span><span class="o">=</span><span class="s2">"apple_doc_001"</span><span class="p">,</span>
+        <span class="n">source_path</span><span class="o">=</span><span class="s2">"data/apple.txt"</span><span class="p">,</span>
+        <span class="n">timestamp</span><span class="o">=</span><span class="s2">"2024-01-01T00:00:00Z"</span><span class="p">,</span>
+        <span class="n">method</span><span class="o">=</span><span class="s2">"recursive"</span>
+    <span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Provenance Tracking Results:</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"="</span> <span class="o">*</span> <span class="mi">80</span><span class="p">)</span>
+
+<span class="c1"># 获取第一个分块的血缘</span>
+<span class="k">if</span> <span class="n">chunks</span><span class="p">:</span>
+    <span class="c1"># 使用分块的 ID 获取溯源信息</span>
+    <span class="n">chunk_id</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">chunks</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="s1">'id'</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Chunk ID: </span><span class="si">{</span><span class="n">chunk_id</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">chunk_id</span><span class="p">:</span>
+        <span class="n">prov_info</span> <span class="o">=</span> <span class="n">tracker</span><span class="o">.</span><span class="n">get_provenance</span><span class="p">(</span><span class="n">chunk_id</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">prov_info</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Lineage for Chunk 1:"</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  Source Document: </span><span class="si">{</span><span class="n">prov_info</span><span class="o">.</span><span class="n">source_document</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  File Path: </span><span class="si">{</span><span class="n">prov_info</span><span class="o">.</span><span class="n">source_path</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  Method: </span><span class="si">{</span><span class="n">prov_info</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'method'</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  Timestamp: </span><span class="si">{</span><span class="n">prov_info</span><span class="o">.</span><span class="n">timestamp</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"Error: Chunk ID not found. The Chunk class definition might still be cached."</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"Please click 'Kernel' -&gt; 'Restart Kernel' in the menu and run all cells again."</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">"</span> <span class="o">+</span> <span class="s2">"="</span> <span class="o">*</span> <span class="mi">80</span><span class="p">)</span>
+</code></pre></div></section>
+<section id="sec-16"><h2><span class="pill-num">16</span>步骤 13：方法对比</h2><p>让我们并排比较所有方法，以帮助你选择合适的方法。</p>
+<h3>对比标准</h3>
+<ul>
+<li><strong>分块数量</strong>：创建的分块数量</li>
+<li><strong>平均大小</strong>：平均分块大小</li>
+<li><strong>处理时间</strong>：分块速度</li>
+</ul>
+<div class="codehilite"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+
+<span class="c1"># 要比较的方法</span>
+<span class="n">methods_to_compare</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="p">(</span><span class="s2">"recursive"</span><span class="p">,</span> <span class="p">{}),</span>
+    <span class="p">(</span><span class="s2">"sentence"</span><span class="p">,</span> <span class="p">{}),</span>
+    <span class="p">(</span><span class="s2">"paragraph"</span><span class="p">,</span> <span class="p">{}),</span>
+    <span class="p">(</span><span class="s2">"token"</span><span class="p">,</span> <span class="p">{</span><span class="s2">"tokenizer"</span><span class="p">:</span> <span class="s2">"tiktoken"</span><span class="p">}),</span>
+<span class="p">]</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Method Comparison:</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"="</span> <span class="o">*</span> <span class="mi">80</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="s1">'Method'</span><span class="si">:</span><span class="s2">&lt;15</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="s1">'Chunks'</span><span class="si">:</span><span class="s2">&lt;10</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="s1">'Avg Size'</span><span class="si">:</span><span class="s2">&lt;12</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="s1">'Time (ms)'</span><span class="si">:</span><span class="s2">&lt;12</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"-"</span> <span class="o">*</span> <span class="mi">80</span><span class="p">)</span>
+
+<span class="k">for</span> <span class="n">method</span><span class="p">,</span> <span class="n">kwargs</span> <span class="ow">in</span> <span class="n">methods_to_compare</span><span class="p">:</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+
+        <span class="n">splitter</span> <span class="o">=</span> <span class="n">TextSplitter</span><span class="p">(</span>
+            <span class="n">method</span><span class="o">=</span><span class="n">method</span><span class="p">,</span>
+            <span class="n">chunk_size</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span>
+            <span class="n">chunk_overlap</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">kwargs</span>
+        <span class="p">)</span>
+
+        <span class="n">chunks</span> <span class="o">=</span> <span class="n">splitter</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+
+        <span class="n">elapsed</span> <span class="o">=</span> <span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start_time</span><span class="p">)</span> <span class="o">*</span> <span class="mi">1000</span>
+        <span class="n">avg_size</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">text</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">chunks</span><span class="p">)</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">chunks</span><span class="p">)</span> <span class="k">if</span> <span class="n">chunks</span> <span class="k">else</span> <span class="mi">0</span>
+
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">method</span><span class="si">:</span><span class="s2">&lt;15</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">chunks</span><span class="p">)</span><span class="si">:</span><span class="s2">&lt;10</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">avg_size</span><span class="si">:</span><span class="s2">&lt;12.0f</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">elapsed</span><span class="si">:</span><span class="s2">&lt;12.2f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">method</span><span class="si">:</span><span class="s2">&lt;15</span><span class="si">}</span><span class="s2"> Error: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)[:</span><span class="mi">40</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">"="</span> <span class="o">*</span> <span class="mi">80</span><span class="p">)</span>
+</code></pre></div></section>
+<section id="sec-17"><h2><span class="pill-num">17</span>步骤 14：最佳实践</h2><h3>选择合适的方法</h3>
+<ol>
+<li><strong>通用文档</strong>：使用 <code>recursive</code> 以获得速度和简洁性</li>
+<li><strong>LLM 应用</strong>：使用 <code>token</code> 以遵守上下文窗口</li>
+<li><strong>语义检索</strong>：使用 <code>semantic_transformer</code> 以实现主题连贯性</li>
+<li><strong>GraphRAG</strong>：使用 <code>entity_aware</code> 或 <code>relation_aware</code></li>
+<li><strong>结构化文档</strong>：对格式化文档使用 <code>structural</code></li>
+<li><strong>大型文档</strong>：使用 <code>hierarchical</code> 以实现多层级访问</li>
+</ol>
+<h3>分块大小指南</h3>
+<table>
+<thead>
+<tr>
+<th>用例</th>
+<th>推荐大小</th>
+<th>重叠</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>语义检索</td>
+<td>512-1024 字符</td>
+<td>20%</td>
+</tr>
+<tr>
+<td>LLM 上下文</td>
+<td>2000-4000 字符</td>
+<td>10-20%</td>
+</tr>
+<tr>
+<td>实体抽取</td>
+<td>500-1500 字符</td>
+<td>15-25%</td>
+</tr>
+<tr>
+<td>问答</td>
+<td>1000-2000 字符</td>
+<td>20%</td>
+</tr>
+</tbody>
+</table>
+<h3>重叠建议</h3>
+<ul>
+<li><strong>10-15%</strong>：快速处理，冗余较少</li>
+<li><strong>20-25%</strong>：均衡（推荐）</li>
+<li><strong>30-40%</strong>：最大程度保留上下文</li>
+</ul></section>
+<section id="sec-18"><h2><span class="pill-num">18</span>小结</h2><h3>你学到了什么</h3>
+<p>在本 notebook 中，你学会了如何：</p>
+<ul>
+<li>使用 <code>TextSplitter</code> 的多种方法</li>
+<li>应用标准切分（recursive、token、sentence、paragraph）</li>
+<li>使用语义分块以实现主题连贯性</li>
+<li>应用 KG 感知的分块（实体感知、关系感知）</li>
+<li>使用专用分块器（结构化、层级、滑动窗口、表格）</li>
+<li>跟踪溯源</li>
+<li>为你的用例选择合适的方法</li>
+</ul>
+<h3>关键要点</h3>
+<ol>
+<li><strong>方法选择很重要</strong>：不同需求使用不同方法</li>
+<li><strong>分块大小至关重要</strong>：在上下文和处理之间取得平衡</li>
+<li><strong>重叠有帮助</strong>：20% 的重叠是一个不错的默认值</li>
+<li><strong>跟踪溯源</strong>：对调试和合规很重要</li>
+<li><strong>面向 GraphRAG 的 KG 感知</strong>：对知识图谱使用实体/关系感知</li>
+</ol>
+<h3>下一步</h3>
+<p><strong>下一个 Notebook</strong>：<a href="12-embedding-generation.html">12-embedding-generation.html</a><br />
+学习如何为你的分块生成嵌入！</p>
+<p><strong>延伸阅读</strong>：
+- <a href="https://semantica.readthedocs.io/reference/split/">Split Module API Reference</a>
+- <a href="../advanced/https://github.com/semantica-agi/semantica/tree/main/cookbook">Advanced Chunking Strategies</a>
+- <a href="../use_cases/advanced_rag/https://github.com/semantica-agi/semantica/tree/main/cookbook">GraphRAG Pipeline</a></p>
+<hr />
+<p><strong>有问题或疑问？</strong> 查看我们的 <a href="https://github.com/Hawksight-AI/semantica">GitHub repository</a> 或 <a href="https://semantica.readthedocs.io">documentation</a>。</p></section>
+    <nav class="pager"><a class="prev" href="10-graph-analytics.html"><span class="dir">← 上一篇</span><span class="ttl">图分析</span></a><a class="next" href="12-embedding-generation.html"><span class="dir">→ 下一篇</span><span class="ttl">嵌入生成</span></a></nav>
+  </main>
+</div>
+
+<footer>由 Semantica 官方 Cookbook 生成的中文说明页 · <a href="https://github.com/semantica-agi/semantica">semantica-agi/semantica</a></footer>
+
+</body>
+</html>

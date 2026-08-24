@@ -1,0 +1,968 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Datalog 风格推理 · Semantica Cookbook</title>
+<style>
+
+:root {
+  --bg: #0b0e17;
+  --bg-soft: #10141f;
+  --panel: #ffffff;
+  --panel-alt: #f6f7fb;
+  --border: #e6e8f0;
+  --text: #1a1d29;
+  --text-dim: #5a5f72;
+  --primary: #6366f1;
+  --primary-dark: #4338ca;
+  --accent: #14b8a6;
+  --accent-2: #f59e0b;
+  --code-bg: #0f172a;
+  --code-text: #e2e8f0;
+  --radius: 14px;
+  --shadow: 0 10px 30px -12px rgba(30, 41, 59, 0.18);
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif;
+  color: var(--text);
+  background: var(--panel-alt);
+  line-height: 1.75;
+}
+a { color: var(--primary-dark); }
+
+/* ---------- HERO ---------- */
+.hero {
+  background: radial-gradient(1200px 600px at 15% -10%, rgba(99,102,241,0.55), transparent 60%),
+              radial-gradient(900px 500px at 90% 10%, rgba(20,184,166,0.35), transparent 55%),
+              linear-gradient(180deg, var(--bg) 0%, var(--bg-soft) 100%);
+  color: #f4f5fb;
+  padding: 64px 24px 88px;
+  position: relative;
+  overflow: hidden;
+}
+.hero-inner { max-width: 1080px; margin: 0 auto; }
+.eyebrow {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-size: 12.5px; letter-spacing: 0.12em; text-transform: uppercase;
+  color: #a5b4fc; background: rgba(99,102,241,0.15);
+  border: 1px solid rgba(165,180,252,0.35);
+  padding: 6px 14px; border-radius: 999px; margin-bottom: 22px;
+}
+.hero h1 { font-size: 40px; line-height: 1.2; margin: 0 0 16px; font-weight: 800; letter-spacing: -0.01em; }
+.hero p.lead { font-size: 17px; color: #cbd0e6; max-width: 720px; margin: 0 0 28px; }
+.hero-badges { display: flex; flex-wrap: wrap; gap: 10px; }
+.badge {
+  font-size: 13px; background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.14); color: #e2e4f5;
+  padding: 6px 12px; border-radius: 999px;
+}
+.hero a.home-link {
+  display: inline-flex; align-items: center; gap: 6px;
+  color: #a5b4fc; text-decoration: none; font-size: 13.5px; margin-bottom: 20px;
+}
+.hero a.home-link:hover { color: #fff; }
+
+/* ---------- LAYOUT ---------- */
+.layout {
+  max-width: 1200px; margin: -48px auto 0; padding: 0 24px 60px;
+  display: grid; grid-template-columns: 240px 1fr; gap: 32px; position: relative;
+}
+.toc {
+  position: sticky; top: 24px; align-self: start;
+  background: var(--panel); border: 1px solid var(--border);
+  border-radius: var(--radius); box-shadow: var(--shadow);
+  padding: 18px 16px; font-size: 13.5px;
+  max-height: calc(100vh - 48px); overflow-y: auto;
+}
+.toc h4 { margin: 0 0 10px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-dim); }
+.toc a { display: block; padding: 6px 8px; border-radius: 8px; color: var(--text-dim); text-decoration: none; margin-bottom: 2px; }
+.toc a:hover { background: var(--panel-alt); color: var(--text); }
+.toc a.active { background: var(--panel-alt); color: var(--primary-dark); font-weight: 600; }
+
+main { min-width: 0; }
+
+section {
+  background: var(--panel); border: 1px solid var(--border);
+  border-radius: var(--radius); box-shadow: var(--shadow);
+  padding: 34px 40px; margin-bottom: 24px; scroll-margin-top: 20px;
+}
+section h2 { font-size: 23px; margin: 0 0 16px; display: flex; align-items: center; gap: 10px; }
+section h2 .pill-num {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 30px; height: 30px; border-radius: 9px; flex-shrink: 0;
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  color: #fff; font-size: 14px; font-weight: 700;
+}
+h3 { font-size: 17px; margin: 26px 0 10px; }
+h4 { font-size: 15px; margin: 20px 0 8px; }
+p { margin: 0 0 14px; }
+ul, ol { margin: 0 0 16px; padding-left: 22px; }
+li { margin-bottom: 6px; }
+li > ul, li > ol { margin-top: 6px; }
+strong { color: var(--text); }
+blockquote {
+  margin: 0 0 16px; padding: 12px 18px;
+  border-left: 4px solid var(--accent); background: var(--panel-alt);
+  border-radius: 0 8px 8px 0; color: var(--text-dim);
+}
+blockquote p { margin: 0; }
+
+/* tables */
+table { width: 100%; border-collapse: collapse; font-size: 13.8px; margin: 8px 0 18px; }
+th {
+  text-align: left; font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em;
+  color: var(--text-dim); border-bottom: 1px solid var(--border); padding: 8px 10px;
+}
+td { padding: 10px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+tr:last-child td { border-bottom: none; }
+
+/* inline code */
+code {
+  background: #eef0fb; color: var(--primary-dark);
+  padding: 2px 7px; border-radius: 6px;
+  font-family: "SFMono-Regular", Menlo, Consolas, monospace; font-size: 13px;
+}
+
+/* code blocks */
+pre {
+  background: var(--code-bg); color: var(--code-text);
+  padding: 16px 18px; border-radius: 10px; overflow-x: auto;
+  font-size: 13px; line-height: 1.6;
+  font-family: "SFMono-Regular", Menlo, Consolas, monospace;
+  margin: 10px 0 18px;
+}
+pre code { background: transparent; color: inherit; padding: 0; border-radius: 0; font-size: 13px; }
+.codehilite { background: var(--code-bg); border-radius: 10px; overflow-x: auto; margin: 10px 0 18px; }
+.codehilite pre { margin: 0; padding: 16px 18px; background: transparent; }
+
+/* pager */
+.pager { display: flex; justify-content: space-between; gap: 16px; margin-top: 8px; }
+.pager a {
+  flex: 1; display: flex; flex-direction: column; gap: 4px;
+  padding: 16px 20px; border-radius: var(--radius); text-decoration: none;
+  background: var(--panel); border: 1px solid var(--border); box-shadow: var(--shadow);
+  transition: transform 0.15s, border-color 0.15s;
+}
+.pager a:hover { transform: translateY(-2px); border-color: var(--primary); }
+.pager a .dir { font-size: 12px; color: var(--text-dim); }
+.pager a .ttl { font-size: 14.5px; font-weight: 700; color: var(--text); }
+.pager a.next { text-align: right; }
+.pager a.disabled { opacity: 0.4; pointer-events: none; }
+
+footer { text-align: center; color: var(--text-dim); font-size: 13px; padding: 20px 0 40px; }
+footer a { color: var(--text-dim); }
+
+@media (max-width: 900px) {
+  .layout { grid-template-columns: 1fr; }
+  .toc { position: static; max-height: none; }
+  section { padding: 26px 22px; }
+  .hero h1 { font-size: 30px; }
+  .pager { flex-direction: column; }
+}
+
+pre { line-height: 125%; }
+td.linenos .normal { color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px; }
+span.linenos { color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px; }
+td.linenos .special { color: #000000; background-color: #ffffc0; padding-left: 5px; padding-right: 5px; }
+span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 5px; padding-right: 5px; }
+.codehilite .hll { background-color: #49483e }
+.codehilite { background: #272822; color: #F8F8F2 }
+.codehilite .c { color: #959077 } /* Comment */
+.codehilite .err { color: #ED007E; background-color: #1E0010 } /* Error */
+.codehilite .esc { color: #F8F8F2 } /* Escape */
+.codehilite .g { color: #F8F8F2 } /* Generic */
+.codehilite .k { color: #66D9EF } /* Keyword */
+.codehilite .l { color: #AE81FF } /* Literal */
+.codehilite .n { color: #F8F8F2 } /* Name */
+.codehilite .o { color: #FF4689 } /* Operator */
+.codehilite .x { color: #F8F8F2 } /* Other */
+.codehilite .p { color: #F8F8F2 } /* Punctuation */
+.codehilite .ch { color: #959077 } /* Comment.Hashbang */
+.codehilite .cm { color: #959077 } /* Comment.Multiline */
+.codehilite .cp { color: #959077 } /* Comment.Preproc */
+.codehilite .cpf { color: #959077 } /* Comment.PreprocFile */
+.codehilite .c1 { color: #959077 } /* Comment.Single */
+.codehilite .cs { color: #959077 } /* Comment.Special */
+.codehilite .gd { color: #FF4689 } /* Generic.Deleted */
+.codehilite .ge { color: #F8F8F2; font-style: italic } /* Generic.Emph */
+.codehilite .ges { color: #F8F8F2; font-weight: bold; font-style: italic } /* Generic.EmphStrong */
+.codehilite .gr { color: #FF4689 } /* Generic.Error */
+.codehilite .gh { color: #F8F8F2 } /* Generic.Heading */
+.codehilite .gi { color: #A6E22E } /* Generic.Inserted */
+.codehilite .go { color: #66D9EF } /* Generic.Output */
+.codehilite .gp { color: #FF4689; font-weight: bold } /* Generic.Prompt */
+.codehilite .gs { color: #F8F8F2; font-weight: bold } /* Generic.Strong */
+.codehilite .gu { color: #959077 } /* Generic.Subheading */
+.codehilite .gt { color: #66D9EF } /* Generic.Traceback */
+.codehilite .kc { color: #66D9EF } /* Keyword.Constant */
+.codehilite .kd { color: #66D9EF } /* Keyword.Declaration */
+.codehilite .kn { color: #FF4689 } /* Keyword.Namespace */
+.codehilite .kp { color: #66D9EF } /* Keyword.Pseudo */
+.codehilite .kr { color: #66D9EF } /* Keyword.Reserved */
+.codehilite .kt { color: #66D9EF } /* Keyword.Type */
+.codehilite .ld { color: #E6DB74 } /* Literal.Date */
+.codehilite .m { color: #AE81FF } /* Literal.Number */
+.codehilite .s { color: #E6DB74 } /* Literal.String */
+.codehilite .na { color: #A6E22E } /* Name.Attribute */
+.codehilite .nb { color: #A6E22E } /* Name.Builtin */
+.codehilite .nc { color: #A6E22E } /* Name.Class */
+.codehilite .no { color: #66D9EF } /* Name.Constant */
+.codehilite .nd { color: #A6E22E } /* Name.Decorator */
+.codehilite .ni { color: #F8F8F2 } /* Name.Entity */
+.codehilite .ne { color: #A6E22E } /* Name.Exception */
+.codehilite .nf { color: #A6E22E } /* Name.Function */
+.codehilite .nl { color: #F8F8F2 } /* Name.Label */
+.codehilite .nn { color: #F8F8F2 } /* Name.Namespace */
+.codehilite .nx { color: #A6E22E } /* Name.Other */
+.codehilite .py { color: #F8F8F2 } /* Name.Property */
+.codehilite .nt { color: #FF4689 } /* Name.Tag */
+.codehilite .nv { color: #F8F8F2 } /* Name.Variable */
+.codehilite .ow { color: #FF4689 } /* Operator.Word */
+.codehilite .pm { color: #F8F8F2 } /* Punctuation.Marker */
+.codehilite .w { color: #F8F8F2 } /* Text.Whitespace */
+.codehilite .mb { color: #AE81FF } /* Literal.Number.Bin */
+.codehilite .mf { color: #AE81FF } /* Literal.Number.Float */
+.codehilite .mh { color: #AE81FF } /* Literal.Number.Hex */
+.codehilite .mi { color: #AE81FF } /* Literal.Number.Integer */
+.codehilite .mo { color: #AE81FF } /* Literal.Number.Oct */
+.codehilite .sa { color: #E6DB74 } /* Literal.String.Affix */
+.codehilite .sb { color: #E6DB74 } /* Literal.String.Backtick */
+.codehilite .sc { color: #E6DB74 } /* Literal.String.Char */
+.codehilite .dl { color: #E6DB74 } /* Literal.String.Delimiter */
+.codehilite .sd { color: #E6DB74 } /* Literal.String.Doc */
+.codehilite .s2 { color: #E6DB74 } /* Literal.String.Double */
+.codehilite .se { color: #AE81FF } /* Literal.String.Escape */
+.codehilite .sh { color: #E6DB74 } /* Literal.String.Heredoc */
+.codehilite .si { color: #E6DB74 } /* Literal.String.Interpol */
+.codehilite .sx { color: #E6DB74 } /* Literal.String.Other */
+.codehilite .sr { color: #E6DB74 } /* Literal.String.Regex */
+.codehilite .s1 { color: #E6DB74 } /* Literal.String.Single */
+.codehilite .ss { color: #E6DB74 } /* Literal.String.Symbol */
+.codehilite .bp { color: #A6E22E } /* Name.Builtin.Pseudo */
+.codehilite .fm { color: #A6E22E } /* Name.Function.Magic */
+.codehilite .vc { color: #F8F8F2 } /* Name.Variable.Class */
+.codehilite .vg { color: #F8F8F2 } /* Name.Variable.Global */
+.codehilite .vi { color: #F8F8F2 } /* Name.Variable.Instance */
+.codehilite .vm { color: #F8F8F2 } /* Name.Variable.Magic */
+.codehilite .il { color: #AE81FF } /* Literal.Number.Integer.Long */
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="hero-inner">
+    <a class="home-link" href="index.html">← 返回 Semantica 专题首页</a>
+    <span class="eyebrow">🚀 SEMANTICA · COOKBOOK · 进阶系列</span>
+    <h1>Datalog 风格推理</h1>
+    <p class="lead">Semantica 官方 Cookbook 中文翻译 · 第 33 / 37 篇</p>
+    <div class="hero-badges">
+      <span class="badge">📦 semantica</span>
+      <span class="badge">🕸️ 知识图谱</span>
+      <span class="badge">🔎 GraphRAG</span>
+    </div>
+  </div>
+</header>
+
+<div class="layout">
+  <nav class="toc">
+    <h4>目录</h4>
+    <a href="#sec-1">你将构建什么</a>
+<a href="#sec-2">第 1 部分 — 核心 API：EDB 事实、IDB 规则、不动点</a>
+<a href="#sec-3">第 2 部分 — GraphBuilder → DatalogReasoner 流水线</a>
+<a href="#sec-4">第 3 部分 — ContextGraph + `load_from_graph()`</a>
+<a href="#sec-5">第 4 部分 — RBAC 访问控制策略</a>
+<a href="#sec-6">第 5 部分 — 使用 ContextGraph 建模组织层级</a>
+<a href="#sec-7">第 6 部分 — 引擎内省：DatalogFact 与 DatalogRule</a>
+<a href="#sec-8">API 小结</a>
+  </nav>
+
+  <main>
+    <section id="overview"><div class="intro"><p>Semantica 的 <strong><code>DatalogReasoner</code></strong>——一个原生的自底向上半朴素不动点引擎——的端到端指南，它与 <code>GraphBuilder</code>、<code>ContextGraph</code>、<code>GraphAnalyzer</code>、<code>ExplanationGenerator</code> 以及支撑性的数据类（<code>DatalogFact</code>、<code>DatalogRule</code>、<code>InferenceResult</code>、<code>Rule</code>）协同工作。</p></div></section>
+<section id="sec-1"><h2><span class="pill-num">1</span>你将构建什么</h2><table>
+<thead>
+<tr>
+<th>部分</th>
+<th>主题</th>
+<th>关键类</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>核心 API 与 EDB/IDB 概念</td>
+<td><code>DatalogReasoner</code>、<code>DatalogFact</code>、<code>DatalogRule</code></td>
+</tr>
+<tr>
+<td>2</td>
+<td>知识图谱 → Datalog 流水线</td>
+<td><code>GraphBuilder</code>、<code>GraphAnalyzer</code>、<code>DatalogReasoner</code></td>
+</tr>
+<tr>
+<td>3</td>
+<td>ContextGraph 集成</td>
+<td><code>ContextGraph</code>、<code>DatalogReasoner.load_from_graph()</code></td>
+</tr>
+<tr>
+<td>4</td>
+<td>RBAC 访问控制策略</td>
+<td><code>GraphBuilder</code>、<code>DatalogReasoner</code>、<code>ExplanationGenerator</code></td>
+</tr>
+<tr>
+<td>5</td>
+<td>组织层级</td>
+<td><code>ContextGraph</code>、<code>DatalogReasoner</code>、<code>InferenceResult</code></td>
+</tr>
+<tr>
+<td>6</td>
+<td>引擎内省</td>
+<td><code>DatalogFact</code>、<code>DatalogRule</code> 内部状态</td>
+</tr>
+</tbody>
+</table>
+<p><strong>相关 notebook</strong>
+- <a href="08-reasoning-and-inference.html">08-reasoning-and-inference.html</a> — 使用 IF/THEN 语法的高层 <code>Reasoner</code>
+- <a href="10-temporal-knowledge-graphs.html">10-temporal-knowledge-graphs.html</a> — 时序推理</p>
+<p><strong>文档</strong>：<a href="https://semantica.readthedocs.io/reference/reasoning/">推理 API</a> | <a href="https://semantica.readthedocs.io/reference/kg/">知识图谱 API</a> | <a href="https://semantica.readthedocs.io/reference/context/">上下文 API</a></p>
+<div class="codehilite"><pre><span></span><code><span class="err">!</span><span class="n">pip</span> <span class="n">install</span> <span class="o">-</span><span class="n">qU</span> <span class="n">semantica</span>
+</code></pre></div>
+
+<div class="codehilite"><pre><span></span><code><span class="c1"># ── 推理 ──────────────────────────────────────────────────────────────</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">semantica.reasoning</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">DatalogReasoner</span><span class="p">,</span>   <span class="c1"># 原生 Datalog 不动点引擎</span>
+    <span class="n">DatalogFact</span><span class="p">,</span>       <span class="c1"># 冻结数据类：谓词 + 参数元组</span>
+    <span class="n">DatalogRule</span><span class="p">,</span>       <span class="c1"># 数据类：头 + 体（list[BodyAtom]）</span>
+    <span class="n">ExplanationGenerator</span><span class="p">,</span>  <span class="c1"># 生成自然语言解释</span>
+    <span class="n">InferenceResult</span><span class="p">,</span>   <span class="c1"># 由 ExplanationGenerator 消费的结果数据类</span>
+    <span class="n">Rule</span><span class="p">,</span>              <span class="c1"># 由 ExplanationGenerator 使用的规则数据类</span>
+    <span class="n">RuleType</span><span class="p">,</span>          <span class="c1"># 枚举：IMPLICATION | EQUIVALENCE | CONSTRAINT | TRANSFORMATION</span>
+<span class="p">)</span>
+
+<span class="c1"># ── 知识图谱 ────────────────────────────────────────────────────────</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">semantica.kg</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">GraphBuilder</span><span class="p">,</span>    <span class="c1"># 从实体+关系源构建知识图谱字典</span>
+    <span class="n">GraphAnalyzer</span><span class="p">,</span>   <span class="c1"># 中心性、社区、连通性、指标</span>
+<span class="p">)</span>
+
+<span class="c1"># ── 上下文 ────────────────────────────────────────────────────────────────</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">semantica.context</span><span class="w"> </span><span class="kn">import</span> <span class="n">ContextGraph</span>  <span class="c1"># 内存图谱：add_node/add_edge/find_*</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">"All Semantica classes imported successfully."</span><span class="p">)</span>
+</code></pre></div>
+
+<hr /></section>
+<section id="sec-2"><h2><span class="pill-num">2</span>第 1 部分 — 核心 API：EDB 事实、IDB 规则、不动点</h2><h3>30 秒了解 Datalog</h3>
+<table>
+<thead>
+<tr>
+<th>术语</th>
+<th>含义</th>
+<th>示例</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>EDB（外延数据库）</td>
+<td>你断言的基础事实</td>
+<td><code>parent(tom, bob)</code></td>
+</tr>
+<tr>
+<td>IDB（内涵数据库）</td>
+<td>由规则推导出的事实</td>
+<td><code>ancestor(tom, ann)</code></td>
+</tr>
+<tr>
+<td>规则（Horn 子句）</td>
+<td>如果体 → 推导出头</td>
+<td><code>ancestor(X,Y) :- parent(X,Y).</code></td>
+</tr>
+<tr>
+<td>变量</td>
+<td>大写，求值期间统一</td>
+<td><code>X</code>、<code>Y</code>、<code>Role</code></td>
+</tr>
+<tr>
+<td>常量</td>
+<td>小写，字面匹配</td>
+<td><code>tom</code>、<code>admin</code></td>
+</tr>
+<tr>
+<td>不动点</td>
+<td>迭代直到不再出现新事实</td>
+<td><code>DatalogReasoner.derive_all()</code></td>
+</tr>
+</tbody>
+</table>
+<h3>经典示例——传递祖先关系</h3>
+<div class="codehilite"><pre><span></span><code><span class="c1"># ── 步骤 1：创建引擎 ──────────────────────────────────────────────────</span>
+<span class="n">dr</span> <span class="o">=</span> <span class="n">DatalogReasoner</span><span class="p">()</span>
+
+<span class="c1"># ── 步骤 2：加载 EDB（基础事实） ───────────────────────────────────────</span>
+<span class="c1"># 语法：predicate(constant1, constant2)  — 常量必须小写</span>
+<span class="n">edb_facts</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">"parent(tom, bob)"</span><span class="p">,</span>
+    <span class="s2">"parent(bob, ann)"</span><span class="p">,</span>
+    <span class="s2">"parent(ann, pat)"</span><span class="p">,</span>
+<span class="p">]</span>
+<span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">edb_facts</span><span class="p">:</span>
+    <span class="n">dr</span><span class="o">.</span><span class="n">add_fact</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"EDB loaded: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">dr</span><span class="o">.</span><span class="n">_all_facts</span><span class="p">)</span><span class="si">}</span><span class="s2"> ground facts"</span><span class="p">)</span>
+</code></pre></div>
+
+<div class="codehilite"><pre><span></span><code><span class="c1"># ── 步骤 3：添加 IDB 规则（Horn 子句） ──────────────────────────────────</span>
+<span class="c1"># 语法：head(Vars) :- body_atom1(Vars), body_atom2(Vars).</span>
+<span class="c1"># 变量以大写开头；末尾的 '.' 是可选的</span>
+<span class="n">dr</span><span class="o">.</span><span class="n">add_rule</span><span class="p">(</span><span class="s2">"ancestor(X, Y) :- parent(X, Y)."</span><span class="p">)</span>
+<span class="n">dr</span><span class="o">.</span><span class="n">add_rule</span><span class="p">(</span><span class="s2">"ancestor(X, Y) :- parent(X, Z), ancestor(Z, Y)."</span><span class="p">)</span>  <span class="c1"># 递归</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Rules loaded: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">dr</span><span class="o">.</span><span class="n">_rules</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</code></pre></div>
+
+<div class="codehilite"><pre><span></span><code><span class="c1"># ── 步骤 4：不动点求值 ────────────────────────────────────────────</span>
+<span class="c1"># derive_all() 运行半朴素自底向上求值，直到不再出现新事实</span>
+<span class="n">all_facts</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">dr</span><span class="o">.</span><span class="n">derive_all</span><span class="p">()</span>
+
+<span class="n">ancestor_strs</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">f</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">all_facts</span> <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"ancestor"</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Derived </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">ancestor_strs</span><span class="p">)</span><span class="si">}</span><span class="s2"> ancestor facts:"</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">ancestor_strs</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">" "</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span>
+</code></pre></div>
+
+<div class="codehilite"><pre><span></span><code><span class="c1"># ── 步骤 5：查询 ──────────────────────────────────────────────────────────</span>
+<span class="c1"># 使用 '?varname' 占位符——query() 在需要时会自动调用 derive_all()</span>
+<span class="c1"># 返回：list[dict]  例如 [{"Y": "bob"}, {"Y": "ann"}, {"Y": "pat"}]</span>
+
+<span class="n">descendants</span> <span class="o">=</span> <span class="n">dr</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s2">"ancestor(tom, ?Y)"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"All descendants of tom:"</span><span class="p">,</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s2">"Y"</span><span class="p">]</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">descendants</span><span class="p">))</span>
+
+<span class="n">ancestors_of_pat</span> <span class="o">=</span> <span class="n">dr</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s2">"ancestor(?X, pat)"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"All ancestors of pat: "</span><span class="p">,</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s2">"X"</span><span class="p">]</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">ancestors_of_pat</span><span class="p">))</span>
+
+<span class="n">all_pairs</span> <span class="o">=</span> <span class="n">dr</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s2">"ancestor(?X, ?Y)"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">All ancestor pairs (</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">all_pairs</span><span class="p">)</span><span class="si">}</span><span class="s2">):"</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">all_pairs</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">r</span><span class="p">:</span> <span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s2">"X"</span><span class="p">],</span> <span class="n">r</span><span class="p">[</span><span class="s2">"Y"</span><span class="p">])):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  </span><span class="si">{</span><span class="n">row</span><span class="p">[</span><span class="s1">'X'</span><span class="p">]</span><span class="si">:</span><span class="s2">6s</span><span class="si">}</span><span class="s2"> → </span><span class="si">{</span><span class="n">row</span><span class="p">[</span><span class="s1">'Y'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</code></pre></div>
+
+<hr /></section>
+<section id="sec-3"><h2><span class="pill-num">3</span>第 2 部分 — GraphBuilder → DatalogReasoner 流水线</h2><p><code>GraphBuilder</code> 从你的数据构建一个结构化的 <code>{"entities": [...], "relationships": [...]}</code> 字典。然后我们：</p>
+<ol>
+<li>使用 <code>GraphAnalyzer</code> 分析图谱以理解结构。</li>
+<li>将 <code>kg["relationships"]</code> 作为 EDB 事实输入 <code>DatalogReasoner</code>。</li>
+<li>在知识图谱上应用递归 Datalog 规则。</li>
+</ol>
+<div class="codehilite"><pre><span></span><code><span class="c1"># ── 构建一个软件依赖知识图谱 ────────────────────────────────────────</span>
+<span class="n">entities</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="s2">"pythonsdk"</span><span class="p">,</span>   <span class="s2">"name"</span><span class="p">:</span> <span class="s2">"Python SDK"</span><span class="p">,</span>   <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"Component"</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="s2">"restapi"</span><span class="p">,</span>     <span class="s2">"name"</span><span class="p">:</span> <span class="s2">"REST API"</span><span class="p">,</span>     <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"Component"</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="s2">"authservice"</span><span class="p">,</span> <span class="s2">"name"</span><span class="p">:</span> <span class="s2">"Auth Service"</span><span class="p">,</span> <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"Component"</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="s2">"database"</span><span class="p">,</span>    <span class="s2">"name"</span><span class="p">:</span> <span class="s2">"Database"</span><span class="p">,</span>     <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"Component"</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="s2">"dashboard"</span><span class="p">,</span>   <span class="s2">"name"</span><span class="p">:</span> <span class="s2">"Dashboard"</span><span class="p">,</span>    <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"Component"</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="s2">"analytics"</span><span class="p">,</span>   <span class="s2">"name"</span><span class="p">:</span> <span class="s2">"Analytics"</span><span class="p">,</span>    <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"Component"</span><span class="p">},</span>
+<span class="p">]</span>
+<span class="n">relationships</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="p">{</span><span class="s2">"source"</span><span class="p">:</span> <span class="s2">"pythonsdk"</span><span class="p">,</span>   <span class="s2">"target"</span><span class="p">:</span> <span class="s2">"restapi"</span><span class="p">,</span>     <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"depends_on"</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"source"</span><span class="p">:</span> <span class="s2">"restapi"</span><span class="p">,</span>     <span class="s2">"target"</span><span class="p">:</span> <span class="s2">"authservice"</span><span class="p">,</span> <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"depends_on"</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"source"</span><span class="p">:</span> <span class="s2">"authservice"</span><span class="p">,</span> <span class="s2">"target"</span><span class="p">:</span> <span class="s2">"database"</span><span class="p">,</span>    <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"depends_on"</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"source"</span><span class="p">:</span> <span class="s2">"dashboard"</span><span class="p">,</span>   <span class="s2">"target"</span><span class="p">:</span> <span class="s2">"restapi"</span><span class="p">,</span>     <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"depends_on"</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"source"</span><span class="p">:</span> <span class="s2">"dashboard"</span><span class="p">,</span>   <span class="s2">"target"</span><span class="p">:</span> <span class="s2">"analytics"</span><span class="p">,</span>   <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"depends_on"</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"source"</span><span class="p">:</span> <span class="s2">"analytics"</span><span class="p">,</span>   <span class="s2">"target"</span><span class="p">:</span> <span class="s2">"database"</span><span class="p">,</span>    <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"depends_on"</span><span class="p">},</span>
+<span class="p">]</span>
+
+<span class="c1"># GraphBuilder 验证、去重并打包数据</span>
+<span class="n">builder</span> <span class="o">=</span> <span class="n">GraphBuilder</span><span class="p">(</span><span class="n">merge_entities</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">resolve_conflicts</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="n">kg</span> <span class="o">=</span> <span class="n">builder</span><span class="o">.</span><span class="n">build</span><span class="p">([{</span><span class="s2">"entities"</span><span class="p">:</span> <span class="n">entities</span><span class="p">,</span> <span class="s2">"relationships"</span><span class="p">:</span> <span class="n">relationships</span><span class="p">}])</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"KG built — entities: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">kg</span><span class="p">[</span><span class="s1">'entities'</span><span class="p">])</span><span class="si">}</span><span class="s2">, relationships: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">kg</span><span class="p">[</span><span class="s1">'relationships'</span><span class="p">])</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</code></pre></div>
+
+<div class="codehilite"><pre><span></span><code><span class="c1"># ── 在推理之前分析图谱结构 ───────────────────────────</span>
+<span class="c1"># GraphAnalyzer 提供中心性、社区、连通性和指标</span>
+<span class="n">analyzer</span> <span class="o">=</span> <span class="n">GraphAnalyzer</span><span class="p">()</span>
+<span class="n">metrics</span> <span class="o">=</span> <span class="n">analyzer</span><span class="o">.</span><span class="n">compute_metrics</span><span class="p">(</span><span class="n">graph</span><span class="o">=</span><span class="n">kg</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Graph structure:"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  Nodes      : </span><span class="si">{</span><span class="n">metrics</span><span class="p">[</span><span class="s1">'num_nodes'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  Edges      : </span><span class="si">{</span><span class="n">metrics</span><span class="p">[</span><span class="s1">'num_edges'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="k">if</span> <span class="s2">"density"</span> <span class="ow">in</span> <span class="n">metrics</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  Density    : </span><span class="si">{</span><span class="n">metrics</span><span class="p">[</span><span class="s1">'density'</span><span class="p">]</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="k">if</span> <span class="s2">"is_connected"</span> <span class="ow">in</span> <span class="n">metrics</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  Connected  : </span><span class="si">{</span><span class="n">metrics</span><span class="p">[</span><span class="s1">'is_connected'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</code></pre></div>
+
+<div class="codehilite"><pre><span></span><code><span class="c1"># ── 将知识图谱关系加载为 EDB 事实 ────────────────────────────────────</span>
+<span class="c1"># GraphBuilder 输出的字典使用与 DatalogReasoner.add_fact()</span>
+<span class="c1"># 原生理解的相同的 source/target/type 结构</span>
+<span class="n">dr</span> <span class="o">=</span> <span class="n">DatalogReasoner</span><span class="p">()</span>
+
+<span class="k">for</span> <span class="n">rel</span> <span class="ow">in</span> <span class="n">kg</span><span class="p">[</span><span class="s2">"relationships"</span><span class="p">]:</span>
+    <span class="n">dr</span><span class="o">.</span><span class="n">add_fact</span><span class="p">(</span><span class="n">rel</span><span class="p">)</span>   <span class="c1"># 字典路径：{"source": ..., "target": ..., "type": ...}</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"EDB loaded: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">dr</span><span class="o">.</span><span class="n">_all_facts</span><span class="p">)</span><span class="si">}</span><span class="s2"> dependency facts"</span><span class="p">)</span>
+</code></pre></div>
+
+<div class="codehilite"><pre><span></span><code><span class="c1"># ── 传递依赖闭包 ─────────────────────────────────────────</span>
+<span class="c1"># 'depends_on' 是 add_fact 从 'type' 推断出的谓词名</span>
+<span class="n">dr</span><span class="o">.</span><span class="n">add_rule</span><span class="p">(</span><span class="s2">"transitive_dep(X, Y) :- depends_on(X, Y)."</span><span class="p">)</span>
+<span class="n">dr</span><span class="o">.</span><span class="n">add_rule</span><span class="p">(</span><span class="s2">"transitive_dep(X, Y) :- depends_on(X, Z), transitive_dep(Z, Y)."</span><span class="p">)</span>
+
+<span class="n">dr</span><span class="o">.</span><span class="n">derive_all</span><span class="p">()</span>
+
+<span class="c1"># 传递依赖于数据库的所有组件</span>
+<span class="n">db_deps</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s2">"X"</span><span class="p">]</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">dr</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s2">"transitive_dep(?X, database)"</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Components that transitively depend on Database:"</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">db_deps</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">" "</span><span class="p">,</span> <span class="n">c</span><span class="p">)</span>
+
+<span class="c1"># pythonsdk 传递依赖于什么？</span>
+<span class="n">sdk_chain</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s2">"Y"</span><span class="p">]</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">dr</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s2">"transitive_dep(pythonsdk, ?Y)"</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Python SDK full dependency chain: </span><span class="si">{</span><span class="n">sdk_chain</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</code></pre></div>
+
+<hr /></section>
+<section id="sec-4"><h2><span class="pill-num">4</span>第 3 部分 — ContextGraph + `load_from_graph()`</h2><p><code>DatalogReasoner.load_from_graph(graph)</code> 直接接受任何 <code>ContextGraph</code>：它调用 <code>graph.find_edges()</code> 和 <code>graph.find_nodes()</code>，并自动将每个结果转换为 EDB 事实。</p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># ── 构建一个内存 ContextGraph ───────────────────────────────────────</span>
+<span class="c1"># ContextGraph.add_node / add_edge 是构建内存知识图谱的规范方式</span>
+<span class="n">cg</span> <span class="o">=</span> <span class="n">ContextGraph</span><span class="p">()</span>
+
+<span class="c1"># 节点</span>
+<span class="k">for</span> <span class="n">person</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">"alice"</span><span class="p">,</span> <span class="s2">"bob"</span><span class="p">,</span> <span class="s2">"carol"</span><span class="p">,</span> <span class="s2">"dave"</span><span class="p">,</span> <span class="s2">"eve"</span><span class="p">]:</span>
+    <span class="n">cg</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="n">person</span><span class="p">,</span> <span class="n">node_type</span><span class="o">=</span><span class="s2">"person"</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">person</span><span class="o">.</span><span class="n">capitalize</span><span class="p">())</span>
+
+<span class="c1"># 有向 "follows" 边</span>
+<span class="k">for</span> <span class="n">src</span><span class="p">,</span> <span class="n">dst</span> <span class="ow">in</span> <span class="p">[(</span><span class="s2">"alice"</span><span class="p">,</span> <span class="s2">"bob"</span><span class="p">),</span> <span class="p">(</span><span class="s2">"bob"</span><span class="p">,</span> <span class="s2">"carol"</span><span class="p">),</span> <span class="p">(</span><span class="s2">"carol"</span><span class="p">,</span> <span class="s2">"dave"</span><span class="p">),</span> <span class="p">(</span><span class="s2">"alice"</span><span class="p">,</span> <span class="s2">"eve"</span><span class="p">),</span> <span class="p">(</span><span class="s2">"eve"</span><span class="p">,</span> <span class="s2">"carol"</span><span class="p">)]:</span>
+    <span class="n">cg</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="n">dst</span><span class="p">,</span> <span class="n">edge_type</span><span class="o">=</span><span class="s2">"follows"</span><span class="p">)</span>
+
+<span class="c1"># 验证图谱构建正确</span>
+<span class="n">nodes</span> <span class="o">=</span> <span class="n">cg</span><span class="o">.</span><span class="n">find_nodes</span><span class="p">(</span><span class="n">node_type</span><span class="o">=</span><span class="s2">"person"</span><span class="p">)</span>
+<span class="n">edges</span> <span class="o">=</span> <span class="n">cg</span><span class="o">.</span><span class="n">find_edges</span><span class="p">(</span><span class="n">edge_type</span><span class="o">=</span><span class="s2">"follows"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"ContextGraph — nodes: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">nodes</span><span class="p">)</span><span class="si">}</span><span class="s2">, edges: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">edges</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Edges:"</span><span class="p">,</span> <span class="p">[(</span><span class="n">e</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"source"</span><span class="p">,</span> <span class="n">e</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"source_id"</span><span class="p">)),</span> <span class="n">e</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"target"</span><span class="p">,</span> <span class="n">e</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"target_id"</span><span class="p">)))</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">edges</span><span class="p">])</span>
+</code></pre></div>
+
+<div class="codehilite"><pre><span></span><code><span class="c1"># ── load_from_graph() 直接摄取 ContextGraph ───────────────────</span>
+<span class="n">dr</span> <span class="o">=</span> <span class="n">DatalogReasoner</span><span class="p">()</span>
+<span class="n">n_loaded</span> <span class="o">=</span> <span class="n">dr</span><span class="o">.</span><span class="n">load_from_graph</span><span class="p">(</span><span class="n">cg</span><span class="p">)</span>  <span class="c1"># 内部调用 cg.find_edges() + cg.find_nodes()</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Facts loaded from ContextGraph: </span><span class="si">{</span><span class="n">n_loaded</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</code></pre></div>
+
+<div class="codehilite"><pre><span></span><code><span class="c1"># ── 通过传递 'follows' 实现影响力可达 ──────────────────────────────</span>
+<span class="n">dr</span><span class="o">.</span><span class="n">add_rule</span><span class="p">(</span><span class="s2">"influence(X, Y) :- follows(X, Y)."</span><span class="p">)</span>
+<span class="n">dr</span><span class="o">.</span><span class="n">add_rule</span><span class="p">(</span><span class="s2">"influence(X, Y) :- follows(X, Z), influence(Z, Y)."</span><span class="p">)</span>
+
+<span class="n">dr</span><span class="o">.</span><span class="n">derive_all</span><span class="p">()</span>
+
+<span class="c1"># alice 能影响到谁？</span>
+<span class="n">alice_reach</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s2">"Y"</span><span class="p">]</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">dr</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s2">"influence(alice, ?Y)"</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Alice's influence reach : </span><span class="si">{</span><span class="n">alice_reach</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+<span class="c1"># 谁能影响到 dave？</span>
+<span class="n">reach_dave</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s2">"X"</span><span class="p">]</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">dr</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s2">"influence(?X, dave)"</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Who can influence dave  : </span><span class="si">{</span><span class="n">reach_dave</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+<span class="c1"># 完整影响力矩阵</span>
+<span class="n">all_influence</span> <span class="o">=</span> <span class="n">dr</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s2">"influence(?X, ?Y)"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Total influence pairs: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">all_influence</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</code></pre></div>
+
+<hr /></section>
+<section id="sec-5"><h2><span class="pill-num">5</span>第 4 部分 — RBAC 访问控制策略</h2><p>我们建模一个基于角色的访问控制（RBAC）系统：</p>
+<ol>
+<li>使用 <code>GraphBuilder</code> 构建用户、角色和权限的结构化知识图谱。</li>
+<li>将其加载到 <code>DatalogReasoner</code> 中进行策略推断。</li>
+<li>使用 <code>ExplanationGenerator</code> 生成可供审计的自然语言解释。</li>
+</ol>
+<div class="codehilite"><pre><span></span><code><span class="c1"># ── 使用 GraphBuilder 构建 RBAC 图谱 ────────────────────────────────────</span>
+<span class="n">rbac_entities</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="c1"># 用户</span>
+    <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="s2">"alice"</span><span class="p">,</span>  <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"User"</span><span class="p">,</span> <span class="s2">"name"</span><span class="p">:</span> <span class="s2">"Alice"</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="s2">"bob"</span><span class="p">,</span>    <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"User"</span><span class="p">,</span> <span class="s2">"name"</span><span class="p">:</span> <span class="s2">"Bob"</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="s2">"carol"</span><span class="p">,</span>  <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"User"</span><span class="p">,</span> <span class="s2">"name"</span><span class="p">:</span> <span class="s2">"Carol"</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="s2">"dave"</span><span class="p">,</span>   <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"User"</span><span class="p">,</span> <span class="s2">"name"</span><span class="p">:</span> <span class="s2">"Dave"</span><span class="p">},</span>
+    <span class="c1"># 角色</span>
+    <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="s2">"admin"</span><span class="p">,</span>  <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"Role"</span><span class="p">,</span> <span class="s2">"name"</span><span class="p">:</span> <span class="s2">"Administrator"</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="s2">"editor"</span><span class="p">,</span> <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"Role"</span><span class="p">,</span> <span class="s2">"name"</span><span class="p">:</span> <span class="s2">"Editor"</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="s2">"viewer"</span><span class="p">,</span> <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"Role"</span><span class="p">,</span> <span class="s2">"name"</span><span class="p">:</span> <span class="s2">"Viewer"</span><span class="p">},</span>
+    <span class="c1"># 权限</span>
+    <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="s2">"read"</span><span class="p">,</span>         <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"Permission"</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="s2">"write"</span><span class="p">,</span>        <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"Permission"</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="s2">"delete"</span><span class="p">,</span>       <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"Permission"</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="s2">"manage_users"</span><span class="p">,</span> <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"Permission"</span><span class="p">},</span>
+<span class="p">]</span>
+<span class="n">rbac_relationships</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="c1"># 用户 → 角色分配</span>
+    <span class="p">{</span><span class="s2">"source"</span><span class="p">:</span> <span class="s2">"alice"</span><span class="p">,</span>  <span class="s2">"target"</span><span class="p">:</span> <span class="s2">"admin"</span><span class="p">,</span>  <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"has_role"</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"source"</span><span class="p">:</span> <span class="s2">"bob"</span><span class="p">,</span>    <span class="s2">"target"</span><span class="p">:</span> <span class="s2">"editor"</span><span class="p">,</span> <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"has_role"</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"source"</span><span class="p">:</span> <span class="s2">"carol"</span><span class="p">,</span>  <span class="s2">"target"</span><span class="p">:</span> <span class="s2">"viewer"</span><span class="p">,</span> <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"has_role"</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"source"</span><span class="p">:</span> <span class="s2">"dave"</span><span class="p">,</span>   <span class="s2">"target"</span><span class="p">:</span> <span class="s2">"editor"</span><span class="p">,</span> <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"has_role"</span><span class="p">},</span>
+    <span class="c1"># 角色层级（admin 继承自 editor，editor 继承自 viewer）</span>
+    <span class="p">{</span><span class="s2">"source"</span><span class="p">:</span> <span class="s2">"admin"</span><span class="p">,</span>  <span class="s2">"target"</span><span class="p">:</span> <span class="s2">"editor"</span><span class="p">,</span> <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"role_inherits"</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"source"</span><span class="p">:</span> <span class="s2">"editor"</span><span class="p">,</span> <span class="s2">"target"</span><span class="p">:</span> <span class="s2">"viewer"</span><span class="p">,</span> <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"role_inherits"</span><span class="p">},</span>
+    <span class="c1"># 角色 → 权限授予</span>
+    <span class="p">{</span><span class="s2">"source"</span><span class="p">:</span> <span class="s2">"viewer"</span><span class="p">,</span> <span class="s2">"target"</span><span class="p">:</span> <span class="s2">"read"</span><span class="p">,</span>         <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"role_has_perm"</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"source"</span><span class="p">:</span> <span class="s2">"editor"</span><span class="p">,</span> <span class="s2">"target"</span><span class="p">:</span> <span class="s2">"write"</span><span class="p">,</span>        <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"role_has_perm"</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"source"</span><span class="p">:</span> <span class="s2">"admin"</span><span class="p">,</span>  <span class="s2">"target"</span><span class="p">:</span> <span class="s2">"delete"</span><span class="p">,</span>       <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"role_has_perm"</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"source"</span><span class="p">:</span> <span class="s2">"admin"</span><span class="p">,</span>  <span class="s2">"target"</span><span class="p">:</span> <span class="s2">"manage_users"</span><span class="p">,</span> <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"role_has_perm"</span><span class="p">},</span>
+<span class="p">]</span>
+
+<span class="n">builder</span> <span class="o">=</span> <span class="n">GraphBuilder</span><span class="p">(</span><span class="n">merge_entities</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">resolve_conflicts</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="n">rbac_kg</span> <span class="o">=</span> <span class="n">builder</span><span class="o">.</span><span class="n">build</span><span class="p">([{</span><span class="s2">"entities"</span><span class="p">:</span> <span class="n">rbac_entities</span><span class="p">,</span> <span class="s2">"relationships"</span><span class="p">:</span> <span class="n">rbac_relationships</span><span class="p">}])</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"RBAC KG — entities: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">rbac_kg</span><span class="p">[</span><span class="s1">'entities'</span><span class="p">])</span><span class="si">}</span><span class="s2">, relationships: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">rbac_kg</span><span class="p">[</span><span class="s1">'relationships'</span><span class="p">])</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</code></pre></div>
+
+<div class="codehilite"><pre><span></span><code><span class="c1"># ── 分析 RBAC 图谱结构 ──────────────────────────────────────────</span>
+<span class="n">analyzer</span> <span class="o">=</span> <span class="n">GraphAnalyzer</span><span class="p">()</span>
+<span class="n">metrics</span> <span class="o">=</span> <span class="n">analyzer</span><span class="o">.</span><span class="n">compute_metrics</span><span class="p">(</span><span class="n">graph</span><span class="o">=</span><span class="n">rbac_kg</span><span class="p">)</span>
+<span class="n">centrality</span> <span class="o">=</span> <span class="n">analyzer</span><span class="o">.</span><span class="n">calculate_centrality</span><span class="p">(</span><span class="n">rbac_kg</span><span class="p">,</span> <span class="n">centrality_type</span><span class="o">=</span><span class="s2">"degree"</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"RBAC graph — </span><span class="si">{</span><span class="n">metrics</span><span class="p">[</span><span class="s1">'num_nodes'</span><span class="p">]</span><span class="si">}</span><span class="s2"> nodes, </span><span class="si">{</span><span class="n">metrics</span><span class="p">[</span><span class="s1">'num_edges'</span><span class="p">]</span><span class="si">}</span><span class="s2"> edges"</span><span class="p">)</span>
+<span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">centrality</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="s2">"degree"</span> <span class="ow">in</span> <span class="n">centrality</span><span class="p">:</span>
+    <span class="n">top</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">centrality</span><span class="p">[</span><span class="s2">"degree"</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">(),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">)[:</span><span class="mi">3</span><span class="p">]</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"Top-3 nodes by degree centrality:"</span><span class="p">,</span> <span class="n">top</span><span class="p">)</span>
+</code></pre></div>
+
+<div class="codehilite"><pre><span></span><code><span class="c1"># ── 将 RBAC 知识图谱加载到 DatalogReasoner ────────────────────────────────────</span>
+<span class="n">dr</span> <span class="o">=</span> <span class="n">DatalogReasoner</span><span class="p">()</span>
+
+<span class="k">for</span> <span class="n">rel</span> <span class="ow">in</span> <span class="n">rbac_kg</span><span class="p">[</span><span class="s2">"relationships"</span><span class="p">]:</span>
+    <span class="n">dr</span><span class="o">.</span><span class="n">add_fact</span><span class="p">(</span><span class="n">rel</span><span class="p">)</span>   <span class="c1"># {source, target, type} → predicate(source, target)</span>
+
+<span class="c1"># ── IDB 规则：传递角色层级 ─────────────────────────────────</span>
+<span class="n">dr</span><span class="o">.</span><span class="n">add_rule</span><span class="p">(</span><span class="s2">"effective_role(R, R2) :- role_inherits(R, R2)."</span><span class="p">)</span>
+<span class="n">dr</span><span class="o">.</span><span class="n">add_rule</span><span class="p">(</span><span class="s2">"effective_role(R, R2) :- role_inherits(R, Z), effective_role(Z, R2)."</span><span class="p">)</span>
+
+<span class="c1"># ── IDB 规则：继承的权限 ─────────────────────────────────────</span>
+<span class="n">dr</span><span class="o">.</span><span class="n">add_rule</span><span class="p">(</span><span class="s2">"role_can(R, P) :- role_has_perm(R, P)."</span><span class="p">)</span>
+<span class="n">dr</span><span class="o">.</span><span class="n">add_rule</span><span class="p">(</span><span class="s2">"role_can(R, P) :- effective_role(R, R2), role_has_perm(R2, P)."</span><span class="p">)</span>
+
+<span class="c1"># ── IDB 规则：用户有效权限 ────────────────────────────────</span>
+<span class="n">dr</span><span class="o">.</span><span class="n">add_rule</span><span class="p">(</span><span class="s2">"can(U, P) :- has_role(U, R), role_can(R, P)."</span><span class="p">)</span>
+
+<span class="n">dr</span><span class="o">.</span><span class="n">derive_all</span><span class="p">()</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">"User permissions derived via role-hierarchy inference:"</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">user</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">"alice"</span><span class="p">,</span> <span class="s2">"bob"</span><span class="p">,</span> <span class="s2">"carol"</span><span class="p">,</span> <span class="s2">"dave"</span><span class="p">]:</span>
+    <span class="n">perms</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s2">"P"</span><span class="p">]</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">dr</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="sa">f</span><span class="s2">"can(</span><span class="si">{</span><span class="n">user</span><span class="si">}</span><span class="s2">, ?P)"</span><span class="p">))</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  </span><span class="si">{</span><span class="n">user</span><span class="si">:</span><span class="s2">6s</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">perms</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</code></pre></div>
+
+<div class="codehilite"><pre><span></span><code><span class="c1"># ── ExplanationGenerator — 可供审计的自然语言解释 ──────────────────</span>
+<span class="c1"># ExplanationGenerator 与 InferenceResult 对象一起工作。</span>
+<span class="c1"># 我们手动构造一个来表示推导出的 Datalog 结论。</span>
+
+<span class="n">explainer</span> <span class="o">=</span> <span class="n">ExplanationGenerator</span><span class="p">(</span><span class="n">detail_level</span><span class="o">=</span><span class="s2">"detailed"</span><span class="p">)</span>
+
+<span class="c1"># 构建表示权限推导链的 Rule 对象</span>
+<span class="n">perm_rule</span> <span class="o">=</span> <span class="n">Rule</span><span class="p">(</span>
+    <span class="n">rule_id</span><span class="o">=</span><span class="s2">"rbac_perm_chain"</span><span class="p">,</span>
+    <span class="n">name</span><span class="o">=</span><span class="s2">"RBAC permission via role hierarchy"</span><span class="p">,</span>
+    <span class="n">conditions</span><span class="o">=</span><span class="p">[</span><span class="s2">"has_role(alice, admin)"</span><span class="p">,</span> <span class="s2">"effective_role(admin, viewer)"</span><span class="p">,</span> <span class="s2">"role_has_perm(viewer, read)"</span><span class="p">],</span>
+    <span class="n">conclusion</span><span class="o">=</span><span class="s2">"can(alice, read)"</span><span class="p">,</span>
+    <span class="n">rule_type</span><span class="o">=</span><span class="n">RuleType</span><span class="o">.</span><span class="n">IMPLICATION</span><span class="p">,</span>
+    <span class="n">confidence</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="c1"># 构建表示 Datalog 结论的 InferenceResult</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">InferenceResult</span><span class="p">(</span>
+    <span class="n">conclusion</span><span class="o">=</span><span class="s2">"can(alice, read)"</span><span class="p">,</span>
+    <span class="n">rule_used</span><span class="o">=</span><span class="n">perm_rule</span><span class="p">,</span>
+    <span class="n">premises</span><span class="o">=</span><span class="p">[</span>
+        <span class="s2">"has_role(alice, admin)"</span><span class="p">,</span>
+        <span class="s2">"role_inherits(admin, editor)"</span><span class="p">,</span>
+        <span class="s2">"role_inherits(editor, viewer)"</span><span class="p">,</span>
+        <span class="s2">"role_has_perm(viewer, read)"</span><span class="p">,</span>
+    <span class="p">],</span>
+    <span class="n">confidence</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="c1"># 生成自然语言解释</span>
+<span class="n">explanation</span> <span class="o">=</span> <span class="n">explainer</span><span class="o">.</span><span class="n">generate_explanation</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Explanation type :"</span><span class="p">,</span> <span class="n">explanation</span><span class="o">.</span><span class="n">explanation_type</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Conclusion       :"</span><span class="p">,</span> <span class="n">explanation</span><span class="o">.</span><span class="n">conclusion</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Natural language :"</span><span class="p">,</span> <span class="n">explanation</span><span class="o">.</span><span class="n">natural_language</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Reasoning steps  :"</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">explanation</span><span class="o">.</span><span class="n">reasoning_path</span><span class="o">.</span><span class="n">steps</span><span class="p">))</span>
+</code></pre></div>
+
+<div class="codehilite"><pre><span></span><code><span class="c1"># ── 反向查询 ───────────────────────────────────────────────────────</span>
+<span class="n">deleters</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s2">"U"</span><span class="p">]</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">dr</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s2">"can(?U, delete)"</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Who can delete:"</span><span class="p">,</span> <span class="n">deleters</span><span class="p">)</span>
+
+<span class="n">writers</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s2">"U"</span><span class="p">]</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">dr</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s2">"can(?U, write)"</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Who can write: "</span><span class="p">,</span> <span class="n">writers</span><span class="p">)</span>
+
+<span class="c1"># 所有 (user, permission) 对——完整策略矩阵</span>
+<span class="n">all_caps</span> <span class="o">=</span> <span class="n">dr</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s2">"can(?U, ?P)"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Total (user, permission) pairs: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">all_caps</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</code></pre></div>
+
+<hr /></section>
+<section id="sec-6"><h2><span class="pill-num">6</span>第 5 部分 — 使用 ContextGraph 建模组织层级</h2><p>我们使用 <code>ContextGraph</code> 建模一个公司组织架构图，并推导出：
+- <code>manages(M, E)</code> — 直接和传递的管理关系
+- <code>skip_level(M, E)</code> — 链条上两跳
+- <code>same_team(X, Y)</code> — 共享的团队归属</p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># ── ContextGraph：组织架构图 ────────────────────────────────────────────────</span>
+<span class="n">org</span> <span class="o">=</span> <span class="n">ContextGraph</span><span class="p">()</span>
+
+<span class="c1"># 将员工添加为带元数据的节点</span>
+<span class="n">staff</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="p">(</span><span class="s2">"eng1"</span><span class="p">,</span>      <span class="s2">"engineer"</span><span class="p">,</span>  <span class="s2">"backend"</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">"eng2"</span><span class="p">,</span>      <span class="s2">"engineer"</span><span class="p">,</span>  <span class="s2">"backend"</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">"eng3"</span><span class="p">,</span>      <span class="s2">"engineer"</span><span class="p">,</span>  <span class="s2">"frontend"</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">"techlead"</span><span class="p">,</span>  <span class="s2">"lead"</span><span class="p">,</span>      <span class="s2">"engineering"</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">"design1"</span><span class="p">,</span>   <span class="s2">"designer"</span><span class="p">,</span>  <span class="s2">"ux"</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">"design2"</span><span class="p">,</span>   <span class="s2">"designer"</span><span class="p">,</span>  <span class="s2">"ux"</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">"designlead"</span><span class="p">,</span><span class="s2">"lead"</span><span class="p">,</span>      <span class="s2">"design"</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">"vpeng"</span><span class="p">,</span>     <span class="s2">"vp"</span><span class="p">,</span>        <span class="s2">"engineering"</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">"cto"</span><span class="p">,</span>       <span class="s2">"executive"</span><span class="p">,</span> <span class="s2">"leadership"</span><span class="p">),</span>
+<span class="p">]</span>
+<span class="k">for</span> <span class="n">emp_id</span><span class="p">,</span> <span class="n">role</span><span class="p">,</span> <span class="n">team</span> <span class="ow">in</span> <span class="n">staff</span><span class="p">:</span>
+    <span class="n">org</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="n">emp_id</span><span class="p">,</span> <span class="n">node_type</span><span class="o">=</span><span class="s2">"employee"</span><span class="p">,</span> <span class="n">role</span><span class="o">=</span><span class="n">role</span><span class="p">,</span> <span class="n">team</span><span class="o">=</span><span class="n">team</span><span class="p">)</span>
+
+<span class="c1"># 汇报关系</span>
+<span class="n">reports_to</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="p">(</span><span class="s2">"eng1"</span><span class="p">,</span> <span class="s2">"techlead"</span><span class="p">),</span> <span class="p">(</span><span class="s2">"eng2"</span><span class="p">,</span> <span class="s2">"techlead"</span><span class="p">),</span> <span class="p">(</span><span class="s2">"eng3"</span><span class="p">,</span> <span class="s2">"techlead"</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">"techlead"</span><span class="p">,</span> <span class="s2">"vpeng"</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">"design1"</span><span class="p">,</span> <span class="s2">"designlead"</span><span class="p">),</span> <span class="p">(</span><span class="s2">"design2"</span><span class="p">,</span> <span class="s2">"designlead"</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">"designlead"</span><span class="p">,</span> <span class="s2">"vpeng"</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">"vpeng"</span><span class="p">,</span> <span class="s2">"cto"</span><span class="p">),</span>
+<span class="p">]</span>
+<span class="k">for</span> <span class="n">employee</span><span class="p">,</span> <span class="n">manager</span> <span class="ow">in</span> <span class="n">reports_to</span><span class="p">:</span>
+    <span class="n">org</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="n">employee</span><span class="p">,</span> <span class="n">manager</span><span class="p">,</span> <span class="n">edge_type</span><span class="o">=</span><span class="s2">"reports_to"</span><span class="p">)</span>
+
+<span class="c1"># 团队归属边</span>
+<span class="n">teams</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="p">(</span><span class="s2">"eng1"</span><span class="p">,</span> <span class="s2">"backend"</span><span class="p">),</span>  <span class="p">(</span><span class="s2">"eng2"</span><span class="p">,</span> <span class="s2">"backend"</span><span class="p">),</span>  <span class="p">(</span><span class="s2">"eng3"</span><span class="p">,</span> <span class="s2">"frontend"</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">"design1"</span><span class="p">,</span> <span class="s2">"ux"</span><span class="p">),</span>    <span class="p">(</span><span class="s2">"design2"</span><span class="p">,</span> <span class="s2">"ux"</span><span class="p">),</span>
+<span class="p">]</span>
+<span class="k">for</span> <span class="n">emp</span><span class="p">,</span> <span class="n">team</span> <span class="ow">in</span> <span class="n">teams</span><span class="p">:</span>
+    <span class="n">org</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="n">emp</span><span class="p">,</span> <span class="n">team</span><span class="p">,</span> <span class="n">edge_type</span><span class="o">=</span><span class="s2">"in_team"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">org</span><span class="o">.</span><span class="n">find_nodes</span><span class="p">(</span><span class="n">node_type</span><span class="o">=</span><span class="s2">"team"</span><span class="p">):</span>
+        <span class="n">org</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="n">team</span><span class="p">,</span> <span class="n">node_type</span><span class="o">=</span><span class="s2">"team"</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"ContextGraph — nodes: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">org</span><span class="o">.</span><span class="n">find_nodes</span><span class="p">())</span><span class="si">}</span><span class="s2">, edges: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">org</span><span class="o">.</span><span class="n">find_edges</span><span class="p">())</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</code></pre></div>
+
+<div class="codehilite"><pre><span></span><code><span class="c1"># ── 将组织架构图加载到 DatalogReasoner ───────────────────────────────────</span>
+<span class="n">dr</span> <span class="o">=</span> <span class="n">DatalogReasoner</span><span class="p">()</span>
+<span class="n">n</span> <span class="o">=</span> <span class="n">dr</span><span class="o">.</span><span class="n">load_from_graph</span><span class="p">(</span><span class="n">org</span><span class="p">)</span>   <span class="c1"># 使用 org.find_edges() + org.find_nodes()</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Facts loaded via load_from_graph(): </span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+<span class="c1"># ── IDB 规则 ─────────────────────────────────────────────────────────────</span>
+<span class="c1"># 传递管理链</span>
+<span class="n">dr</span><span class="o">.</span><span class="n">add_rule</span><span class="p">(</span><span class="s2">"manages(M, E) :- reports_to(E, M)."</span><span class="p">)</span>
+<span class="n">dr</span><span class="o">.</span><span class="n">add_rule</span><span class="p">(</span><span class="s2">"manages(M, E) :- reports_to(E, Z), manages(M, Z)."</span><span class="p">)</span>
+
+<span class="c1"># 跳级：恰好两跳汇报</span>
+<span class="n">dr</span><span class="o">.</span><span class="n">add_rule</span><span class="p">(</span><span class="s2">"skip_level(M, E) :- reports_to(E, Z), reports_to(Z, M)."</span><span class="p">)</span>
+
+<span class="c1"># 同一团队</span>
+<span class="n">dr</span><span class="o">.</span><span class="n">add_rule</span><span class="p">(</span><span class="s2">"same_team(X, Y) :- in_team(X, T), in_team(Y, T)."</span><span class="p">)</span>
+
+<span class="n">dr</span><span class="o">.</span><span class="n">derive_all</span><span class="p">()</span>
+</code></pre></div>
+
+<div class="codehilite"><pre><span></span><code><span class="c1"># ── 查询组织层级 ────────────────────────────────────────────────────</span>
+<span class="c1"># CTO 之下的所有人</span>
+<span class="n">under_cto</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s2">"E"</span><span class="p">]</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">dr</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s2">"manages(cto, ?E)"</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"CTO manages (</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">under_cto</span><span class="p">)</span><span class="si">}</span><span class="s2"> people): </span><span class="si">{</span><span class="n">under_cto</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+<span class="c1"># VP Eng 的直接 + 间接下属</span>
+<span class="n">under_vp</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s2">"E"</span><span class="p">]</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">dr</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s2">"manages(vpeng, ?E)"</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"VP Eng manages           : </span><span class="si">{</span><span class="n">under_vp</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+<span class="c1"># 向 CTO 跳级汇报（CTO 之下两跳的人）</span>
+<span class="n">skip</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s2">"E"</span><span class="p">]</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">dr</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s2">"skip_level(cto, ?E)"</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"CTO skip-level reports   : </span><span class="si">{</span><span class="n">skip</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+<span class="c1"># eng1 的队友</span>
+<span class="n">mates</span> <span class="o">=</span> <span class="p">[</span><span class="n">r</span><span class="p">[</span><span class="s2">"Y"</span><span class="p">]</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">dr</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s2">"same_team(eng1, ?Y)"</span><span class="p">)</span> <span class="k">if</span> <span class="n">r</span><span class="p">[</span><span class="s2">"Y"</span><span class="p">]</span> <span class="o">!=</span> <span class="s2">"eng1"</span><span class="p">]</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"eng1's teammates         : </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">mates</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</code></pre></div>
+
+<div class="codehilite"><pre><span></span><code><span class="c1"># ── 构建 InferenceResult 并解释一个组织查询 ────────────────────</span>
+<span class="n">explainer</span> <span class="o">=</span> <span class="n">ExplanationGenerator</span><span class="p">(</span><span class="n">detail_level</span><span class="o">=</span><span class="s2">"verbose"</span><span class="p">)</span>
+
+<span class="n">mgmt_rule</span> <span class="o">=</span> <span class="n">Rule</span><span class="p">(</span>
+    <span class="n">rule_id</span><span class="o">=</span><span class="s2">"transitive_manages"</span><span class="p">,</span>
+    <span class="n">name</span><span class="o">=</span><span class="s2">"Transitive management chain"</span><span class="p">,</span>
+    <span class="n">conditions</span><span class="o">=</span><span class="p">[</span><span class="s2">"reports_to(eng1, techlead)"</span><span class="p">,</span> <span class="s2">"manages(vpeng, techlead)"</span><span class="p">],</span>
+    <span class="n">conclusion</span><span class="o">=</span><span class="s2">"manages(vpeng, eng1)"</span><span class="p">,</span>
+    <span class="n">rule_type</span><span class="o">=</span><span class="n">RuleType</span><span class="o">.</span><span class="n">IMPLICATION</span><span class="p">,</span>
+    <span class="n">confidence</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">InferenceResult</span><span class="p">(</span>
+    <span class="n">conclusion</span><span class="o">=</span><span class="s2">"manages(vpeng, eng1)"</span><span class="p">,</span>
+    <span class="n">rule_used</span><span class="o">=</span><span class="n">mgmt_rule</span><span class="p">,</span>
+    <span class="n">premises</span><span class="o">=</span><span class="p">[</span><span class="s2">"reports_to(eng1, techlead)"</span><span class="p">,</span> <span class="s2">"reports_to(techlead, vpeng)"</span><span class="p">],</span>
+    <span class="n">confidence</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">exp</span> <span class="o">=</span> <span class="n">explainer</span><span class="o">.</span><span class="n">generate_explanation</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">exp</span><span class="o">.</span><span class="n">natural_language</span><span class="p">)</span>
+</code></pre></div>
+
+<hr /></section>
+<section id="sec-7"><h2><span class="pill-num">7</span>第 6 部分 — 引擎内省：DatalogFact 与 DatalogRule</h2><p>推理之后，引擎的内部状态可以通过 <code>DatalogFact</code> 和 <code>DatalogRule</code> 数据类完全访问。将其用于审计、调试或下游导出。</p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># ── 检查 DatalogRule 对象 ────────────────────────────────────────────</span>
+<span class="c1"># dr._rules  →  List[DatalogRule]</span>
+<span class="c1"># DatalogRule.head_predicate、.head_args、.body  (body = List[BodyAtom])</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Rules in engine:"</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">rule</span> <span class="ow">in</span> <span class="n">dr</span><span class="o">.</span><span class="n">_rules</span><span class="p">:</span>
+    <span class="n">body_str</span> <span class="o">=</span> <span class="s2">", "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">atom</span><span class="o">.</span><span class="n">predicate</span><span class="si">}</span><span class="s2">(</span><span class="si">{</span><span class="s1">', '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">atom</span><span class="o">.</span><span class="n">args</span><span class="p">)</span><span class="si">}</span><span class="s2">)"</span>
+        <span class="k">for</span> <span class="n">atom</span> <span class="ow">in</span> <span class="n">rule</span><span class="o">.</span><span class="n">body</span>
+    <span class="p">)</span>
+    <span class="n">head_str</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">rule</span><span class="o">.</span><span class="n">head_predicate</span><span class="si">}</span><span class="s2">(</span><span class="si">{</span><span class="s1">', '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">rule</span><span class="o">.</span><span class="n">head_args</span><span class="p">)</span><span class="si">}</span><span class="s2">)"</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  </span><span class="si">{</span><span class="n">head_str</span><span class="si">}</span><span class="s2">  :-  </span><span class="si">{</span><span class="n">body_str</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</code></pre></div>
+
+<div class="codehilite"><pre><span></span><code><span class="c1"># ── 检查 DatalogFact 对象 ────────────────────────────────────────────</span>
+<span class="c1"># dr._all_facts  →  Set[DatalogFact]  (derive_all 之后 EDB + IDB 合并)</span>
+<span class="c1"># dr._fact_index →  Dict[predicate, Set[DatalogFact]]</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections</span><span class="w"> </span><span class="kn">import</span> <span class="n">Counter</span>
+
+<span class="c1"># 统计每个谓词的事实数量</span>
+<span class="n">predicate_counts</span> <span class="o">=</span> <span class="n">Counter</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">predicate</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">dr</span><span class="o">.</span><span class="n">_all_facts</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Facts per predicate (EDB + derived IDB):"</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">pred</span><span class="p">,</span> <span class="n">count</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">predicate_counts</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  </span><span class="si">{</span><span class="n">pred</span><span class="si">:</span><span class="s2">20s</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">count</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">  TOTAL: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">dr</span><span class="o">.</span><span class="n">_all_facts</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</code></pre></div>
+
+<div class="codehilite"><pre><span></span><code><span class="c1"># ── 将 EDB 与 IDB 分开 ─────────────────────────────────────────────────</span>
+<span class="c1"># EDB 谓词是我们通过 add_fact 添加的（不是由规则推导的）</span>
+<span class="n">idb_predicates</span> <span class="o">=</span> <span class="p">{</span><span class="n">rule</span><span class="o">.</span><span class="n">head_predicate</span> <span class="k">for</span> <span class="n">rule</span> <span class="ow">in</span> <span class="n">dr</span><span class="o">.</span><span class="n">_rules</span><span class="p">}</span>
+<span class="n">edb_predicates</span> <span class="o">=</span> <span class="p">{</span><span class="n">f</span><span class="o">.</span><span class="n">predicate</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">dr</span><span class="o">.</span><span class="n">_all_facts</span><span class="p">}</span> <span class="o">-</span> <span class="n">idb_predicates</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"EDB predicates (base facts)  : </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">edb_predicates</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"IDB predicates (derived)     : </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">idb_predicates</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</code></pre></div>
+
+<div class="codehilite"><pre><span></span><code><span class="c1"># ── 示例 DatalogFact 结构 ──────────────────────────────────────────</span>
+<span class="c1"># DatalogFact 是一个冻结数据类：predicate: str, args: Tuple[str, ...]</span>
+<span class="n">manages_facts</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">dr</span><span class="o">.</span><span class="n">_fact_index</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"manages"</span><span class="p">,</span> <span class="p">[]),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">f</span><span class="p">:</span> <span class="n">f</span><span class="o">.</span><span class="n">args</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"First 5 'manages' DatalogFact objects (</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">manages_facts</span><span class="p">)</span><span class="si">}</span><span class="s2"> total):"</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">fact</span> <span class="ow">in</span> <span class="n">manages_facts</span><span class="p">[:</span><span class="mi">5</span><span class="p">]:</span>
+    <span class="c1"># 直接从数据类访问 predicate 和 args</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  DatalogFact(predicate=</span><span class="si">{</span><span class="n">fact</span><span class="o">.</span><span class="n">predicate</span><span class="si">!r}</span><span class="s2">, args=</span><span class="si">{</span><span class="n">fact</span><span class="o">.</span><span class="n">args</span><span class="si">}</span><span class="s2">)"</span><span class="p">)</span>
+</code></pre></div>
+
+<div class="codehilite"><pre><span></span><code><span class="c1"># ── clear() 完全重置引擎 ─────────────────────────────────</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Facts before clear(): </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">dr</span><span class="o">.</span><span class="n">_all_facts</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="n">dr</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Facts after  clear(): </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">dr</span><span class="o">.</span><span class="n">_all_facts</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Rules after  clear(): </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">dr</span><span class="o">.</span><span class="n">_rules</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</code></pre></div>
+
+<hr /></section>
+<section id="sec-8"><h2><span class="pill-num">8</span>API 小结</h2><h3>DatalogReasoner</h3>
+<table>
+<thead>
+<tr>
+<th>方法</th>
+<th>输入</th>
+<th>输出</th>
+<th>备注</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>add_fact(f)</code></td>
+<td><code>str</code> 或 <code>dict</code></td>
+<td><code>None</code></td>
+<td>字符串：<code>"pred(a, b)"</code> · 字典：<code>{source, target, type}</code></td>
+</tr>
+<tr>
+<td><code>add_rule(s)</code></td>
+<td><code>str</code></td>
+<td><code>None</code></td>
+<td>Horn 子句：<code>"head(X) :- body(X, Y)."</code></td>
+</tr>
+<tr>
+<td><code>derive_all()</code></td>
+<td>—</td>
+<td><code>list[str]</code></td>
+<td>半朴素不动点；幂等</td>
+</tr>
+<tr>
+<td><code>query(pat)</code></td>
+<td><code>str</code></td>
+<td><code>list[dict]</code></td>
+<td><code>"pred(a, ?Y)"</code> → <code>[{"Y": ...}]</code></td>
+</tr>
+<tr>
+<td><code>load_from_graph(g)</code></td>
+<td><code>ContextGraph</code></td>
+<td><code>int</code></td>
+<td>加载的事实数量</td>
+</tr>
+<tr>
+<td><code>clear()</code></td>
+<td>—</td>
+<td><code>None</code></td>
+<td>重置引擎</td>
+</tr>
+</tbody>
+</table>
+<h3>语法规则</h3>
+<table>
+<thead>
+<tr>
+<th>项</th>
+<th>规则</th>
+<th>示例</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>变量</td>
+<td>以<strong>大写</strong>开头</td>
+<td><code>X</code>、<code>Role</code>、<code>Parent</code></td>
+</tr>
+<tr>
+<td>常量</td>
+<td>全部<strong>小写</strong></td>
+<td><code>tom</code>、<code>admin</code>、<code>database</code></td>
+</tr>
+<tr>
+<td>查询变量</td>
+<td>前缀 <code>?</code></td>
+<td><code>?X</code>、<code>?Y</code>、<code>?Role</code></td>
+</tr>
+<tr>
+<td>规则体</td>
+<td><code>:-</code> 分隔符，原子之间用逗号</td>
+<td><code>head(X) :- a(X, Z), b(Z, Y).</code></td>
+</tr>
+</tbody>
+</table>
+<h3>类映射</h3>
+<div class="codehilite"><pre><span></span><code>GraphBuilder.build()            → kg 字典 {entities, relationships}
+                   ↓ kg["relationships"] → dr.add_fact(rel)
+
+ContextGraph.add_node/add_edge  → 内存图谱
+                   ↓ dr.load_from_graph(cg)
+
+DatalogReasoner.add_rule()      → Horn 子句规则
+DatalogReasoner.derive_all()    → 半朴素不动点
+DatalogReasoner.query()         → 结果行
+                   ↓ 构建 InferenceResult
+
+ExplanationGenerator            → 自然语言解释
+GraphAnalyzer                   → 推理前/后的图谱结构指标
+DatalogFact / DatalogRule       → 内省引擎状态
+</code></pre></div></section>
+    <nav class="pager"><a class="prev" href="13-manual-ontology-snowflake-mapping.html"><span class="dir">← 上一篇</span><span class="ttl">手动本体-Snowflake 映射</span></a><a class="next" href="15-advanced-vector-store-and-search.html"><span class="dir">→ 下一篇</span><span class="ttl">高级向量存储与检索</span></a></nav>
+  </main>
+</div>
+
+<footer>由 Semantica 官方 Cookbook 生成的中文说明页 · <a href="https://github.com/semantica-agi/semantica">semantica-agi/semantica</a></footer>
+
+</body>
+</html>

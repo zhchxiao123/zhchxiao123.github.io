@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Amazon Neptune 图存储 · Semantica Cookbook</title>
+<style>
+
+:root {
+  --bg: #0b0e17;
+  --bg-soft: #10141f;
+  --panel: #ffffff;
+  --panel-alt: #f6f7fb;
+  --border: #e6e8f0;
+  --text: #1a1d29;
+  --text-dim: #5a5f72;
+  --primary: #6366f1;
+  --primary-dark: #4338ca;
+  --accent: #14b8a6;
+  --accent-2: #f59e0b;
+  --code-bg: #0f172a;
+  --code-text: #e2e8f0;
+  --radius: 14px;
+  --shadow: 0 10px 30px -12px rgba(30, 41, 59, 0.18);
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif;
+  color: var(--text);
+  background: var(--panel-alt);
+  line-height: 1.75;
+}
+a { color: var(--primary-dark); }
+
+/* ---------- HERO ---------- */
+.hero {
+  background: radial-gradient(1200px 600px at 15% -10%, rgba(99,102,241,0.55), transparent 60%),
+              radial-gradient(900px 500px at 90% 10%, rgba(20,184,166,0.35), transparent 55%),
+              linear-gradient(180deg, var(--bg) 0%, var(--bg-soft) 100%);
+  color: #f4f5fb;
+  padding: 64px 24px 88px;
+  position: relative;
+  overflow: hidden;
+}
+.hero-inner { max-width: 1080px; margin: 0 auto; }
+.eyebrow {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-size: 12.5px; letter-spacing: 0.12em; text-transform: uppercase;
+  color: #a5b4fc; background: rgba(99,102,241,0.15);
+  border: 1px solid rgba(165,180,252,0.35);
+  padding: 6px 14px; border-radius: 999px; margin-bottom: 22px;
+}
+.hero h1 { font-size: 40px; line-height: 1.2; margin: 0 0 16px; font-weight: 800; letter-spacing: -0.01em; }
+.hero p.lead { font-size: 17px; color: #cbd0e6; max-width: 720px; margin: 0 0 28px; }
+.hero-badges { display: flex; flex-wrap: wrap; gap: 10px; }
+.badge {
+  font-size: 13px; background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.14); color: #e2e4f5;
+  padding: 6px 12px; border-radius: 999px;
+}
+.hero a.home-link {
+  display: inline-flex; align-items: center; gap: 6px;
+  color: #a5b4fc; text-decoration: none; font-size: 13.5px; margin-bottom: 20px;
+}
+.hero a.home-link:hover { color: #fff; }
+
+/* ---------- LAYOUT ---------- */
+.layout {
+  max-width: 1200px; margin: -48px auto 0; padding: 0 24px 60px;
+  display: grid; grid-template-columns: 240px 1fr; gap: 32px; position: relative;
+}
+.toc {
+  position: sticky; top: 24px; align-self: start;
+  background: var(--panel); border: 1px solid var(--border);
+  border-radius: var(--radius); box-shadow: var(--shadow);
+  padding: 18px 16px; font-size: 13.5px;
+  max-height: calc(100vh - 48px); overflow-y: auto;
+}
+.toc h4 { margin: 0 0 10px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-dim); }
+.toc a { display: block; padding: 6px 8px; border-radius: 8px; color: var(--text-dim); text-decoration: none; margin-bottom: 2px; }
+.toc a:hover { background: var(--panel-alt); color: var(--text); }
+.toc a.active { background: var(--panel-alt); color: var(--primary-dark); font-weight: 600; }
+
+main { min-width: 0; }
+
+section {
+  background: var(--panel); border: 1px solid var(--border);
+  border-radius: var(--radius); box-shadow: var(--shadow);
+  padding: 34px 40px; margin-bottom: 24px; scroll-margin-top: 20px;
+}
+section h2 { font-size: 23px; margin: 0 0 16px; display: flex; align-items: center; gap: 10px; }
+section h2 .pill-num {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 30px; height: 30px; border-radius: 9px; flex-shrink: 0;
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  color: #fff; font-size: 14px; font-weight: 700;
+}
+h3 { font-size: 17px; margin: 26px 0 10px; }
+h4 { font-size: 15px; margin: 20px 0 8px; }
+p { margin: 0 0 14px; }
+ul, ol { margin: 0 0 16px; padding-left: 22px; }
+li { margin-bottom: 6px; }
+li > ul, li > ol { margin-top: 6px; }
+strong { color: var(--text); }
+blockquote {
+  margin: 0 0 16px; padding: 12px 18px;
+  border-left: 4px solid var(--accent); background: var(--panel-alt);
+  border-radius: 0 8px 8px 0; color: var(--text-dim);
+}
+blockquote p { margin: 0; }
+
+/* tables */
+table { width: 100%; border-collapse: collapse; font-size: 13.8px; margin: 8px 0 18px; }
+th {
+  text-align: left; font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em;
+  color: var(--text-dim); border-bottom: 1px solid var(--border); padding: 8px 10px;
+}
+td { padding: 10px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+tr:last-child td { border-bottom: none; }
+
+/* inline code */
+code {
+  background: #eef0fb; color: var(--primary-dark);
+  padding: 2px 7px; border-radius: 6px;
+  font-family: "SFMono-Regular", Menlo, Consolas, monospace; font-size: 13px;
+}
+
+/* code blocks */
+pre {
+  background: var(--code-bg); color: var(--code-text);
+  padding: 16px 18px; border-radius: 10px; overflow-x: auto;
+  font-size: 13px; line-height: 1.6;
+  font-family: "SFMono-Regular", Menlo, Consolas, monospace;
+  margin: 10px 0 18px;
+}
+pre code { background: transparent; color: inherit; padding: 0; border-radius: 0; font-size: 13px; }
+.codehilite { background: var(--code-bg); border-radius: 10px; overflow-x: auto; margin: 10px 0 18px; }
+.codehilite pre { margin: 0; padding: 16px 18px; background: transparent; }
+
+/* pager */
+.pager { display: flex; justify-content: space-between; gap: 16px; margin-top: 8px; }
+.pager a {
+  flex: 1; display: flex; flex-direction: column; gap: 4px;
+  padding: 16px 20px; border-radius: var(--radius); text-decoration: none;
+  background: var(--panel); border: 1px solid var(--border); box-shadow: var(--shadow);
+  transition: transform 0.15s, border-color 0.15s;
+}
+.pager a:hover { transform: translateY(-2px); border-color: var(--primary); }
+.pager a .dir { font-size: 12px; color: var(--text-dim); }
+.pager a .ttl { font-size: 14.5px; font-weight: 700; color: var(--text); }
+.pager a.next { text-align: right; }
+.pager a.disabled { opacity: 0.4; pointer-events: none; }
+
+footer { text-align: center; color: var(--text-dim); font-size: 13px; padding: 20px 0 40px; }
+footer a { color: var(--text-dim); }
+
+@media (max-width: 900px) {
+  .layout { grid-template-columns: 1fr; }
+  .toc { position: static; max-height: none; }
+  section { padding: 26px 22px; }
+  .hero h1 { font-size: 30px; }
+  .pager { flex-direction: column; }
+}
+
+pre { line-height: 125%; }
+td.linenos .normal { color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px; }
+span.linenos { color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px; }
+td.linenos .special { color: #000000; background-color: #ffffc0; padding-left: 5px; padding-right: 5px; }
+span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 5px; padding-right: 5px; }
+.codehilite .hll { background-color: #49483e }
+.codehilite { background: #272822; color: #F8F8F2 }
+.codehilite .c { color: #959077 } /* Comment */
+.codehilite .err { color: #ED007E; background-color: #1E0010 } /* Error */
+.codehilite .esc { color: #F8F8F2 } /* Escape */
+.codehilite .g { color: #F8F8F2 } /* Generic */
+.codehilite .k { color: #66D9EF } /* Keyword */
+.codehilite .l { color: #AE81FF } /* Literal */
+.codehilite .n { color: #F8F8F2 } /* Name */
+.codehilite .o { color: #FF4689 } /* Operator */
+.codehilite .x { color: #F8F8F2 } /* Other */
+.codehilite .p { color: #F8F8F2 } /* Punctuation */
+.codehilite .ch { color: #959077 } /* Comment.Hashbang */
+.codehilite .cm { color: #959077 } /* Comment.Multiline */
+.codehilite .cp { color: #959077 } /* Comment.Preproc */
+.codehilite .cpf { color: #959077 } /* Comment.PreprocFile */
+.codehilite .c1 { color: #959077 } /* Comment.Single */
+.codehilite .cs { color: #959077 } /* Comment.Special */
+.codehilite .gd { color: #FF4689 } /* Generic.Deleted */
+.codehilite .ge { color: #F8F8F2; font-style: italic } /* Generic.Emph */
+.codehilite .ges { color: #F8F8F2; font-weight: bold; font-style: italic } /* Generic.EmphStrong */
+.codehilite .gr { color: #FF4689 } /* Generic.Error */
+.codehilite .gh { color: #F8F8F2 } /* Generic.Heading */
+.codehilite .gi { color: #A6E22E } /* Generic.Inserted */
+.codehilite .go { color: #66D9EF } /* Generic.Output */
+.codehilite .gp { color: #FF4689; font-weight: bold } /* Generic.Prompt */
+.codehilite .gs { color: #F8F8F2; font-weight: bold } /* Generic.Strong */
+.codehilite .gu { color: #959077 } /* Generic.Subheading */
+.codehilite .gt { color: #66D9EF } /* Generic.Traceback */
+.codehilite .kc { color: #66D9EF } /* Keyword.Constant */
+.codehilite .kd { color: #66D9EF } /* Keyword.Declaration */
+.codehilite .kn { color: #FF4689 } /* Keyword.Namespace */
+.codehilite .kp { color: #66D9EF } /* Keyword.Pseudo */
+.codehilite .kr { color: #66D9EF } /* Keyword.Reserved */
+.codehilite .kt { color: #66D9EF } /* Keyword.Type */
+.codehilite .ld { color: #E6DB74 } /* Literal.Date */
+.codehilite .m { color: #AE81FF } /* Literal.Number */
+.codehilite .s { color: #E6DB74 } /* Literal.String */
+.codehilite .na { color: #A6E22E } /* Name.Attribute */
+.codehilite .nb { color: #A6E22E } /* Name.Builtin */
+.codehilite .nc { color: #A6E22E } /* Name.Class */
+.codehilite .no { color: #66D9EF } /* Name.Constant */
+.codehilite .nd { color: #A6E22E } /* Name.Decorator */
+.codehilite .ni { color: #F8F8F2 } /* Name.Entity */
+.codehilite .ne { color: #A6E22E } /* Name.Exception */
+.codehilite .nf { color: #A6E22E } /* Name.Function */
+.codehilite .nl { color: #F8F8F2 } /* Name.Label */
+.codehilite .nn { color: #F8F8F2 } /* Name.Namespace */
+.codehilite .nx { color: #A6E22E } /* Name.Other */
+.codehilite .py { color: #F8F8F2 } /* Name.Property */
+.codehilite .nt { color: #FF4689 } /* Name.Tag */
+.codehilite .nv { color: #F8F8F2 } /* Name.Variable */
+.codehilite .ow { color: #FF4689 } /* Operator.Word */
+.codehilite .pm { color: #F8F8F2 } /* Punctuation.Marker */
+.codehilite .w { color: #F8F8F2 } /* Text.Whitespace */
+.codehilite .mb { color: #AE81FF } /* Literal.Number.Bin */
+.codehilite .mf { color: #AE81FF } /* Literal.Number.Float */
+.codehilite .mh { color: #AE81FF } /* Literal.Number.Hex */
+.codehilite .mi { color: #AE81FF } /* Literal.Number.Integer */
+.codehilite .mo { color: #AE81FF } /* Literal.Number.Oct */
+.codehilite .sa { color: #E6DB74 } /* Literal.String.Affix */
+.codehilite .sb { color: #E6DB74 } /* Literal.String.Backtick */
+.codehilite .sc { color: #E6DB74 } /* Literal.String.Char */
+.codehilite .dl { color: #E6DB74 } /* Literal.String.Delimiter */
+.codehilite .sd { color: #E6DB74 } /* Literal.String.Doc */
+.codehilite .s2 { color: #E6DB74 } /* Literal.String.Double */
+.codehilite .se { color: #AE81FF } /* Literal.String.Escape */
+.codehilite .sh { color: #E6DB74 } /* Literal.String.Heredoc */
+.codehilite .si { color: #E6DB74 } /* Literal.String.Interpol */
+.codehilite .sx { color: #E6DB74 } /* Literal.String.Other */
+.codehilite .sr { color: #E6DB74 } /* Literal.String.Regex */
+.codehilite .s1 { color: #E6DB74 } /* Literal.String.Single */
+.codehilite .ss { color: #E6DB74 } /* Literal.String.Symbol */
+.codehilite .bp { color: #A6E22E } /* Name.Builtin.Pseudo */
+.codehilite .fm { color: #A6E22E } /* Name.Function.Magic */
+.codehilite .vc { color: #F8F8F2 } /* Name.Variable.Class */
+.codehilite .vg { color: #F8F8F2 } /* Name.Variable.Global */
+.codehilite .vi { color: #F8F8F2 } /* Name.Variable.Instance */
+.codehilite .vm { color: #F8F8F2 } /* Name.Variable.Magic */
+.codehilite .il { color: #AE81FF } /* Literal.Number.Integer.Long */
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="hero-inner">
+    <a class="home-link" href="index.html">← 返回 Semantica 专题首页</a>
+    <span class="eyebrow">🌱 SEMANTICA · COOKBOOK · 入门系列</span>
+    <h1>Amazon Neptune 图存储</h1>
+    <p class="lead">Semantica 官方 Cookbook 中文翻译 · 第 21 / 37 篇</p>
+    <div class="hero-badges">
+      <span class="badge">📦 semantica</span>
+      <span class="badge">🕸️ 知识图谱</span>
+      <span class="badge">🔎 GraphRAG</span>
+    </div>
+  </div>
+</header>
+
+<div class="layout">
+  <nav class="toc">
+    <h4>目录</h4>
+    <a href="#sec-1">概览</a>
+<a href="#sec-2">安装</a>
+<a href="#sec-3">配置</a>
+<a href="#sec-4">步骤 1：初始化 Neptune 存储</a>
+<a href="#sec-5">步骤 2：节点操作</a>
+<a href="#sec-6">步骤 3：关系操作</a>
+<a href="#sec-7">步骤 4：OpenCypher 查询</a>
+<a href="#sec-8">步骤 5：图分析</a>
+<a href="#sec-9">步骤 6：图统计</a>
+<a href="#sec-10">步骤 7：连接管理</a>
+<a href="#sec-11">Neptune 特有注意事项</a>
+<a href="#sec-12">小结</a>
+  </nav>
+
+  <main>
+    <section id="sec-1"><h2><span class="pill-num">1</span>概览</h2><p>本 notebook 介绍 Semantica 中的 Amazon Neptune 数据库集成。Amazon Neptune 是一个全托管的图数据库服务，同时支持属性图（通过 OpenCypher/Gremlin）和 RDF 图（通过 SPARQL）。</p>
+<h3>关键特性</h3>
+<ul>
+<li><strong>IAM 认证</strong>：通过 AuthManager 使用 AWS SigV4 签名进行安全访问</li>
+<li><strong>OpenCypher 支持</strong>：使用标准 OpenCypher 语法进行查询</li>
+<li><strong>Bolt 协议</strong>：使用 Neo4j Bolt 驱动进行高效的二进制通信</li>
+<li><strong>原生 ~id 支持</strong>：利用 Neptune 的原生元素 ID 处理</li>
+<li><strong>完整 CRUD 操作</strong>：创建、读取、更新、删除节点和关系</li>
+<li><strong>自动重试</strong>：内置针对瞬时错误带指数退避的重试逻辑</li>
+</ul>
+<h3>前置条件</h3>
+<ul>
+<li>一个 Amazon Neptune 数据库集群</li>
+<li>已配置的 AWS 凭证（boto3、环境变量或 IAM 角色）</li>
+<li>到你的 Neptune 集群的网络访问（VPC、安全组）</li>
+<li>你的公网 IP 地址或 VPN/办公室 CIDR（运行 <code>curl ifconfig.me</code> 查找你的公网 IP），用于下文限制数据库访问</li>
+</ul>
+<h4>使用 CloudFormation 快速设置</h4>
+<p>如果你没有 Neptune 集群，使用提供的 CloudFormation 模板创建一个带公网端点和 IAM 认证的集群：</p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 部署 Neptune 栈（大约需要 15-20 分钟）</span>
+<span class="c1"># 将 203.0.113.25/32 替换为你自己的公网 IP（运行 `curl ifconfig.me` 查找）</span>
+<span class="c1"># 或你的办公室/VPN CIDR。这会在网络层面限制谁能访问数据库——</span>
+<span class="c1"># 除了短期的本地实验外，绝不要将其放宽到 0.0.0.0/0。</span>
+aws<span class="w"> </span>cloudformation<span class="w"> </span>create-stack<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--stack-name<span class="w"> </span>semantica-neptune<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--template-body<span class="w"> </span>file://neptune-setup.yaml<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--parameters<span class="w"> </span><span class="nv">ParameterKey</span><span class="o">=</span>ClientCidr,ParameterValue<span class="o">=</span><span class="m">203</span>.0.113.25/32<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--capabilities<span class="w"> </span>CAPABILITY_NAMED_IAM
+
+<span class="c1"># 等待栈创建完成</span>
+aws<span class="w"> </span>cloudformation<span class="w"> </span><span class="nb">wait</span><span class="w"> </span>stack-create-complete<span class="w"> </span>--stack-name<span class="w"> </span>semantica-neptune
+
+<span class="c1"># 获取输出（端点、端口、凭证）</span>
+aws<span class="w"> </span>cloudformation<span class="w"> </span>describe-stacks<span class="w"> </span>--stack-name<span class="w"> </span>semantica-neptune<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--query<span class="w"> </span><span class="s1">'Stacks[0].Outputs'</span><span class="w"> </span>--output<span class="w"> </span>table
+</code></pre></div>
+
+<p>该模板会创建：
+- 带公网子网、互联网网关和 VPC 流日志（到 CloudWatch Logs）的 VPC
+- 启用了 IAM 认证的 Neptune 集群（<code>db.t3.medium</code>）
+- 具有用于 OpenCypher 查询的最小权限访问的 IAM 用户
+- 仅允许来自你指定的 <code>ClientCidr</code> 访问 Bolt 协议（端口 8182）的安全组</p>
+<blockquote>
+<p>⚠️ <strong>安全说明</strong>：为简化演示/测试环境，此模板创建了一个带静态访问密钥的 IAM 用户。对于生产环境，我们推荐使用 IAM 角色（EC2 实例角色、ECS 任务角色、Lambda 执行角色），它们提供会自动轮换的临时凭证。CloudFormation 输出中的秘密访问密钥以明文提供，以简化初始设置——在生产环境中，请使用 AWS Secrets Manager。<code>ClientCidr</code> 参数是必需的（无默认值），正是为了确保数据库绝不会被静默地暴露给整个互联网。</p>
+</blockquote>
+<p><strong>输出：</strong>
+- <code>NeptuneEndpoint</code> - 集群主机名（用作 <code>NEPTUNE_ENDPOINT</code>）
+- <code>NeptunePort</code> - 8182（用作 <code>NEPTUNE_PORT</code>）
+- <code>AwsAccessKeyId</code> - IAM 用户访问密钥（用作 <code>AWS_ACCESS_KEY_ID</code>）
+- <code>AwsSecretAccessKey</code> - IAM 用户秘密密钥，<strong>明文</strong>（用作 <code>AWS_SECRET_ACCESS_KEY</code>）
+- <code>AwsRegion</code> - 部署区域（用作 <code>AWS_REGION</code>）</p>
+<p><strong>清理：</strong></p>
+<div class="codehilite"><pre><span></span><code>aws<span class="w"> </span>cloudformation<span class="w"> </span>delete-stack<span class="w"> </span>--stack-name<span class="w"> </span>semantica-neptune
+</code></pre></div>
+
+<p><strong>预估月度成本（在 100% 利用率下约为每月 100-105 美元）：</strong></p>
+<table>
+<thead>
+<tr>
+<th>资源</th>
+<th>成本（美元）</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Neptune db.t3.medium 实例</td>
+<td>约 96/月（0.132/小时）</td>
+</tr>
+<tr>
+<td>存储（10 GB）</td>
+<td>约 1/月</td>
+</tr>
+<tr>
+<td>I/O 请求</td>
+<td>约 1-5/月</td>
+</tr>
+<tr>
+<td>公网 IPv4 地址</td>
+<td>约 3.60/月（0.005/小时）</td>
+</tr>
+<tr>
+<td>VPC 流日志（CloudWatch Logs）</td>
+<td>约 1-2/月，取决于流量</td>
+</tr>
+<tr>
+<td>VPC、子网、路由表、互联网网关、IAM</td>
+<td>无额外费用</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><strong>免费套餐</strong>：新的 Neptune 用户可免费使用 30 天（750 小时 db.t3.medium、1000 万次 I/O、1 GB 存储）。不使用时删除该栈以避免产生费用。</p>
+</blockquote>
+<hr /></section>
+<section id="sec-2"><h2><span class="pill-num">2</span>安装</h2><div class="codehilite"><pre><span></span><code><span class="c1"># 安装带 Neptune 支持的 Semantica</span>
+pip<span class="w"> </span>install<span class="w"> </span>semantica
+
+<span class="c1"># 所需依赖（自动安装）</span>
+pip<span class="w"> </span>install<span class="w"> </span>boto3<span class="w"> </span>neo4j
+</code></pre></div>
+
+<div class="codehilite"><pre><span></span><code><span class="err">!</span><span class="n">pip</span> <span class="n">install</span> <span class="n">semantica</span>
+</code></pre></div></section>
+<section id="sec-3"><h2><span class="pill-num">3</span>配置</h2><p>设置你的 Neptune 集群端点和 AWS 凭证。将占位值替换为你的实际配置。</p>
+<div class="codehilite"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+
+<span class="c1"># Neptune 集群配置 - 替换为你的值</span>
+<span class="c1"># （从 CloudFormation 栈输出中获取这些值）</span>
+<span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">"NEPTUNE_ENDPOINT"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"your-cluster.us-east-1.neptune.amazonaws.com"</span>
+<span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">"NEPTUNE_PORT"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"8182"</span>
+<span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">"AWS_REGION"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"us-east-1"</span>
+
+<span class="c1"># 用于 IAM 认证的 AWS 凭证</span>
+<span class="c1"># 选项 1：IAM 用户（来自 CloudFormation 模板的静态凭证）</span>
+<span class="c1"># os.environ["AWS_ACCESS_KEY_ID"] = "AKIA..."  # 来自 AwsAccessKeyId 输出</span>
+<span class="c1"># os.environ["AWS_SECRET_ACCESS_KEY"] = "..."  # 来自 AwsSecretAccessKey 输出</span>
+<span class="c1"># 注意：IAM 用户不需要 AWS_SESSION_TOKEN</span>
+
+<span class="c1"># 选项 2：IAM 角色 / 临时凭证（例如 STS AssumeRole、EC2 实例角色）</span>
+<span class="c1"># os.environ["AWS_ACCESS_KEY_ID"] = "ASIA..."  # 临时访问密钥</span>
+<span class="c1"># os.environ["AWS_SECRET_ACCESS_KEY"] = "..."  # 临时秘密密钥</span>
+<span class="c1"># os.environ["AWS_SESSION_TOKEN"] = "..."      # 临时凭证必需</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Neptune Endpoint: </span><span class="si">{</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'NEPTUNE_ENDPOINT'</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"AWS Region: </span><span class="si">{</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'AWS_REGION'</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</code></pre></div></section>
+<section id="sec-4"><h2><span class="pill-num">4</span>步骤 1：初始化 Neptune 存储</h2><p>使用 IAM 认证初始化到你的 Amazon Neptune 集群的连接。</p>
+<div class="codehilite"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">semantica.graph_store</span><span class="w"> </span><span class="kn">import</span> <span class="n">GraphStore</span>
+
+<span class="c1"># 选项 1：使用 GraphStore 工厂（推荐）</span>
+<span class="n">neptune_store</span> <span class="o">=</span> <span class="n">GraphStore</span><span class="p">(</span>
+    <span class="n">backend</span><span class="o">=</span><span class="s2">"neptune"</span><span class="p">,</span>
+    <span class="n">endpoint</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"NEPTUNE_ENDPOINT"</span><span class="p">),</span>
+    <span class="n">port</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"NEPTUNE_PORT"</span><span class="p">,</span> <span class="mi">8182</span><span class="p">)),</span>
+    <span class="n">region</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"AWS_REGION"</span><span class="p">,</span> <span class="s2">"us-east-1"</span><span class="p">),</span>
+    <span class="n">iam_auth</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="c1"># 连接到 Neptune</span>
+<span class="n">neptune_store</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Connected to Amazon Neptune!"</span><span class="p">)</span>
+</code></pre></div>
+
+<h3>无需 IAM 认证的开发/测试</h3>
+<p>对于不需要 IAM 认证的开发或测试环境（例如 Neptune notebook 或仅 VPC 访问），你可以禁用 IAM 签名：</p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 用于无 IAM 认证的开发/测试环境</span>
+<span class="n">neptune_store_dev</span> <span class="o">=</span> <span class="n">GraphStore</span><span class="p">(</span>
+    <span class="n">backend</span><span class="o">=</span><span class="s2">"neptune"</span><span class="p">,</span>
+    <span class="n">endpoint</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"NEPTUNE_ENDPOINT"</span><span class="p">),</span>
+    <span class="n">port</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"NEPTUNE_PORT"</span><span class="p">,</span> <span class="mi">8182</span><span class="p">)),</span>
+    <span class="n">region</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"AWS_REGION"</span><span class="p">,</span> <span class="s2">"us-east-1"</span><span class="p">),</span>
+    <span class="n">iam_auth</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>  <span class="c1"># 为开发/测试禁用 IAM 签名</span>
+<span class="p">)</span>
+<span class="n">neptune_store_dev</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span>
+</code></pre></div>
+
+<h3>认证选项</h3>
+<p>IAM 认证（生产环境推荐）自动使用 AWS 凭证链：
+1. 环境变量（AWS_ACCESS_KEY_ID、AWS_SECRET_ACCESS_KEY）
+2. AWS 凭证文件（~/.aws/credentials）
+3. IAM 角色（用于 EC2、Lambda、ECS）</p></section>
+<section id="sec-5"><h2><span class="pill-num">5</span>步骤 2：节点操作</h2><h3>创建节点</h3>
+<p>节点代表图中的实体。每个节点可以有：
+- <strong>ID</strong>：唯一标识符（自定义或自动生成的 UUID）
+- <strong>标签</strong>：类别/类型（例如 <code>Person</code>、<code>Company</code>）
+- <strong>属性</strong>：键值对（例如 <code>{"name": "Alice", "age": 30}</code>）</p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 使用自定义 ID 创建单个节点（id 在属性中）</span>
+<span class="n">alice</span> <span class="o">=</span> <span class="n">neptune_store</span><span class="o">.</span><span class="n">create_node</span><span class="p">(</span>
+    <span class="n">labels</span><span class="o">=</span><span class="p">[</span><span class="s2">"Person"</span><span class="p">],</span>
+    <span class="n">properties</span><span class="o">=</span><span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="s2">"alice"</span><span class="p">,</span> <span class="s2">"name"</span><span class="p">:</span> <span class="s2">"Alice"</span><span class="p">,</span> <span class="s2">"age"</span><span class="p">:</span> <span class="mi">30</span><span class="p">,</span> <span class="s2">"role"</span><span class="p">:</span> <span class="s2">"Engineer"</span><span class="p">}</span>
+<span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Created node: </span><span class="si">{</span><span class="n">alice</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+<span class="c1"># 使用自动生成的 UUID 创建节点（属性中无 id）</span>
+<span class="n">bob</span> <span class="o">=</span> <span class="n">neptune_store</span><span class="o">.</span><span class="n">create_node</span><span class="p">(</span>
+    <span class="n">labels</span><span class="o">=</span><span class="p">[</span><span class="s2">"Person"</span><span class="p">],</span>
+    <span class="n">properties</span><span class="o">=</span><span class="p">{</span><span class="s2">"name"</span><span class="p">:</span> <span class="s2">"Bob"</span><span class="p">,</span> <span class="s2">"age"</span><span class="p">:</span> <span class="mi">25</span><span class="p">,</span> <span class="s2">"role"</span><span class="p">:</span> <span class="s2">"Designer"</span><span class="p">}</span>
+<span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Created node with UUID: </span><span class="si">{</span><span class="n">bob</span><span class="p">[</span><span class="s1">'id'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+<span class="c1"># 使用自动生成的 ID 创建公司节点</span>
+<span class="n">acme</span> <span class="o">=</span> <span class="n">neptune_store</span><span class="o">.</span><span class="n">create_node</span><span class="p">(</span>
+    <span class="n">labels</span><span class="o">=</span><span class="p">[</span><span class="s2">"Company"</span><span class="p">],</span>
+    <span class="n">properties</span><span class="o">=</span><span class="p">{</span><span class="s2">"name"</span><span class="p">:</span> <span class="s2">"Acme Corp"</span><span class="p">,</span> <span class="s2">"industry"</span><span class="p">:</span> <span class="s2">"Technology"</span><span class="p">,</span> <span class="s2">"founded"</span><span class="p">:</span> <span class="mi">2010</span><span class="p">}</span>
+<span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Created company: </span><span class="si">{</span><span class="n">acme</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</code></pre></div>
+
+<h3>批量创建多个节点</h3>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 批量创建节点以获得更好的性能</span>
+<span class="c1"># 在属性中包含 'id' 以使用自定义 ID</span>
+<span class="n">nodes_data</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="p">{</span><span class="s2">"labels"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"Person"</span><span class="p">],</span> <span class="s2">"properties"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="s2">"charlie"</span><span class="p">,</span> <span class="s2">"name"</span><span class="p">:</span> <span class="s2">"Charlie"</span><span class="p">,</span> <span class="s2">"age"</span><span class="p">:</span> <span class="mi">35</span><span class="p">}},</span>
+    <span class="p">{</span><span class="s2">"labels"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"Person"</span><span class="p">],</span> <span class="s2">"properties"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="s2">"diana"</span><span class="p">,</span> <span class="s2">"name"</span><span class="p">:</span> <span class="s2">"Diana"</span><span class="p">,</span> <span class="s2">"age"</span><span class="p">:</span> <span class="mi">28</span><span class="p">}},</span>
+    <span class="p">{</span><span class="s2">"labels"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"Location"</span><span class="p">],</span> <span class="s2">"properties"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"name"</span><span class="p">:</span> <span class="s2">"San Francisco"</span><span class="p">,</span> <span class="s2">"state"</span><span class="p">:</span> <span class="s2">"CA"</span><span class="p">}},</span>
+<span class="p">]</span>
+
+<span class="n">created_nodes</span> <span class="o">=</span> <span class="n">neptune_store</span><span class="o">.</span><span class="n">create_nodes</span><span class="p">(</span><span class="n">nodes_data</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Created </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">created_nodes</span><span class="p">)</span><span class="si">}</span><span class="s2"> nodes in batch"</span><span class="p">)</span>
+</code></pre></div>
+
+<h3>检索节点</h3>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 按 ID 获取特定节点</span>
+<span class="n">alice_node</span> <span class="o">=</span> <span class="n">neptune_store</span><span class="o">.</span><span class="n">get_node</span><span class="p">(</span><span class="n">node_id</span><span class="o">=</span><span class="s2">"alice"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Retrieved: </span><span class="si">{</span><span class="n">alice_node</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+<span class="c1"># 按标签获取节点</span>
+<span class="n">people</span> <span class="o">=</span> <span class="n">neptune_store</span><span class="o">.</span><span class="n">get_nodes</span><span class="p">(</span><span class="n">labels</span><span class="o">=</span><span class="p">[</span><span class="s2">"Person"</span><span class="p">],</span> <span class="n">limit</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Found </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">people</span><span class="p">)</span><span class="si">}</span><span class="s2"> Person nodes:"</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">person</span> <span class="ow">in</span> <span class="n">people</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  - </span><span class="si">{</span><span class="n">person</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'properties'</span><span class="p">,</span><span class="w"> </span><span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'name'</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+<span class="c1"># 按属性获取节点</span>
+<span class="n">engineers</span> <span class="o">=</span> <span class="n">neptune_store</span><span class="o">.</span><span class="n">get_nodes</span><span class="p">(</span>
+    <span class="n">labels</span><span class="o">=</span><span class="p">[</span><span class="s2">"Person"</span><span class="p">],</span>
+    <span class="n">properties</span><span class="o">=</span><span class="p">{</span><span class="s2">"role"</span><span class="p">:</span> <span class="s2">"Engineer"</span><span class="p">},</span>
+    <span class="n">limit</span><span class="o">=</span><span class="mi">5</span>
+<span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Found </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">engineers</span><span class="p">)</span><span class="si">}</span><span class="s2"> engineers"</span><span class="p">)</span>
+</code></pre></div>
+
+<h3>更新节点</h3>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 更新节点属性（合并模式 - 默认）</span>
+<span class="n">updated_alice</span> <span class="o">=</span> <span class="n">neptune_store</span><span class="o">.</span><span class="n">update_node</span><span class="p">(</span>
+    <span class="n">node_id</span><span class="o">=</span><span class="s2">"alice"</span><span class="p">,</span>
+    <span class="n">properties</span><span class="o">=</span><span class="p">{</span><span class="s2">"age"</span><span class="p">:</span> <span class="mi">31</span><span class="p">,</span> <span class="s2">"department"</span><span class="p">:</span> <span class="s2">"AI Research"</span><span class="p">},</span>
+    <span class="n">merge</span><span class="o">=</span><span class="kc">True</span>
+<span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Updated Alice: </span><span class="si">{</span><span class="n">updated_alice</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+<span class="c1"># 替换所有属性（merge=False）</span>
+<span class="c1"># 警告：这会移除不在更新中的属性</span>
+<span class="n">replaced</span> <span class="o">=</span> <span class="n">neptune_store</span><span class="o">.</span><span class="n">update_node</span><span class="p">(</span>
+    <span class="n">node_id</span><span class="o">=</span><span class="s2">"charlie"</span><span class="p">,</span>
+    <span class="n">properties</span><span class="o">=</span><span class="p">{</span><span class="s2">"name"</span><span class="p">:</span> <span class="s2">"Charlie"</span><span class="p">,</span> <span class="s2">"age"</span><span class="p">:</span> <span class="mi">36</span><span class="p">},</span>
+    <span class="n">merge</span><span class="o">=</span><span class="kc">False</span>
+<span class="p">)</span>
+</code></pre></div>
+
+<h3>删除节点</h3>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 删除节点（使用 detach=True 同时删除关系）</span>
+<span class="n">deleted</span> <span class="o">=</span> <span class="n">neptune_store</span><span class="o">.</span><span class="n">delete_node</span><span class="p">(</span><span class="n">node_id</span><span class="o">=</span><span class="s2">"diana"</span><span class="p">,</span> <span class="n">detach</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Deleted diana: </span><span class="si">{</span><span class="n">deleted</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+<span class="c1"># 不使用 detach（如果节点有关系则会失败）</span>
+<span class="c1"># neptune_store.delete_node(node_id="alice", detach=False)</span>
+</code></pre></div></section>
+<section id="sec-6"><h2><span class="pill-num">6</span>步骤 3：关系操作</h2><h3>创建关系</h3>
+<p>关系连接节点，表示实体之间的连接。</p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 在 Alice 和 Acme 之间创建关系</span>
+<span class="n">works_at</span> <span class="o">=</span> <span class="n">neptune_store</span><span class="o">.</span><span class="n">create_relationship</span><span class="p">(</span>
+    <span class="n">start_node_id</span><span class="o">=</span><span class="s2">"alice"</span><span class="p">,</span>
+    <span class="n">end_node_id</span><span class="o">=</span><span class="n">acme</span><span class="p">[</span><span class="s2">"id"</span><span class="p">],</span>
+    <span class="n">rel_type</span><span class="o">=</span><span class="s2">"WORKS_AT"</span><span class="p">,</span>
+    <span class="n">properties</span><span class="o">=</span><span class="p">{</span><span class="s2">"since"</span><span class="p">:</span> <span class="mi">2020</span><span class="p">,</span> <span class="s2">"position"</span><span class="p">:</span> <span class="s2">"Senior Engineer"</span><span class="p">}</span>
+<span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Created relationship: </span><span class="si">{</span><span class="n">works_at</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+<span class="c1"># 在人与人之间创建 KNOWS 关系</span>
+<span class="n">knows_rel</span> <span class="o">=</span> <span class="n">neptune_store</span><span class="o">.</span><span class="n">create_relationship</span><span class="p">(</span>
+    <span class="n">start_node_id</span><span class="o">=</span><span class="s2">"alice"</span><span class="p">,</span>
+    <span class="n">end_node_id</span><span class="o">=</span><span class="n">bob</span><span class="p">[</span><span class="s2">"id"</span><span class="p">],</span>
+    <span class="n">rel_type</span><span class="o">=</span><span class="s2">"KNOWS"</span><span class="p">,</span>
+    <span class="n">properties</span><span class="o">=</span><span class="p">{</span><span class="s2">"since"</span><span class="p">:</span> <span class="mi">2019</span><span class="p">}</span>
+<span class="p">)</span>
+</code></pre></div>
+
+<h3>检索关系</h3>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 获取某个节点的所有关系</span>
+<span class="n">alice_rels</span> <span class="o">=</span> <span class="n">neptune_store</span><span class="o">.</span><span class="n">get_relationships</span><span class="p">(</span><span class="n">node_id</span><span class="o">=</span><span class="s2">"alice"</span><span class="p">,</span> <span class="n">direction</span><span class="o">=</span><span class="s2">"both"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Alice has </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">alice_rels</span><span class="p">)</span><span class="si">}</span><span class="s2"> relationships"</span><span class="p">)</span>
+
+<span class="c1"># 仅获取出向关系</span>
+<span class="n">outgoing</span> <span class="o">=</span> <span class="n">neptune_store</span><span class="o">.</span><span class="n">get_relationships</span><span class="p">(</span><span class="n">node_id</span><span class="o">=</span><span class="s2">"alice"</span><span class="p">,</span> <span class="n">direction</span><span class="o">=</span><span class="s2">"out"</span><span class="p">)</span>
+
+<span class="c1"># 按关系类型过滤</span>
+<span class="n">works_rels</span> <span class="o">=</span> <span class="n">neptune_store</span><span class="o">.</span><span class="n">get_relationships</span><span class="p">(</span>
+    <span class="n">node_id</span><span class="o">=</span><span class="s2">"alice"</span><span class="p">,</span>
+    <span class="n">rel_type</span><span class="o">=</span><span class="s2">"WORKS_AT"</span><span class="p">,</span>
+    <span class="n">direction</span><span class="o">=</span><span class="s2">"out"</span>
+<span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Alice's work relationships: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">works_rels</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</code></pre></div>
+
+<h3>删除关系</h3>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 按 ID 删除特定关系</span>
+<span class="k">if</span> <span class="n">works_at</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"id"</span><span class="p">):</span>
+    <span class="n">deleted</span> <span class="o">=</span> <span class="n">neptune_store</span><span class="o">.</span><span class="n">delete_relationship</span><span class="p">(</span><span class="n">rel_id</span><span class="o">=</span><span class="n">works_at</span><span class="p">[</span><span class="s2">"id"</span><span class="p">])</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Deleted relationship: </span><span class="si">{</span><span class="n">deleted</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</code></pre></div></section>
+<section id="sec-7"><h2><span class="pill-num">7</span>步骤 4：OpenCypher 查询</h2><p>Amazon Neptune 通过 Bolt 协议支持 OpenCypher 查询。使用标准 Cypher 语法执行复杂的图模式。</p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 简单查询</span>
+<span class="n">results</span> <span class="o">=</span> <span class="n">neptune_store</span><span class="o">.</span><span class="n">execute_query</span><span class="p">(</span>
+    <span class="s2">"MATCH (p:Person) RETURN p.name, p.age ORDER BY p.age"</span>
+<span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"People in the graph:"</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">record</span> <span class="ow">in</span> <span class="n">results</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"records"</span><span class="p">,</span> <span class="p">[]):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  - </span><span class="si">{</span><span class="n">record</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'p.name'</span><span class="p">)</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">record</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'p.age'</span><span class="p">)</span><span class="si">}</span><span class="s2"> years old"</span><span class="p">)</span>
+</code></pre></div>
+
+<div class="codehilite"><pre><span></span><code><span class="c1"># 使用参数（更安全、更高效）</span>
+<span class="n">results</span> <span class="o">=</span> <span class="n">neptune_store</span><span class="o">.</span><span class="n">execute_query</span><span class="p">(</span>
+    <span class="s2">"MATCH (p:Person) WHERE p.age &gt; $min_age RETURN p.name, p.age"</span><span class="p">,</span>
+    <span class="n">parameters</span><span class="o">=</span><span class="p">{</span><span class="s2">"min_age"</span><span class="p">:</span> <span class="mi">25</span><span class="p">}</span>
+<span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"People over 25: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'records'</span><span class="p">,</span><span class="w"> </span><span class="p">[]))</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</code></pre></div>
+
+<div class="codehilite"><pre><span></span><code><span class="c1"># 查找节点之间的关系</span>
+<span class="n">results</span> <span class="o">=</span> <span class="n">neptune_store</span><span class="o">.</span><span class="n">execute_query</span><span class="p">(</span><span class="s2">"""</span>
+<span class="s2">    MATCH (p:Person)-[r:WORKS_AT]-&gt;(c:Company)</span>
+<span class="s2">    RETURN p.name as employee, c.name as company, r.since as start_year</span>
+<span class="s2">"""</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">record</span> <span class="ow">in</span> <span class="n">results</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"records"</span><span class="p">,</span> <span class="p">[]):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">record</span><span class="p">[</span><span class="s1">'employee'</span><span class="p">]</span><span class="si">}</span><span class="s2"> works at </span><span class="si">{</span><span class="n">record</span><span class="p">[</span><span class="s1">'company'</span><span class="p">]</span><span class="si">}</span><span class="s2"> since </span><span class="si">{</span><span class="n">record</span><span class="p">[</span><span class="s1">'start_year'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</code></pre></div>
+
+<div class="codehilite"><pre><span></span><code><span class="c1"># 计数和聚合</span>
+<span class="n">results</span> <span class="o">=</span> <span class="n">neptune_store</span><span class="o">.</span><span class="n">execute_query</span><span class="p">(</span><span class="s2">"""</span>
+<span class="s2">    MATCH (p:Person)</span>
+<span class="s2">    RETURN count(p) as total, avg(p.age) as avg_age, max(p.age) as max_age</span>
+<span class="s2">"""</span><span class="p">)</span>
+<span class="n">stats</span> <span class="o">=</span> <span class="n">results</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"records"</span><span class="p">,</span> <span class="p">[{}])[</span><span class="mi">0</span><span class="p">]</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Total: </span><span class="si">{</span><span class="n">stats</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'total'</span><span class="p">)</span><span class="si">}</span><span class="s2">, Avg Age: </span><span class="si">{</span><span class="n">stats</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'avg_age'</span><span class="p">)</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</code></pre></div></section>
+<section id="sec-8"><h2><span class="pill-num">8</span>步骤 5：图分析</h2><h3>获取邻居</h3>
+<p>遍历图以查找相连的节点。</p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 获取直接邻居（depth=1）</span>
+<span class="n">neighbors</span> <span class="o">=</span> <span class="n">neptune_store</span><span class="o">.</span><span class="n">get_neighbors</span><span class="p">(</span>
+    <span class="n">node_id</span><span class="o">=</span><span class="s2">"alice"</span><span class="p">,</span>
+    <span class="n">direction</span><span class="o">=</span><span class="s2">"both"</span><span class="p">,</span>
+    <span class="n">depth</span><span class="o">=</span><span class="mi">1</span>
+<span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Alice's direct neighbors: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">neighbors</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+<span class="c1"># 获取最多 2 跳之外的邻居</span>
+<span class="n">extended</span> <span class="o">=</span> <span class="n">neptune_store</span><span class="o">.</span><span class="n">get_neighbors</span><span class="p">(</span>
+    <span class="n">node_id</span><span class="o">=</span><span class="s2">"alice"</span><span class="p">,</span>
+    <span class="n">direction</span><span class="o">=</span><span class="s2">"out"</span><span class="p">,</span>
+    <span class="n">depth</span><span class="o">=</span><span class="mi">2</span>
+<span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Nodes within 2 hops: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">extended</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</code></pre></div>
+
+<h3>最短路径</h3>
+<p>查找两个节点之间的最短路径。</p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 查找最短路径</span>
+<span class="n">path</span> <span class="o">=</span> <span class="n">neptune_store</span><span class="o">.</span><span class="n">shortest_path</span><span class="p">(</span>
+    <span class="n">start_node_id</span><span class="o">=</span><span class="s2">"alice"</span><span class="p">,</span>
+    <span class="n">end_node_id</span><span class="o">=</span><span class="s2">"charlie"</span><span class="p">,</span>
+    <span class="n">max_depth</span><span class="o">=</span><span class="mi">5</span>
+<span class="p">)</span>
+
+<span class="k">if</span> <span class="n">path</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"Path found!"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  Length: </span><span class="si">{</span><span class="n">path</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'length'</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  Nodes: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">path</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'nodes'</span><span class="p">,</span><span class="w"> </span><span class="p">[]))</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  Relationships: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">path</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'relationships'</span><span class="p">,</span><span class="w"> </span><span class="p">[]))</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"No path found between nodes"</span><span class="p">)</span>
+</code></pre></div></section>
+<section id="sec-9"><h2><span class="pill-num">9</span>步骤 6：图统计</h2><p>获取关于你的图的全面统计信息。</p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 获取图统计信息</span>
+<span class="n">stats</span> <span class="o">=</span> <span class="n">neptune_store</span><span class="o">.</span><span class="n">get_stats</span><span class="p">()</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Graph Statistics:"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  Total nodes: </span><span class="si">{</span><span class="n">stats</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'node_count'</span><span class="p">,</span><span class="w"> </span><span class="s1">'N/A'</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  Total relationships: </span><span class="si">{</span><span class="n">stats</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'relationship_count'</span><span class="p">,</span><span class="w"> </span><span class="s1">'N/A'</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Node labels:"</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">label</span><span class="p">,</span> <span class="n">count</span> <span class="ow">in</span> <span class="n">stats</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'label_counts'</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  - </span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">count</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Relationship types:"</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">rel_type</span><span class="p">,</span> <span class="n">count</span> <span class="ow">in</span> <span class="n">stats</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'relationship_type_counts'</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  - </span><span class="si">{</span><span class="n">rel_type</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">count</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</code></pre></div></section>
+<section id="sec-10"><h2><span class="pill-num">10</span>步骤 7：连接管理</h2><p>完成后始终关闭连接以释放资源。</p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 检查连接状态</span>
+<span class="n">status</span> <span class="o">=</span> <span class="n">neptune_store</span><span class="o">.</span><span class="n">get_status</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Connection status: </span><span class="si">{</span><span class="n">status</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+<span class="c1"># 关闭连接</span>
+<span class="n">neptune_store</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Connection closed"</span><span class="p">)</span>
+</code></pre></div></section>
+<section id="sec-11"><h2><span class="pill-num">11</span>Neptune 特有注意事项</h2><h3>原生元素 ID</h3>
+<p>Neptune 使用原生 <code>~id</code> 进行元素标识。在属性中包含 <code>id</code> 以设置自定义 ID：</p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 使用自定义 ID 创建节点（在属性中包含 'id'）</span>
+<span class="n">node</span> <span class="o">=</span> <span class="n">neptune_store</span><span class="o">.</span><span class="n">create_node</span><span class="p">(</span>
+    <span class="n">labels</span><span class="o">=</span><span class="p">[</span><span class="s2">"Person"</span><span class="p">],</span>
+    <span class="n">properties</span><span class="o">=</span><span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="s2">"my-custom-id"</span><span class="p">,</span> <span class="s2">"name"</span><span class="p">:</span> <span class="s2">"Test"</span><span class="p">}</span>
+<span class="p">)</span>
+
+<span class="c1"># 使用自动生成的 UUID 创建节点（从属性中省略 'id'）</span>
+<span class="n">node</span> <span class="o">=</span> <span class="n">neptune_store</span><span class="o">.</span><span class="n">create_node</span><span class="p">(</span>
+    <span class="n">labels</span><span class="o">=</span><span class="p">[</span><span class="s2">"Person"</span><span class="p">],</span>
+    <span class="n">properties</span><span class="o">=</span><span class="p">{</span><span class="s2">"name"</span><span class="p">:</span> <span class="s2">"Test"</span><span class="p">}</span>
+<span class="p">)</span>
+
+<span class="c1"># 该 ID 在内部用于 id() 函数调用：</span>
+<span class="c1"># MATCH (n) WHERE id(n) = 'my-custom-id' RETURN n</span>
+</code></pre></div>
+
+<h3>OpenCypher 注意事项</h3>
+<p>Amazon Neptune 数据库的 OpenCypher 实现与 Neo4j 有一些差异：</p>
+<ol>
+<li><strong>没有 <code>shortestPath()</code> 函数</strong>：使用变长路径模式或 <code>allShortestPaths()</code></li>
+<li><strong>标签语法</strong>：使用 <code>labels(n)</code> 函数检索节点标签</li>
+<li><strong>属性更新</strong>：使用 <code>SET n += {props}</code> 实现合并行为</li>
+</ol>
+<p>有关 Amazon Neptune 数据库支持的完整 OpenCypher 规范，请参阅 <a href="https://docs.aws.amazon.com/neptune/latest/userguide/access-graph-opencypher.html">AWS 文档</a>。</p>
+<h3>Amazon Neptune Analytics</h3>
+<p>对于分析型（OLAP）工作负载，如图算法、聚合和大规模遍历，请考虑使用 <a href="https://docs.aws.amazon.com/neptune-analytics/latest/userguide/what-is-neptune-analytics.html">Amazon Neptune Analytics</a>。Neptune Analytics 通过为分析查询提供优化性能来补充 Neptune 数据库，而 Neptune 数据库则针对事务型（OLTP）工作负载进行了优化。</p>
+<h3>性能提示</h3>
+<ol>
+<li><strong>使用批量操作</strong>来创建多个节点/关系</li>
+<li><strong>在查询中使用参数</strong>以启用查询缓存</li>
+<li><strong>使用 <code>LIMIT</code> 子句限制结果集</strong></li>
+</ol></section>
+<section id="sec-12"><h2><span class="pill-num">12</span>小结</h2><p>本 notebook 介绍了 Amazon Neptune 图存储集成：</p>
+<ul>
+<li><strong>IAM 认证</strong>：安全的 AWS SigV4 签名</li>
+<li><strong>CRUD 操作</strong>：完整的节点和关系管理</li>
+<li><strong>OpenCypher 查询</strong>：标准图查询语言</li>
+<li><strong>图分析</strong>：邻居和最短路径算法</li>
+<li><strong>统计与监控</strong>：图指标和状态</li>
+</ul>
+<h3>关键要点</h3>
+<ul>
+<li>Neptune 使用原生 <code>~id</code> 进行元素标识</li>
+<li>生产环境推荐使用 IAM 认证</li>
+<li>Bolt 协议提供高效的二进制查询接口</li>
+<li>Semantica 抽象了 Neptune 特有的语法差异</li>
+</ul>
+<h3>下一步</h3>
+<ul>
+<li><a href="09-graph-store.html">图存储（Neo4j/FalkorDB）</a> - 与其他后端比较</li>
+<li><a href="07-building-knowledge-graphs.html">构建知识图谱</a> - 构建生产级知识图谱</li>
+<li><a href="10-graph-analytics.html">图分析</a> - 高级分析算法</li>
+</ul></section>
+    <nav class="pager"><a class="prev" href="20-triplet-store.html"><span class="dir">← 上一篇</span><span class="ttl">三元组存储</span></a><a class="next" href="01-advanced-extraction.html"><span class="dir">→ 下一篇</span><span class="ttl">高级抽取</span></a></nav>
+  </main>
+</div>
+
+<footer>由 Semantica 官方 Cookbook 生成的中文说明页 · <a href="https://github.com/semantica-agi/semantica">semantica-agi/semantica</a></footer>
+
+</body>
+</html>

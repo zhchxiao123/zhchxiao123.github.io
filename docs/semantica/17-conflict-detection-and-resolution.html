@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>冲突检测与冲突消解 · Semantica Cookbook</title>
+<style>
+
+:root {
+  --bg: #0b0e17;
+  --bg-soft: #10141f;
+  --panel: #ffffff;
+  --panel-alt: #f6f7fb;
+  --border: #e6e8f0;
+  --text: #1a1d29;
+  --text-dim: #5a5f72;
+  --primary: #6366f1;
+  --primary-dark: #4338ca;
+  --accent: #14b8a6;
+  --accent-2: #f59e0b;
+  --code-bg: #0f172a;
+  --code-text: #e2e8f0;
+  --radius: 14px;
+  --shadow: 0 10px 30px -12px rgba(30, 41, 59, 0.18);
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif;
+  color: var(--text);
+  background: var(--panel-alt);
+  line-height: 1.75;
+}
+a { color: var(--primary-dark); }
+
+/* ---------- HERO ---------- */
+.hero {
+  background: radial-gradient(1200px 600px at 15% -10%, rgba(99,102,241,0.55), transparent 60%),
+              radial-gradient(900px 500px at 90% 10%, rgba(20,184,166,0.35), transparent 55%),
+              linear-gradient(180deg, var(--bg) 0%, var(--bg-soft) 100%);
+  color: #f4f5fb;
+  padding: 64px 24px 88px;
+  position: relative;
+  overflow: hidden;
+}
+.hero-inner { max-width: 1080px; margin: 0 auto; }
+.eyebrow {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-size: 12.5px; letter-spacing: 0.12em; text-transform: uppercase;
+  color: #a5b4fc; background: rgba(99,102,241,0.15);
+  border: 1px solid rgba(165,180,252,0.35);
+  padding: 6px 14px; border-radius: 999px; margin-bottom: 22px;
+}
+.hero h1 { font-size: 40px; line-height: 1.2; margin: 0 0 16px; font-weight: 800; letter-spacing: -0.01em; }
+.hero p.lead { font-size: 17px; color: #cbd0e6; max-width: 720px; margin: 0 0 28px; }
+.hero-badges { display: flex; flex-wrap: wrap; gap: 10px; }
+.badge {
+  font-size: 13px; background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.14); color: #e2e4f5;
+  padding: 6px 12px; border-radius: 999px;
+}
+.hero a.home-link {
+  display: inline-flex; align-items: center; gap: 6px;
+  color: #a5b4fc; text-decoration: none; font-size: 13.5px; margin-bottom: 20px;
+}
+.hero a.home-link:hover { color: #fff; }
+
+/* ---------- LAYOUT ---------- */
+.layout {
+  max-width: 1200px; margin: -48px auto 0; padding: 0 24px 60px;
+  display: grid; grid-template-columns: 240px 1fr; gap: 32px; position: relative;
+}
+.toc {
+  position: sticky; top: 24px; align-self: start;
+  background: var(--panel); border: 1px solid var(--border);
+  border-radius: var(--radius); box-shadow: var(--shadow);
+  padding: 18px 16px; font-size: 13.5px;
+  max-height: calc(100vh - 48px); overflow-y: auto;
+}
+.toc h4 { margin: 0 0 10px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-dim); }
+.toc a { display: block; padding: 6px 8px; border-radius: 8px; color: var(--text-dim); text-decoration: none; margin-bottom: 2px; }
+.toc a:hover { background: var(--panel-alt); color: var(--text); }
+.toc a.active { background: var(--panel-alt); color: var(--primary-dark); font-weight: 600; }
+
+main { min-width: 0; }
+
+section {
+  background: var(--panel); border: 1px solid var(--border);
+  border-radius: var(--radius); box-shadow: var(--shadow);
+  padding: 34px 40px; margin-bottom: 24px; scroll-margin-top: 20px;
+}
+section h2 { font-size: 23px; margin: 0 0 16px; display: flex; align-items: center; gap: 10px; }
+section h2 .pill-num {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 30px; height: 30px; border-radius: 9px; flex-shrink: 0;
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  color: #fff; font-size: 14px; font-weight: 700;
+}
+h3 { font-size: 17px; margin: 26px 0 10px; }
+h4 { font-size: 15px; margin: 20px 0 8px; }
+p { margin: 0 0 14px; }
+ul, ol { margin: 0 0 16px; padding-left: 22px; }
+li { margin-bottom: 6px; }
+li > ul, li > ol { margin-top: 6px; }
+strong { color: var(--text); }
+blockquote {
+  margin: 0 0 16px; padding: 12px 18px;
+  border-left: 4px solid var(--accent); background: var(--panel-alt);
+  border-radius: 0 8px 8px 0; color: var(--text-dim);
+}
+blockquote p { margin: 0; }
+
+/* tables */
+table { width: 100%; border-collapse: collapse; font-size: 13.8px; margin: 8px 0 18px; }
+th {
+  text-align: left; font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em;
+  color: var(--text-dim); border-bottom: 1px solid var(--border); padding: 8px 10px;
+}
+td { padding: 10px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+tr:last-child td { border-bottom: none; }
+
+/* inline code */
+code {
+  background: #eef0fb; color: var(--primary-dark);
+  padding: 2px 7px; border-radius: 6px;
+  font-family: "SFMono-Regular", Menlo, Consolas, monospace; font-size: 13px;
+}
+
+/* code blocks */
+pre {
+  background: var(--code-bg); color: var(--code-text);
+  padding: 16px 18px; border-radius: 10px; overflow-x: auto;
+  font-size: 13px; line-height: 1.6;
+  font-family: "SFMono-Regular", Menlo, Consolas, monospace;
+  margin: 10px 0 18px;
+}
+pre code { background: transparent; color: inherit; padding: 0; border-radius: 0; font-size: 13px; }
+.codehilite { background: var(--code-bg); border-radius: 10px; overflow-x: auto; margin: 10px 0 18px; }
+.codehilite pre { margin: 0; padding: 16px 18px; background: transparent; }
+
+/* pager */
+.pager { display: flex; justify-content: space-between; gap: 16px; margin-top: 8px; }
+.pager a {
+  flex: 1; display: flex; flex-direction: column; gap: 4px;
+  padding: 16px 20px; border-radius: var(--radius); text-decoration: none;
+  background: var(--panel); border: 1px solid var(--border); box-shadow: var(--shadow);
+  transition: transform 0.15s, border-color 0.15s;
+}
+.pager a:hover { transform: translateY(-2px); border-color: var(--primary); }
+.pager a .dir { font-size: 12px; color: var(--text-dim); }
+.pager a .ttl { font-size: 14.5px; font-weight: 700; color: var(--text); }
+.pager a.next { text-align: right; }
+.pager a.disabled { opacity: 0.4; pointer-events: none; }
+
+footer { text-align: center; color: var(--text-dim); font-size: 13px; padding: 20px 0 40px; }
+footer a { color: var(--text-dim); }
+
+@media (max-width: 900px) {
+  .layout { grid-template-columns: 1fr; }
+  .toc { position: static; max-height: none; }
+  section { padding: 26px 22px; }
+  .hero h1 { font-size: 30px; }
+  .pager { flex-direction: column; }
+}
+
+pre { line-height: 125%; }
+td.linenos .normal { color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px; }
+span.linenos { color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px; }
+td.linenos .special { color: #000000; background-color: #ffffc0; padding-left: 5px; padding-right: 5px; }
+span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 5px; padding-right: 5px; }
+.codehilite .hll { background-color: #49483e }
+.codehilite { background: #272822; color: #F8F8F2 }
+.codehilite .c { color: #959077 } /* Comment */
+.codehilite .err { color: #ED007E; background-color: #1E0010 } /* Error */
+.codehilite .esc { color: #F8F8F2 } /* Escape */
+.codehilite .g { color: #F8F8F2 } /* Generic */
+.codehilite .k { color: #66D9EF } /* Keyword */
+.codehilite .l { color: #AE81FF } /* Literal */
+.codehilite .n { color: #F8F8F2 } /* Name */
+.codehilite .o { color: #FF4689 } /* Operator */
+.codehilite .x { color: #F8F8F2 } /* Other */
+.codehilite .p { color: #F8F8F2 } /* Punctuation */
+.codehilite .ch { color: #959077 } /* Comment.Hashbang */
+.codehilite .cm { color: #959077 } /* Comment.Multiline */
+.codehilite .cp { color: #959077 } /* Comment.Preproc */
+.codehilite .cpf { color: #959077 } /* Comment.PreprocFile */
+.codehilite .c1 { color: #959077 } /* Comment.Single */
+.codehilite .cs { color: #959077 } /* Comment.Special */
+.codehilite .gd { color: #FF4689 } /* Generic.Deleted */
+.codehilite .ge { color: #F8F8F2; font-style: italic } /* Generic.Emph */
+.codehilite .ges { color: #F8F8F2; font-weight: bold; font-style: italic } /* Generic.EmphStrong */
+.codehilite .gr { color: #FF4689 } /* Generic.Error */
+.codehilite .gh { color: #F8F8F2 } /* Generic.Heading */
+.codehilite .gi { color: #A6E22E } /* Generic.Inserted */
+.codehilite .go { color: #66D9EF } /* Generic.Output */
+.codehilite .gp { color: #FF4689; font-weight: bold } /* Generic.Prompt */
+.codehilite .gs { color: #F8F8F2; font-weight: bold } /* Generic.Strong */
+.codehilite .gu { color: #959077 } /* Generic.Subheading */
+.codehilite .gt { color: #66D9EF } /* Generic.Traceback */
+.codehilite .kc { color: #66D9EF } /* Keyword.Constant */
+.codehilite .kd { color: #66D9EF } /* Keyword.Declaration */
+.codehilite .kn { color: #FF4689 } /* Keyword.Namespace */
+.codehilite .kp { color: #66D9EF } /* Keyword.Pseudo */
+.codehilite .kr { color: #66D9EF } /* Keyword.Reserved */
+.codehilite .kt { color: #66D9EF } /* Keyword.Type */
+.codehilite .ld { color: #E6DB74 } /* Literal.Date */
+.codehilite .m { color: #AE81FF } /* Literal.Number */
+.codehilite .s { color: #E6DB74 } /* Literal.String */
+.codehilite .na { color: #A6E22E } /* Name.Attribute */
+.codehilite .nb { color: #A6E22E } /* Name.Builtin */
+.codehilite .nc { color: #A6E22E } /* Name.Class */
+.codehilite .no { color: #66D9EF } /* Name.Constant */
+.codehilite .nd { color: #A6E22E } /* Name.Decorator */
+.codehilite .ni { color: #F8F8F2 } /* Name.Entity */
+.codehilite .ne { color: #A6E22E } /* Name.Exception */
+.codehilite .nf { color: #A6E22E } /* Name.Function */
+.codehilite .nl { color: #F8F8F2 } /* Name.Label */
+.codehilite .nn { color: #F8F8F2 } /* Name.Namespace */
+.codehilite .nx { color: #A6E22E } /* Name.Other */
+.codehilite .py { color: #F8F8F2 } /* Name.Property */
+.codehilite .nt { color: #FF4689 } /* Name.Tag */
+.codehilite .nv { color: #F8F8F2 } /* Name.Variable */
+.codehilite .ow { color: #FF4689 } /* Operator.Word */
+.codehilite .pm { color: #F8F8F2 } /* Punctuation.Marker */
+.codehilite .w { color: #F8F8F2 } /* Text.Whitespace */
+.codehilite .mb { color: #AE81FF } /* Literal.Number.Bin */
+.codehilite .mf { color: #AE81FF } /* Literal.Number.Float */
+.codehilite .mh { color: #AE81FF } /* Literal.Number.Hex */
+.codehilite .mi { color: #AE81FF } /* Literal.Number.Integer */
+.codehilite .mo { color: #AE81FF } /* Literal.Number.Oct */
+.codehilite .sa { color: #E6DB74 } /* Literal.String.Affix */
+.codehilite .sb { color: #E6DB74 } /* Literal.String.Backtick */
+.codehilite .sc { color: #E6DB74 } /* Literal.String.Char */
+.codehilite .dl { color: #E6DB74 } /* Literal.String.Delimiter */
+.codehilite .sd { color: #E6DB74 } /* Literal.String.Doc */
+.codehilite .s2 { color: #E6DB74 } /* Literal.String.Double */
+.codehilite .se { color: #AE81FF } /* Literal.String.Escape */
+.codehilite .sh { color: #E6DB74 } /* Literal.String.Heredoc */
+.codehilite .si { color: #E6DB74 } /* Literal.String.Interpol */
+.codehilite .sx { color: #E6DB74 } /* Literal.String.Other */
+.codehilite .sr { color: #E6DB74 } /* Literal.String.Regex */
+.codehilite .s1 { color: #E6DB74 } /* Literal.String.Single */
+.codehilite .ss { color: #E6DB74 } /* Literal.String.Symbol */
+.codehilite .bp { color: #A6E22E } /* Name.Builtin.Pseudo */
+.codehilite .fm { color: #A6E22E } /* Name.Function.Magic */
+.codehilite .vc { color: #F8F8F2 } /* Name.Variable.Class */
+.codehilite .vg { color: #F8F8F2 } /* Name.Variable.Global */
+.codehilite .vi { color: #F8F8F2 } /* Name.Variable.Instance */
+.codehilite .vm { color: #F8F8F2 } /* Name.Variable.Magic */
+.codehilite .il { color: #AE81FF } /* Literal.Number.Integer.Long */
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="hero-inner">
+    <a class="home-link" href="index.html">← 返回 Semantica 专题首页</a>
+    <span class="eyebrow">🌱 SEMANTICA · COOKBOOK · 入门系列</span>
+    <h1>冲突检测与冲突消解</h1>
+    <p class="lead">Semantica 官方 Cookbook 中文翻译 · 第 17 / 37 篇</p>
+    <div class="hero-badges">
+      <span class="badge">📦 semantica</span>
+      <span class="badge">🕸️ 知识图谱</span>
+      <span class="badge">🔎 GraphRAG</span>
+    </div>
+  </div>
+</header>
+
+<div class="layout">
+  <nav class="toc">
+    <h4>目录</h4>
+    <a href="#sec-1">概览</a>
+<a href="#sec-2">安装</a>
+<a href="#sec-3">步骤 1：模拟多来源数据</a>
+<a href="#sec-4">步骤 2：注册并追踪来源</a>
+<a href="#sec-5">步骤 3：检测冲突</a>
+<a href="#sec-6">步骤 4：分析冲突模式</a>
+<a href="#sec-7">步骤 5：消解冲突</a>
+<a href="#sec-8">步骤 6：生成调查指南</a>
+<a href="#sec-9">结论</a>
+  </nav>
+
+  <main>
+    <section id="sec-1"><h2><span class="pill-num">1</span>概览</h2><p>在现代数据流水线中，尤其是构建知识图谱的流水线，数据往往从多个异构来源（例如内部数据库、第三方 API、网页抓取）摄取。差异不可避免。</p>
+<p><strong>Semantica 冲突消解模块</strong>（<code>semantica.conflicts</code>）为管理这些数据不一致提供了健壮的框架。它旨在确保你的下游应用只消费高质量、已协调一致的数据。</p>
+<h3>什么算作"冲突"？</h3>
+<ul>
+<li>当<strong>同一实体的多条记录</strong>在某个字段上不一致时，就会发生冲突。</li>
+<li>Semantica 通常假设每条记录是一个字典，包含：</li>
+<li><code>id</code>（或 <code>entity_id</code>）：所描述实体的稳定标识符</li>
+<li>一个或多个属性（例如 <code>name</code>、<code>birth_date</code>、<code>department</code>）</li>
+<li><code>source</code>：值的来源（db、scrape、api、file）</li>
+<li>可选的 <code>timestamp</code>：观察到该值的时间</li>
+<li>该模块是来源感知的：它可以记录<strong>哪些来源贡献了哪些值</strong>，然后使用投票或可信度等策略进行消解。</li>
+</ul>
+<h3>实用 API 说明（避免常见的不匹配）</h3>
+<ul>
+<li>当你只想检查一个字段时，使用 <code>ConflictDetector.detect_value_conflicts(entities, property_name=...)</code>。</li>
+<li>当你想要更广泛的扫描（值/类型/时序等）时，使用 <code>ConflictDetector.detect_conflicts(entities)</code>。</li>
+<li>如果你从知识图谱字典（通过 <code>GraphBuilder</code> 构建）开始，请通过 <code>kg.get("entities", [])</code> 提取实体。</li>
+</ul>
+<h3>关键能力</h3>
+<ol>
+<li>
+<p><strong>多维冲突检测</strong></p>
+<ul>
+<li><strong>值冲突</strong>：同一属性的不同值（例如 <code>"Google"</code> 与 <code>"Google Inc."</code>）。</li>
+<li><strong>类型冲突</strong>：数据类型不匹配（例如字符串与整数）。</li>
+<li><strong>时序冲突</strong>：时间顺序不一致（例如 <code>start_date</code> 晚于 <code>end_date</code>）。</li>
+</ul>
+</li>
+<li>
+<p><strong>溯源与来源追踪</strong></p>
+<ul>
+<li><strong>细粒度追踪</strong>：将每个属性值追溯到其具体的来源文档、页面或 API 调用。</li>
+<li><strong>可信度评分</strong>：为来源分配信任分数（例如内部 HR 数据库为 <code>0.95</code>，网页抓取为 <code>0.60</code>）。</li>
+</ul>
+</li>
+<li>
+<p><strong>自动化消解策略</strong></p>
+<ul>
+<li><strong>投票</strong>：少数服从多数（适用于多个等权重的来源）。</li>
+<li><strong>可信度加权</strong>：来自更高信任来源的值覆盖其他值。</li>
+<li><strong>时效性</strong>：最新的数据点胜出。</li>
+<li><strong>专家评审</strong>：标记复杂冲突以供人工介入。</li>
+</ul>
+</li>
+<li>
+<p><strong>调查与审计</strong></p>
+<ul>
+<li><strong>调查指南</strong>：自动生成分步指南，供人类分析师解决棘手的冲突。</li>
+<li><strong>审计轨迹</strong>：记录每个冲突是如何被消解的，以满足合规要求。</li>
+</ul>
+</li>
+</ol></section>
+<section id="sec-2"><h2><span class="pill-num">2</span>安装</h2><p>确保你的环境中已安装 Semantica：</p>
+<div class="codehilite"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>semantica
+</code></pre></div>
+
+<ul>
+<li>如果你在 Semantica 仓库内运行此 notebook，建议使用可编辑安装（这样代码的改动会立即生效）：</li>
+<li><code>pip install -e .</code></li>
+<li>如果你使用托管的 notebook 环境，<code>%pip install semantica</code> 通常比 <code>!pip install ...</code> 更可靠，因为它会安装到当前内核中。</li>
+</ul>
+<div class="codehilite"><pre><span></span><code><span class="err">!</span><span class="n">pip</span> <span class="n">install</span> <span class="o">-</span><span class="n">q</span> <span class="n">semantica</span>
+</code></pre></div>
+
+<div class="codehilite"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
+</code></pre></div></section>
+<section id="sec-3"><h2><span class="pill-num">3</span>步骤 1：模拟多来源数据</h2><p>为了演示该框架，我们将模拟一个涉及员工数据的真实场景。</p>
+<p><strong>场景：</strong>
+我们从三个不同的来源收到了<strong>员工 001</strong> 的记录：</p>
+<ul>
+<li><strong>HR 数据库</strong>：高度可信的内部来源。</li>
+<li><strong>LinkedIn 抓取</strong>：不太可靠的外部来源。</li>
+<li><strong>公共目录</strong>：过时的公共 API。</li>
+</ul>
+<p><strong>记录结构（Semantica 所期望的）：</strong></p>
+<ul>
+<li>每条记录是一个描述同一实体（<code>id</code>：<code>emp_001</code>）的字典。</li>
+<li>每条记录包含一个 <code>source</code> 键，以便将冲突归因到具体来源。</li>
+<li><code>timestamp</code> 让你可以应用基于时间的消解策略（例如最新者胜出）。</li>
+</ul>
+<p><strong>冲突：</strong>
+*   <strong><code>birth_date</code></strong>：公共目录列出了不同的年份。
+*   <strong><code>department</code></strong>：LinkedIn 使用了更具体的名称（"Software Engineering"），而 HR 数据库中是通用的 "Engineering"。</p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 1. 定义来源元数据</span>
+<span class="n">sources_metadata</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"hr_db"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"credibility"</span><span class="p">:</span> <span class="mf">0.95</span><span class="p">,</span> <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"internal_database"</span><span class="p">},</span>
+    <span class="s2">"linkedin_scrape"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"credibility"</span><span class="p">:</span> <span class="mf">0.60</span><span class="p">,</span> <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"web_scrape"</span><span class="p">},</span>
+    <span class="s2">"public_dir"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"credibility"</span><span class="p">:</span> <span class="mf">0.40</span><span class="p">,</span> <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"public_api"</span><span class="p">}</span>
+<span class="p">}</span>
+
+<span class="c1"># 2. 定义来自这些来源的实体记录</span>
+<span class="n">entity_records</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="p">{</span>
+        <span class="s2">"id"</span><span class="p">:</span> <span class="s2">"emp_001"</span><span class="p">,</span>
+        <span class="s2">"name"</span><span class="p">:</span> <span class="s2">"John Doe"</span><span class="p">,</span>
+        <span class="s2">"birth_date"</span><span class="p">:</span> <span class="s2">"1980-05-15"</span><span class="p">,</span>
+        <span class="s2">"department"</span><span class="p">:</span> <span class="s2">"Engineering"</span><span class="p">,</span>
+        <span class="s2">"source"</span><span class="p">:</span> <span class="s2">"hr_db"</span><span class="p">,</span>
+        <span class="s2">"timestamp"</span><span class="p">:</span> <span class="s2">"2023-01-01T10:00:00"</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s2">"id"</span><span class="p">:</span> <span class="s2">"emp_001"</span><span class="p">,</span>
+        <span class="s2">"name"</span><span class="p">:</span> <span class="s2">"Jonathan Doe"</span><span class="p">,</span>
+        <span class="s2">"birth_date"</span><span class="p">:</span> <span class="s2">"1980-05-15"</span><span class="p">,</span>
+        <span class="s2">"department"</span><span class="p">:</span> <span class="s2">"Software Engineering"</span><span class="p">,</span>
+        <span class="s2">"source"</span><span class="p">:</span> <span class="s2">"linkedin_scrape"</span><span class="p">,</span>
+        <span class="s2">"timestamp"</span><span class="p">:</span> <span class="s2">"2023-06-15T14:30:00"</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s2">"id"</span><span class="p">:</span> <span class="s2">"emp_001"</span><span class="p">,</span>
+        <span class="s2">"name"</span><span class="p">:</span> <span class="s2">"John Doe"</span><span class="p">,</span>
+        <span class="s2">"birth_date"</span><span class="p">:</span> <span class="s2">"1982-05-15"</span><span class="p">,</span>  <span class="c1"># 冲突：年份不同</span>
+        <span class="s2">"department"</span><span class="p">:</span> <span class="s2">"Engineering"</span><span class="p">,</span>
+        <span class="s2">"source"</span><span class="p">:</span> <span class="s2">"public_dir"</span><span class="p">,</span>
+        <span class="s2">"timestamp"</span><span class="p">:</span> <span class="s2">"2022-12-01T09:00:00"</span>
+    <span class="p">}</span>
+<span class="p">]</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Loaded </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">entity_records</span><span class="p">)</span><span class="si">}</span><span class="s2"> records for Employee 001"</span><span class="p">)</span>
+</code></pre></div></section>
+<section id="sec-4"><h2><span class="pill-num">4</span>步骤 2：注册并追踪来源</h2><p>在能够基于信任有效消解冲突之前，我们必须使用 <code>SourceTracker</code> 注册我们的来源。</p>
+<p><code>SourceTracker</code> 充当以下内容的中央注册表：</p>
+<ul>
+<li><strong>可信度分数</strong>：你对来源的信任程度。</li>
+<li><strong>元数据</strong>：有用的上下文（例如来源类型、记录系统与抓取）。</li>
+</ul>
+<p><strong>如何看待可信度分数：</strong></p>
+<ul>
+<li>将分数用作<em>相对排序</em>（确切的小数不如排名重要）。</li>
+<li>从简单开始：<code>internal_db &gt; vendor_api &gt; web_scrape</code>。</li>
+<li>之后使用分析重新审视分数（例如"哪些来源经常出错？"）。</li>
+</ul>
+<p>我们遍历模拟的来源并注册它们。</p>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">semantica.conflicts</span><span class="w"> </span><span class="kn">import</span> <span class="n">SourceTracker</span>
+
+<span class="n">source_tracker</span> <span class="o">=</span> <span class="n">SourceTracker</span><span class="p">()</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Registering sources..."</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">source_id</span><span class="p">,</span> <span class="n">metadata</span> <span class="ow">in</span> <span class="n">sources_metadata</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="n">source_tracker</span><span class="o">.</span><span class="n">register_source</span><span class="p">(</span>
+        <span class="n">source_id</span><span class="o">=</span><span class="n">source_id</span><span class="p">,</span>
+        <span class="n">source_type</span><span class="o">=</span><span class="n">metadata</span><span class="p">[</span><span class="s2">"type"</span><span class="p">],</span>
+        <span class="n">credibility_score</span><span class="o">=</span><span class="n">metadata</span><span class="p">[</span><span class="s2">"credibility"</span><span class="p">]</span>
+    <span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  - Registered '</span><span class="si">{</span><span class="n">source_id</span><span class="si">}</span><span class="s2">' with credibility </span><span class="si">{</span><span class="n">metadata</span><span class="p">[</span><span class="s1">'credibility'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</code></pre></div></section>
+<section id="sec-5"><h2><span class="pill-num">5</span>步骤 3：检测冲突</h2><p>我们使用 <code>ConflictDetector</code> 扫描记录以发现差异。</p>
+<p>该检测器很灵活，可以配置为检查：</p>
+<ul>
+<li><strong>特定属性</strong>：只检查关键字段，如 <code>birth_date</code>。</li>
+<li><strong>实体级扫描</strong>：扫描某个实体的多个（或全部）属性。</li>
+</ul>
+<p><strong>你会得到什么：</strong></p>
+<ul>
+<li>一个 <code>Conflict</code> 对象列表。</li>
+<li>你通常会检查的有用字段：</li>
+<li><code>conflict_type</code>（例如 <code>value_conflict</code>）</li>
+<li><code>entity_id</code>、<code>property_name</code></li>
+<li><code>conflicting_values</code> 和 <code>sources</code></li>
+<li><code>severity</code> 和 <code>confidence</code></li>
+</ul>
+<p>这里，我们显式检查 <code>birth_date</code> 和 <code>department</code>。</p>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">semantica.conflicts</span><span class="w"> </span><span class="kn">import</span> <span class="n">ConflictDetector</span>
+
+<span class="c1"># 使用我们已填充的来源追踪器初始化检测器</span>
+<span class="n">detector</span> <span class="o">=</span> <span class="n">ConflictDetector</span><span class="p">(</span><span class="n">source_tracker</span><span class="o">=</span><span class="n">source_tracker</span><span class="p">)</span>
+
+<span class="n">conflicts</span> <span class="o">=</span> <span class="p">[]</span>
+
+<span class="c1"># 1. 检查 birth_date</span>
+<span class="n">dob_conflicts</span> <span class="o">=</span> <span class="n">detector</span><span class="o">.</span><span class="n">detect_value_conflicts</span><span class="p">(</span><span class="n">entity_records</span><span class="p">,</span> <span class="s2">"birth_date"</span><span class="p">)</span>
+<span class="n">conflicts</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">dob_conflicts</span><span class="p">)</span>
+
+<span class="c1"># 2. 检查 department</span>
+<span class="n">dept_conflicts</span> <span class="o">=</span> <span class="n">detector</span><span class="o">.</span><span class="n">detect_value_conflicts</span><span class="p">(</span><span class="n">entity_records</span><span class="p">,</span> <span class="s2">"department"</span><span class="p">)</span>
+<span class="n">conflicts</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">dept_conflicts</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Detected </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">conflicts</span><span class="p">)</span><span class="si">}</span><span class="s2"> conflicts:"</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">conflict</span> <span class="ow">in</span> <span class="n">conflicts</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"- </span><span class="si">{</span><span class="n">conflict</span><span class="o">.</span><span class="n">conflict_type</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">conflict</span><span class="o">.</span><span class="n">property_name</span><span class="si">}</span><span class="s2"> for </span><span class="si">{</span><span class="n">conflict</span><span class="o">.</span><span class="n">entity_id</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  Values: </span><span class="si">{</span><span class="n">conflict</span><span class="o">.</span><span class="n">conflicting_values</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  Severity: </span><span class="si">{</span><span class="n">conflict</span><span class="o">.</span><span class="n">severity</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"--- "</span><span class="p">)</span>
+</code></pre></div></section>
+<section id="sec-6"><h2><span class="pill-num">6</span>步骤 4：分析冲突模式</h2><p>在处理大型数据集时，单个冲突不如系统性模式重要。<code>ConflictAnalyzer</code> 帮助回答如下问题：</p>
+<ul>
+<li>"是否某个特定来源导致了大多数冲突？"</li>
+<li>"冲突是否集中在某个特定的实体类型或属性上？"</li>
+<li>"冲突严重程度和冲突类型的分布如何？"</li>
+</ul>
+<p><strong>如何在流水线中使用：</strong></p>
+<ul>
+<li>运行分析以识别有噪声的来源。</li>
+<li>使用结果调整可信度分数（步骤 2）或优化摄取/清洗规则。</li>
+<li>随时间追踪趋势，以捕捉上游系统的回归。</li>
+</ul>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">semantica.conflicts</span><span class="w"> </span><span class="kn">import</span> <span class="n">ConflictAnalyzer</span>
+
+<span class="n">analyzer</span> <span class="o">=</span> <span class="n">ConflictAnalyzer</span><span class="p">()</span>
+<span class="n">analysis</span> <span class="o">=</span> <span class="n">analyzer</span><span class="o">.</span><span class="n">analyze_conflicts</span><span class="p">(</span><span class="n">conflicts</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Conflict Analysis Summary:"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Total Conflicts: </span><span class="si">{</span><span class="n">analysis</span><span class="p">[</span><span class="s1">'total_conflicts'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"By Type: </span><span class="si">{</span><span class="n">analysis</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'by_type'</span><span class="p">,</span><span class="w"> </span><span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'counts'</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"By Severity: </span><span class="si">{</span><span class="n">analysis</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'by_severity'</span><span class="p">,</span><span class="w"> </span><span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'counts'</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</code></pre></div></section>
+<section id="sec-7"><h2><span class="pill-num">7</span>步骤 5：消解冲突</h2><p>这是决定信任哪个值的关键步骤。Semantica 提供灵活的消解策略。</p>
+<h3>策略 A：投票（少数服从多数）</h3>
+<p>该策略选择出现最频繁的值。它很简单，但将所有来源视为平等。</p>
+<ul>
+<li>当你拥有许多质量相近的独立来源时最适用。</li>
+<li>如果你有一个应始终占主导地位的单一记录系统，则不太适用。</li>
+</ul>
+<h3>策略 B：可信度加权</h3>
+<p>该策略根据每个值来源的 <code>credibility</code> 计算加权分数。</p>
+<p><strong>示例：</strong>
+*   <code>hr_db</code>（0.95）说 "1980-05-15"
+*   <code>public_dir</code>（0.40）说 "1982-05-15"</p>
+<p>即使多个低质量来源就错误日期达成一致，高可信度来源也很可能胜出。</p>
+<p><strong>消解器返回什么：</strong></p>
+<ul>
+<li>一个消解结果列表，其中每一项通常包含：</li>
+<li>是否已消解</li>
+<li>选定的值（<code>resolved_value</code>）</li>
+<li>一个置信度分数</li>
+<li>元数据（如属性名）以支持审计轨迹</li>
+</ul>
+<p>运行下一个单元格，比较投票与可信度加权的结果。</p>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">semantica.conflicts</span><span class="w"> </span><span class="kn">import</span> <span class="n">ConflictResolver</span>
+
+<span class="n">resolver</span> <span class="o">=</span> <span class="n">ConflictResolver</span><span class="p">()</span>
+
+<span class="c1"># 关键：将来源追踪器关联到消解器。</span>
+<span class="c1"># 这使消解器能够查找我们在步骤 2 中注册的可信度分数。</span>
+<span class="n">resolver</span><span class="o">.</span><span class="n">set_source_tracker</span><span class="p">(</span><span class="n">source_tracker</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">"--- Resolution: Voting ---"</span><span class="p">)</span>
+<span class="n">voting_results</span> <span class="o">=</span> <span class="n">resolver</span><span class="o">.</span><span class="n">resolve_conflicts</span><span class="p">(</span><span class="n">conflicts</span><span class="p">,</span> <span class="n">strategy</span><span class="o">=</span><span class="s2">"voting"</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">res</span> <span class="ow">in</span> <span class="n">voting_results</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Property: </span><span class="si">{</span><span class="n">res</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'property_name'</span><span class="p">)</span><span class="si">:</span><span class="s2">&lt;15</span><span class="si">}</span><span class="s2"> | Resolved Value: </span><span class="si">{</span><span class="n">res</span><span class="o">.</span><span class="n">resolved_value</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">--- Resolution: Credibility Weighted ---"</span><span class="p">)</span>
+<span class="c1"># 注意 HR 数据库的值如何因更高的可信度而被优先选择</span>
+<span class="n">credibility_results</span> <span class="o">=</span> <span class="n">resolver</span><span class="o">.</span><span class="n">resolve_conflicts</span><span class="p">(</span><span class="n">conflicts</span><span class="p">,</span> <span class="n">strategy</span><span class="o">=</span><span class="s2">"credibility_weighted"</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">res</span> <span class="ow">in</span> <span class="n">credibility_results</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Property: </span><span class="si">{</span><span class="n">res</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'property_name'</span><span class="p">)</span><span class="si">:</span><span class="s2">&lt;15</span><span class="si">}</span><span class="s2"> | Resolved Value: </span><span class="si">{</span><span class="n">res</span><span class="o">.</span><span class="n">resolved_value</span><span class="si">}</span><span class="s2"> (Confidence: </span><span class="si">{</span><span class="n">res</span><span class="o">.</span><span class="n">confidence</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">)"</span><span class="p">)</span>
+</code></pre></div></section>
+<section id="sec-8"><h2><span class="pill-num">8</span>步骤 6：生成调查指南</h2><p>并非所有冲突都能自动消解。高风险或低置信度的消解需要人工评审。</p>
+<p><code>InvestigationGuideGenerator</code> 为分析师生成结构化的"行动计划"，详细说明：</p>
+<ul>
+<li><strong>什么</strong>处于冲突中（实体 + 字段 + 相互竞争的值）。</li>
+<li><strong>谁</strong>参与其中（哪些来源产生了哪些值）。</li>
+<li><strong>如何</strong>验证正确的数据（分析师可以遵循的可操作步骤）。</li>
+</ul>
+<p><strong>何时生成指南：</strong></p>
+<ul>
+<li>低置信度的消解。</li>
+<li>关键字段上的冲突（身份、法定名称、合规属性）。</li>
+<li>任何你想在写回图谱之前设置人工介入检查点的时刻。</li>
+</ul>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">semantica.conflicts</span><span class="w"> </span><span class="kn">import</span> <span class="n">InvestigationGuideGenerator</span>
+
+<span class="n">guide_generator</span> <span class="o">=</span> <span class="n">InvestigationGuideGenerator</span><span class="p">()</span>
+
+<span class="c1"># 为第一个冲突（birth_date）生成指南</span>
+<span class="n">guide</span> <span class="o">=</span> <span class="n">guide_generator</span><span class="o">.</span><span class="n">generate_guide</span><span class="p">(</span><span class="n">conflicts</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"=== </span><span class="si">{</span><span class="n">guide</span><span class="o">.</span><span class="n">title</span><span class="si">}</span><span class="s2"> ==="</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Summary: </span><span class="si">{</span><span class="n">guide</span><span class="o">.</span><span class="n">conflict_summary</span><span class="si">}</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Investigation Steps:"</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">step</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">guide</span><span class="o">.</span><span class="n">investigation_steps</span><span class="p">,</span> <span class="mi">1</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">. </span><span class="si">{</span><span class="n">step</span><span class="o">.</span><span class="n">description</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"   Action: </span><span class="si">{</span><span class="n">step</span><span class="o">.</span><span class="n">action</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Recommended Actions:"</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">action</span> <span class="ow">in</span> <span class="n">guide</span><span class="o">.</span><span class="n">recommended_actions</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"[ ] </span><span class="si">{</span><span class="n">action</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</code></pre></div></section>
+<section id="sec-9"><h2><span class="pill-num">9</span>结论</h2><p>你已经使用 Semantica 成功构建了一个冲突消解流水线！</p>
+<p><strong>我们取得的成果回顾：</strong></p>
+<ul>
+<li><strong>模拟</strong>了带有真实分歧的多来源实体记录。</li>
+<li><strong>注册</strong>了带可信度分数的来源，以建立信任层级。</li>
+<li><strong>检测</strong>了特定属性的值冲突。</li>
+<li><strong>分析</strong>了冲突，以了解按类型和严重程度的分布。</li>
+<li>使用投票和可信度加权策略<strong>消解</strong>了冲突。</li>
+<li><strong>生成</strong>了调查指南以支持人工评审。</li>
+</ul>
+<p><strong>在真实项目中的建议下一步：</strong></p>
+<ul>
+<li>与你的摄取层集成，使每个抽取出的值都包含 <code>source</code> 和（理想情况下）<code>timestamp</code>。</li>
+<li>使用 <code>ConflictDetector.detect_conflicts(...)</code> 将检测扩展到值冲突之外。</li>
+<li>存储消解结果和指南输出，为下游消费者构建审计轨迹。</li>
+</ul></section>
+    <nav class="pager"><a class="prev" href="16-visualization.html"><span class="dir">← 上一篇</span><span class="ttl">可视化</span></a><a class="next" href="18-deduplication.html"><span class="dir">→ 下一篇</span><span class="ttl">去重</span></a></nav>
+  </main>
+</div>
+
+<footer>由 Semantica 官方 Cookbook 生成的中文说明页 · <a href="https://github.com/semantica-agi/semantica">semantica-agi/semantica</a></footer>
+
+</body>
+</html>
