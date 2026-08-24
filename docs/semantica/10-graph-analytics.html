@@ -136,8 +136,16 @@ pre {
   margin: 10px 0 18px;
 }
 pre code { background: transparent; color: inherit; padding: 0; border-radius: 0; font-size: 13px; }
-.codehilite { background: var(--code-bg); border-radius: 10px; overflow-x: auto; margin: 10px 0 18px; }
+.codehilite { background: var(--code-bg); border-radius: 10px; overflow-x: auto; margin: 10px 0 18px; position: relative; }
 .codehilite pre { margin: 0; padding: 16px 18px; background: transparent; }
+.copy-btn {
+  position: absolute; top: 8px; right: 8px;
+  background: rgba(255,255,255,0.08); color: #cbd0e6;
+  border: 1px solid rgba(255,255,255,0.18); border-radius: 6px;
+  padding: 3px 10px; font-size: 12px; cursor: pointer;
+  font-family: inherit; opacity: 0.7; transition: opacity 0.15s, background 0.15s;
+}
+.copy-btn:hover { opacity: 1; background: rgba(255,255,255,0.16); }
 
 /* pager */
 .pager { display: flex; justify-content: space-between; gap: 16px; margin-top: 8px; }
@@ -297,28 +305,35 @@ pip<span class="w"> </span>install<span class="w"> </span>semantica<span class="
 
 <hr /></section>
 <section id="sec-3"><h2><span class="pill-num">3</span>步骤 1：图分析</h2><p>分析图结构和属性。</p>
-<div class="codehilite"><pre><span></span><code><span class="err">!</span><span class="n">pip</span> <span class="n">install</span> <span class="n">semantica</span>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 安装 Semantica</span>
+<span class="err">!</span><span class="n">pip</span> <span class="n">install</span> <span class="n">semantica</span>
 </code></pre></div>
 
-<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">semantica.kg</span><span class="w"> </span><span class="kn">import</span> <span class="n">GraphBuilder</span><span class="p">,</span> <span class="n">GraphAnalyzer</span>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 构建示例知识图谱并计算图度量</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">semantica.kg</span><span class="w"> </span><span class="kn">import</span> <span class="n">GraphBuilder</span><span class="p">,</span> <span class="n">GraphAnalyzer</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">semantica.semantic_extract</span><span class="w"> </span><span class="kn">import</span> <span class="n">NERExtractor</span><span class="p">,</span> <span class="n">RelationExtractor</span>
 
+<span class="c1"># 初始化图谱构建器与分析器</span>
 <span class="n">builder</span> <span class="o">=</span> <span class="n">GraphBuilder</span><span class="p">()</span>
 <span class="n">analyzer</span> <span class="o">=</span> <span class="n">GraphAnalyzer</span><span class="p">()</span>
 
+<span class="c1"># 定义示例实体（组织、人物、地点）</span>
 <span class="n">entities</span> <span class="o">=</span> <span class="p">[</span>
     <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="s2">"e1"</span><span class="p">,</span> <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"Organization"</span><span class="p">,</span> <span class="s2">"name"</span><span class="p">:</span> <span class="s2">"Apple Inc."</span><span class="p">,</span> <span class="s2">"properties"</span><span class="p">:</span> <span class="p">{}},</span>
     <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="s2">"e2"</span><span class="p">,</span> <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"Person"</span><span class="p">,</span> <span class="s2">"name"</span><span class="p">:</span> <span class="s2">"Tim Cook"</span><span class="p">,</span> <span class="s2">"properties"</span><span class="p">:</span> <span class="p">{}},</span>
     <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="s2">"e3"</span><span class="p">,</span> <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"Location"</span><span class="p">,</span> <span class="s2">"name"</span><span class="p">:</span> <span class="s2">"Cupertino"</span><span class="p">,</span> <span class="s2">"properties"</span><span class="p">:</span> <span class="p">{}}</span>
 <span class="p">]</span>
 
+<span class="c1"># 定义实体之间的关系</span>
 <span class="n">relationships</span> <span class="o">=</span> <span class="p">[</span>
     <span class="p">{</span><span class="s2">"source"</span><span class="p">:</span> <span class="s2">"e2"</span><span class="p">,</span> <span class="s2">"target"</span><span class="p">:</span> <span class="s2">"e1"</span><span class="p">,</span> <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"CEO_of"</span><span class="p">,</span> <span class="s2">"properties"</span><span class="p">:</span> <span class="p">{}},</span>
     <span class="p">{</span><span class="s2">"source"</span><span class="p">:</span> <span class="s2">"e1"</span><span class="p">,</span> <span class="s2">"target"</span><span class="p">:</span> <span class="s2">"e3"</span><span class="p">,</span> <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"located_in"</span><span class="p">,</span> <span class="s2">"properties"</span><span class="p">:</span> <span class="p">{}}</span>
 <span class="p">]</span>
 
+<span class="c1"># 构建知识图谱</span>
 <span class="n">kg</span> <span class="o">=</span> <span class="n">builder</span><span class="o">.</span><span class="n">build</span><span class="p">(</span><span class="n">entities</span><span class="p">,</span> <span class="n">relationships</span><span class="p">)</span>
 
+<span class="c1"># 计算图结构度量</span>
 <span class="n">metrics</span> <span class="o">=</span> <span class="n">analyzer</span><span class="o">.</span><span class="n">compute_metrics</span><span class="p">(</span><span class="n">kg</span><span class="p">)</span>
 
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Graph metrics:"</span><span class="p">)</span>
@@ -327,13 +342,16 @@ pip<span class="w"> </span>install<span class="w"> </span>semantica<span class="
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  Density: </span><span class="si">{</span><span class="n">metrics</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'density'</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 </code></pre></div></section>
 <section id="sec-4"><h2><span class="pill-num">4</span>步骤 2：中心性度量</h2><p>计算实体的中心性度量。</p>
-<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">semantica.kg</span><span class="w"> </span><span class="kn">import</span> <span class="n">CentralityCalculator</span>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 计算图中各实体的度中心性</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">semantica.kg</span><span class="w"> </span><span class="kn">import</span> <span class="n">CentralityCalculator</span>
 
 <span class="n">centrality_calculator</span> <span class="o">=</span> <span class="n">CentralityCalculator</span><span class="p">()</span>
 
+<span class="c1"># 计算度中心性并提取得分</span>
 <span class="n">centrality_result</span> <span class="o">=</span> <span class="n">centrality_calculator</span><span class="o">.</span><span class="n">calculate_degree_centrality</span><span class="p">(</span><span class="n">kg</span><span class="p">)</span>
 <span class="n">centrality_scores</span> <span class="o">=</span> <span class="n">centrality_result</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'centrality'</span><span class="p">,</span> <span class="p">{})</span>
 
+<span class="c1"># 打印前 5 个实体的中心性得分</span>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Centrality scores:"</span><span class="p">)</span>
 <span class="k">for</span> <span class="n">entity_id</span><span class="p">,</span> <span class="n">score</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">centrality_scores</span><span class="o">.</span><span class="n">items</span><span class="p">())[:</span><span class="mi">5</span><span class="p">]:</span>
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  </span><span class="si">{</span><span class="n">entity_id</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">score</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
@@ -354,10 +372,12 @@ pip<span class="w"> </span>install<span class="w"> </span>semantica<span class="
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  Community </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">community</span><span class="p">)</span><span class="si">}</span><span class="s2"> entities"</span><span class="p">)</span>
 </code></pre></div></section>
 <section id="sec-6"><h2><span class="pill-num">6</span>步骤 4：连通性分析</h2><p>分析图的连通性。</p>
-<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">semantica.kg</span><span class="w"> </span><span class="kn">import</span> <span class="n">ConnectivityAnalyzer</span>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 分析知识图谱的连通性</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">semantica.kg</span><span class="w"> </span><span class="kn">import</span> <span class="n">ConnectivityAnalyzer</span>
 
 <span class="n">connectivity_analyzer</span> <span class="o">=</span> <span class="n">ConnectivityAnalyzer</span><span class="p">()</span>
 
+<span class="c1"># 分析图的连通性（是否连通、连通分量数量）</span>
 <span class="n">connectivity</span> <span class="o">=</span> <span class="n">connectivity_analyzer</span><span class="o">.</span><span class="n">analyze_connectivity</span><span class="p">(</span><span class="n">kg</span><span class="p">)</span>
 
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Connectivity analysis:"</span><span class="p">)</span>
@@ -377,6 +397,41 @@ pip<span class="w"> </span>install<span class="w"> </span>semantica<span class="
 </div>
 
 <footer>由 Semantica 官方 Cookbook 生成的中文说明页 · <a href="https://github.com/semantica-agi/semantica">semantica-agi/semantica</a></footer>
+
+<script>
+(function() {
+  function legacyCopy(text, done) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); done(); } catch (e) {}
+    document.body.removeChild(ta);
+  }
+  function copyText(text, btn) {
+    function done() {
+      btn.textContent = '已复制';
+      setTimeout(function() { btn.textContent = '复制'; }, 1500);
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done, function() { legacyCopy(text, done); });
+    } else {
+      legacyCopy(text, done);
+    }
+  }
+  document.querySelectorAll('.codehilite').forEach(function(block) {
+    var btn = document.createElement('button');
+    btn.className = 'copy-btn';
+    btn.type = 'button';
+    btn.textContent = '复制';
+    btn.setAttribute('aria-label', '复制代码');
+    btn.addEventListener('click', function() {
+      copyText(block.querySelector('pre').innerText, btn);
+    });
+    block.appendChild(btn);
+  });
+})();
+</script>
 
 </body>
 </html>

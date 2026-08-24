@@ -136,8 +136,16 @@ pre {
   margin: 10px 0 18px;
 }
 pre code { background: transparent; color: inherit; padding: 0; border-radius: 0; font-size: 13px; }
-.codehilite { background: var(--code-bg); border-radius: 10px; overflow-x: auto; margin: 10px 0 18px; }
+.codehilite { background: var(--code-bg); border-radius: 10px; overflow-x: auto; margin: 10px 0 18px; position: relative; }
 .codehilite pre { margin: 0; padding: 16px 18px; background: transparent; }
+.copy-btn {
+  position: absolute; top: 8px; right: 8px;
+  background: rgba(255,255,255,0.08); color: #cbd0e6;
+  border: 1px solid rgba(255,255,255,0.18); border-radius: 6px;
+  padding: 3px 10px; font-size: 12px; cursor: pointer;
+  font-family: inherit; opacity: 0.7; transition: opacity 0.15s, background 0.15s;
+}
+.copy-btn:hover { opacity: 1; background: rgba(255,255,255,0.16); }
 
 /* pager */
 .pager { display: flex; justify-content: space-between; gap: 16px; margin-top: 8px; }
@@ -301,38 +309,47 @@ pip<span class="w"> </span>install<span class="w"> </span>semantica<span class="
 
 <hr /></section>
 <section id="sec-3"><h2><span class="pill-num">3</span>步骤 1：文本规范化</h2><p>规范化文本内容以保持一致性。</p>
-<div class="codehilite"><pre><span></span><code><span class="err">!</span><span class="n">pip</span> <span class="n">install</span> <span class="n">semantica</span>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 安装 semantica 包</span>
+<span class="err">!</span><span class="n">pip</span> <span class="n">install</span> <span class="n">semantica</span>
 </code></pre></div>
 
-<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">semantica.normalize</span><span class="w"> </span><span class="kn">import</span> <span class="n">TextNormalizer</span>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 使用 TextNormalizer 清洗并规范化文本</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">semantica.normalize</span><span class="w"> </span><span class="kn">import</span> <span class="n">TextNormalizer</span>
 
 <span class="n">text_normalizer</span> <span class="o">=</span> <span class="n">TextNormalizer</span><span class="p">()</span>
 
+<span class="c1"># 含多余空格与标点的示例文本</span>
 <span class="n">sample_text</span> <span class="o">=</span> <span class="s2">"Hello   World!!!  This is a test."</span>
 
+<span class="c1"># 转为小写并清洗文本</span>
 <span class="n">normalized</span> <span class="o">=</span> <span class="n">text_normalizer</span><span class="o">.</span><span class="n">normalize_text</span><span class="p">(</span><span class="n">sample_text</span><span class="p">,</span> <span class="n">case</span><span class="o">=</span><span class="s2">"lower"</span><span class="p">)</span>
 <span class="n">cleaned</span> <span class="o">=</span> <span class="n">text_normalizer</span><span class="o">.</span><span class="n">clean_text</span><span class="p">(</span><span class="n">sample_text</span><span class="p">,</span> <span class="n">remove_special_chars</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 
 <span class="n">sample_text</span><span class="p">,</span> <span class="n">normalized</span><span class="p">,</span> <span class="n">cleaned</span>
 </code></pre></div></section>
 <section id="sec-4"><h2><span class="pill-num">4</span>步骤 2：实体规范化</h2><p>将实体名称规范化为规范形式。</p>
-<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">semantica.normalize</span><span class="w"> </span><span class="kn">import</span> <span class="n">EntityNormalizer</span>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 将同一实体的不同写法规范化为统一形式</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">semantica.normalize</span><span class="w"> </span><span class="kn">import</span> <span class="n">EntityNormalizer</span>
 
 <span class="n">entity_normalizer</span> <span class="o">=</span> <span class="n">EntityNormalizer</span><span class="p">()</span>
 
+<span class="c1"># 同一组织的多种名称变体</span>
 <span class="n">entity_variants</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"Apple Inc."</span><span class="p">,</span> <span class="s2">"Apple Inc"</span><span class="p">,</span> <span class="s2">"Apple"</span><span class="p">,</span> <span class="s2">"Apple Incorporated"</span><span class="p">]</span>
 
 <span class="n">normalized_entities</span> <span class="o">=</span> <span class="p">[]</span>
 <span class="k">for</span> <span class="n">entity</span> <span class="ow">in</span> <span class="n">entity_variants</span><span class="p">:</span>
+    <span class="c1"># 按组织类型逐条规范化</span>
     <span class="n">normalized</span> <span class="o">=</span> <span class="n">entity_normalizer</span><span class="o">.</span><span class="n">normalize_entity</span><span class="p">(</span><span class="n">entity</span><span class="p">,</span> <span class="n">entity_type</span><span class="o">=</span><span class="s2">"Organization"</span><span class="p">)</span>
     <span class="n">normalized_entities</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">normalized</span><span class="p">)</span>
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">entity</span><span class="si">}</span><span class="s2"> -&gt; </span><span class="si">{</span><span class="n">normalized</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 </code></pre></div></section>
 <section id="sec-5"><h2><span class="pill-num">5</span>步骤 3：日期规范化</h2><p>将日期规范化为标准格式。</p>
-<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">semantica.normalize</span><span class="w"> </span><span class="kn">import</span> <span class="n">DateNormalizer</span>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 将多种日期写法规范化为标准格式</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">semantica.normalize</span><span class="w"> </span><span class="kn">import</span> <span class="n">DateNormalizer</span>
 
 <span class="n">date_normalizer</span> <span class="o">=</span> <span class="n">DateNormalizer</span><span class="p">()</span>
 
+<span class="c1"># 不同风格的日期字符串</span>
 <span class="n">date_formats</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"2023-12-25"</span><span class="p">,</span> <span class="s2">"12/25/2023"</span><span class="p">,</span> <span class="s2">"December 25, 2023"</span><span class="p">,</span> <span class="s2">"25 Dec 2023"</span><span class="p">]</span>
 
 <span class="k">for</span> <span class="n">date_str</span> <span class="ow">in</span> <span class="n">date_formats</span><span class="p">:</span>
@@ -340,14 +357,17 @@ pip<span class="w"> </span>install<span class="w"> </span>semantica<span class="
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">date_str</span><span class="si">}</span><span class="s2"> -&gt; </span><span class="si">{</span><span class="n">normalized</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 </code></pre></div></section>
 <section id="sec-6"><h2><span class="pill-num">6</span>步骤 4：数字规范化</h2><p>规范化数字和数量。</p>
-<div class="codehilite"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">importlib</span>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 规范化数字与数量表示（千分位、单位、百分比、科学计数法等）</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">importlib</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">semantica.normalize.number_normalizer</span>
+<span class="c1"># 重新加载模块以确保使用最新实现</span>
 <span class="n">importlib</span><span class="o">.</span><span class="n">reload</span><span class="p">(</span><span class="n">semantica</span><span class="o">.</span><span class="n">normalize</span><span class="o">.</span><span class="n">number_normalizer</span><span class="p">)</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">semantica.normalize</span><span class="w"> </span><span class="kn">import</span> <span class="n">NumberNormalizer</span>
 
 <span class="n">number_normalizer</span> <span class="o">=</span> <span class="n">NumberNormalizer</span><span class="p">()</span>
 
+<span class="c1"># 各种数字书写形式</span>
 <span class="n">numbers</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"1,000"</span><span class="p">,</span> <span class="s2">"1.5M"</span><span class="p">,</span> <span class="s2">"$100"</span><span class="p">,</span> <span class="s2">"50%"</span><span class="p">,</span> <span class="s2">"3.14e2"</span><span class="p">]</span>
 
 <span class="k">for</span> <span class="n">num_str</span> <span class="ow">in</span> <span class="n">numbers</span><span class="p">:</span>
@@ -355,10 +375,12 @@ pip<span class="w"> </span>install<span class="w"> </span>semantica<span class="
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">num_str</span><span class="si">}</span><span class="s2"> -&gt; </span><span class="si">{</span><span class="n">normalized</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 </code></pre></div></section>
 <section id="sec-7"><h2><span class="pill-num">7</span>步骤 5：数据清洗</h2><p>使用 DataCleaner 清洗数据。</p>
-<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">semantica.normalize</span><span class="w"> </span><span class="kn">import</span> <span class="n">DataCleaner</span>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 使用 DataCleaner 清洗记录并去除重复项</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">semantica.normalize</span><span class="w"> </span><span class="kn">import</span> <span class="n">DataCleaner</span>
 
 <span class="n">data_cleaner</span> <span class="o">=</span> <span class="n">DataCleaner</span><span class="p">()</span>
 
+<span class="c1"># 含重复记录（前两条实为同一公司）的示例数据</span>
 <span class="n">data</span> <span class="o">=</span> <span class="p">[</span>
     <span class="p">{</span><span class="s2">"name"</span><span class="p">:</span> <span class="s2">"Apple Inc."</span><span class="p">,</span> <span class="s2">"value"</span><span class="p">:</span> <span class="mi">100</span><span class="p">},</span>
     <span class="p">{</span><span class="s2">"name"</span><span class="p">:</span> <span class="s2">"Apple Inc"</span><span class="p">,</span> <span class="s2">"value"</span><span class="p">:</span> <span class="mi">100</span><span class="p">},</span>
@@ -371,21 +393,25 @@ pip<span class="w"> </span>install<span class="w"> </span>semantica<span class="
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Cleaned records: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">cleaned_data</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 </code></pre></div></section>
 <section id="sec-8"><h2><span class="pill-num">8</span>步骤 6：语言检测与编码</h2><p>检测语言并处理编码。</p>
-<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">semantica.normalize</span><span class="w"> </span><span class="kn">import</span> <span class="n">LanguageDetector</span><span class="p">,</span> <span class="n">EncodingHandler</span>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 检测文本语言与字节编码，保证数据质量</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">semantica.normalize</span><span class="w"> </span><span class="kn">import</span> <span class="n">LanguageDetector</span><span class="p">,</span> <span class="n">EncodingHandler</span>
 
 <span class="n">language_detector</span> <span class="o">=</span> <span class="n">LanguageDetector</span><span class="p">()</span>
 <span class="n">encoding_handler</span> <span class="o">=</span> <span class="n">EncodingHandler</span><span class="p">()</span>
 
+<span class="c1"># 多语言文本样本</span>
 <span class="n">text_samples</span> <span class="o">=</span> <span class="p">[</span>
     <span class="s2">"Hello, this is English text."</span><span class="p">,</span>
     <span class="s2">"Bonjour, ceci est du texte français."</span><span class="p">,</span>
     <span class="s2">"Hola, este es texto en español."</span>
 <span class="p">]</span>
 
+<span class="c1"># 逐条检测语言</span>
 <span class="k">for</span> <span class="n">text</span> <span class="ow">in</span> <span class="n">text_samples</span><span class="p">:</span>
     <span class="n">detected_lang</span> <span class="o">=</span> <span class="n">language_detector</span><span class="o">.</span><span class="n">detect</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Text: </span><span class="si">{</span><span class="n">text</span><span class="p">[:</span><span class="mi">30</span><span class="p">]</span><span class="si">}</span><span class="s2">... -&gt; Language: </span><span class="si">{</span><span class="n">detected_lang</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
+<span class="c1"># 检测字节串的编码</span>
 <span class="n">sample_bytes</span> <span class="o">=</span> <span class="s2">"Hello World"</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s1">'utf-8'</span><span class="p">)</span>
 <span class="n">detected_encoding</span> <span class="o">=</span> <span class="n">encoding_handler</span><span class="o">.</span><span class="n">detect</span><span class="p">(</span><span class="n">sample_bytes</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Detected encoding: </span><span class="si">{</span><span class="n">detected_encoding</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
@@ -406,6 +432,41 @@ pip<span class="w"> </span>install<span class="w"> </span>semantica<span class="
 </div>
 
 <footer>由 Semantica 官方 Cookbook 生成的中文说明页 · <a href="https://github.com/semantica-agi/semantica">semantica-agi/semantica</a></footer>
+
+<script>
+(function() {
+  function legacyCopy(text, done) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); done(); } catch (e) {}
+    document.body.removeChild(ta);
+  }
+  function copyText(text, btn) {
+    function done() {
+      btn.textContent = '已复制';
+      setTimeout(function() { btn.textContent = '复制'; }, 1500);
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done, function() { legacyCopy(text, done); });
+    } else {
+      legacyCopy(text, done);
+    }
+  }
+  document.querySelectorAll('.codehilite').forEach(function(block) {
+    var btn = document.createElement('button');
+    btn.className = 'copy-btn';
+    btn.type = 'button';
+    btn.textContent = '复制';
+    btn.setAttribute('aria-label', '复制代码');
+    btn.addEventListener('click', function() {
+      copyText(block.querySelector('pre').innerText, btn);
+    });
+    block.appendChild(btn);
+  });
+})();
+</script>
 
 </body>
 </html>

@@ -136,8 +136,16 @@ pre {
   margin: 10px 0 18px;
 }
 pre code { background: transparent; color: inherit; padding: 0; border-radius: 0; font-size: 13px; }
-.codehilite { background: var(--code-bg); border-radius: 10px; overflow-x: auto; margin: 10px 0 18px; }
+.codehilite { background: var(--code-bg); border-radius: 10px; overflow-x: auto; margin: 10px 0 18px; position: relative; }
 .codehilite pre { margin: 0; padding: 16px 18px; background: transparent; }
+.copy-btn {
+  position: absolute; top: 8px; right: 8px;
+  background: rgba(255,255,255,0.08); color: #cbd0e6;
+  border: 1px solid rgba(255,255,255,0.18); border-radius: 6px;
+  padding: 3px 10px; font-size: 12px; cursor: pointer;
+  font-family: inherit; opacity: 0.7; transition: opacity 0.15s, background 0.15s;
+}
+.copy-btn:hover { opacity: 1; background: rgba(255,255,255,0.16); }
 
 /* pager */
 .pager { display: flex; justify-content: space-between; gap: 16px; margin-top: 8px; }
@@ -296,10 +304,12 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 6.  <strong>管理生命周期</strong>：学会修剪旧记忆并保持系统健康。</p>
 <hr /></section>
 <section id="sec-2"><h2><span class="pill-num">2</span>1. 安装</h2><p>要开始使用，只需安装该包：</p>
-<div class="codehilite"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>semantica
+<div class="codehilite"><pre><span></span><code><span class="c1"># 安装 semantica</span>
+pip<span class="w"> </span>install<span class="w"> </span>semantica
 </code></pre></div>
 
-<div class="codehilite"><pre><span></span><code><span class="err">!</span><span class="n">pip</span> <span class="n">install</span> <span class="o">-</span><span class="n">qU</span> <span class="n">semantica</span>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 安装 Semantica 包</span>
+<span class="err">!</span><span class="n">pip</span> <span class="n">install</span> <span class="o">-</span><span class="n">qU</span> <span class="n">semantica</span>
 </code></pre></div>
 
 <div class="codehilite"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
@@ -365,7 +375,8 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 *   <code>use_graph_expansion=True</code>：检索时，不要只看文档本身，还要看它的邻居。
 *   <code>max_expansion_hops=2</code>：要遍历多远？（例如，A -&gt; B -&gt; C）。
 *   <code>hybrid_alpha=0.6</code>：权重。0.0 是纯向量，1.0 是纯图谱。0.6 略微偏向图谱。</p>
-<div class="codehilite"><pre><span></span><code><span class="k">if</span> <span class="n">vs</span><span class="p">:</span>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 基于向量存储与图谱存储构建智能体上下文</span>
+<span class="k">if</span> <span class="n">vs</span><span class="p">:</span>
     <span class="n">context</span> <span class="o">=</span> <span class="n">AgentContext</span><span class="p">(</span>
         <span class="n">vector_store</span><span class="o">=</span><span class="n">vs</span><span class="p">,</span>
         <span class="n">knowledge_graph</span><span class="o">=</span><span class="n">gs</span><span class="p">,</span>
@@ -517,7 +528,8 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 </code></pre></div>
 
 <h3>系统健康与统计</h3>
-<div class="codehilite"><pre><span></span><code><span class="n">stats</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="n">stats</span><span class="p">()</span>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 获取系统健康与统计信息</span>
+<span class="n">stats</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="n">stats</span><span class="p">()</span>
 <span class="nb">print</span><span class="p">(</span><span class="s2">"System Vital Signs:"</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"   - Total Memories: </span><span class="si">{</span><span class="n">stats</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'total_items'</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"   - Graph Nodes:    </span><span class="si">{</span><span class="n">stats</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'graph_stats'</span><span class="p">,</span><span class="w"> </span><span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'node_count'</span><span class="p">,</span><span class="w"> </span><span class="s1">'N/A'</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
@@ -534,6 +546,41 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 </div>
 
 <footer>由 Semantica 官方 Cookbook 生成的中文说明页 · <a href="https://github.com/semantica-agi/semantica">semantica-agi/semantica</a></footer>
+
+<script>
+(function() {
+  function legacyCopy(text, done) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); done(); } catch (e) {}
+    document.body.removeChild(ta);
+  }
+  function copyText(text, btn) {
+    function done() {
+      btn.textContent = '已复制';
+      setTimeout(function() { btn.textContent = '复制'; }, 1500);
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done, function() { legacyCopy(text, done); });
+    } else {
+      legacyCopy(text, done);
+    }
+  }
+  document.querySelectorAll('.codehilite').forEach(function(block) {
+    var btn = document.createElement('button');
+    btn.className = 'copy-btn';
+    btn.type = 'button';
+    btn.textContent = '复制';
+    btn.setAttribute('aria-label', '复制代码');
+    btn.addEventListener('click', function() {
+      copyText(block.querySelector('pre').innerText, btn);
+    });
+    block.appendChild(btn);
+  });
+})();
+</script>
 
 </body>
 </html>

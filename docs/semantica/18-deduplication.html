@@ -136,8 +136,16 @@ pre {
   margin: 10px 0 18px;
 }
 pre code { background: transparent; color: inherit; padding: 0; border-radius: 0; font-size: 13px; }
-.codehilite { background: var(--code-bg); border-radius: 10px; overflow-x: auto; margin: 10px 0 18px; }
+.codehilite { background: var(--code-bg); border-radius: 10px; overflow-x: auto; margin: 10px 0 18px; position: relative; }
 .codehilite pre { margin: 0; padding: 16px 18px; background: transparent; }
+.copy-btn {
+  position: absolute; top: 8px; right: 8px;
+  background: rgba(255,255,255,0.08); color: #cbd0e6;
+  border: 1px solid rgba(255,255,255,0.18); border-radius: 6px;
+  padding: 3px 10px; font-size: 12px; cursor: pointer;
+  font-family: inherit; opacity: 0.7; transition: opacity 0.15s, background 0.15s;
+}
+.copy-btn:hover { opacity: 1; background: rgba(255,255,255,0.16); }
 
 /* pager */
 .pager { display: flex; justify-content: space-between; gap: 16px; margin-top: 8px; }
@@ -499,6 +507,41 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 </div>
 
 <footer>由 Semantica 官方 Cookbook 生成的中文说明页 · <a href="https://github.com/semantica-agi/semantica">semantica-agi/semantica</a></footer>
+
+<script>
+(function() {
+  function legacyCopy(text, done) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); done(); } catch (e) {}
+    document.body.removeChild(ta);
+  }
+  function copyText(text, btn) {
+    function done() {
+      btn.textContent = '已复制';
+      setTimeout(function() { btn.textContent = '复制'; }, 1500);
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done, function() { legacyCopy(text, done); });
+    } else {
+      legacyCopy(text, done);
+    }
+  }
+  document.querySelectorAll('.codehilite').forEach(function(block) {
+    var btn = document.createElement('button');
+    btn.className = 'copy-btn';
+    btn.type = 'button';
+    btn.textContent = '复制';
+    btn.setAttribute('aria-label', '复制代码');
+    btn.addEventListener('click', function() {
+      copyText(block.querySelector('pre').innerText, btn);
+    });
+    block.appendChild(btn);
+  });
+})();
+</script>
 
 </body>
 </html>

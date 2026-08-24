@@ -136,8 +136,16 @@ pre {
   margin: 10px 0 18px;
 }
 pre code { background: transparent; color: inherit; padding: 0; border-radius: 0; font-size: 13px; }
-.codehilite { background: var(--code-bg); border-radius: 10px; overflow-x: auto; margin: 10px 0 18px; }
+.codehilite { background: var(--code-bg); border-radius: 10px; overflow-x: auto; margin: 10px 0 18px; position: relative; }
 .codehilite pre { margin: 0; padding: 16px 18px; background: transparent; }
+.copy-btn {
+  position: absolute; top: 8px; right: 8px;
+  background: rgba(255,255,255,0.08); color: #cbd0e6;
+  border: 1px solid rgba(255,255,255,0.18); border-radius: 6px;
+  padding: 3px 10px; font-size: 12px; cursor: pointer;
+  font-family: inherit; opacity: 0.7; transition: opacity 0.15s, background 0.15s;
+}
+.copy-btn:hover { opacity: 1; background: rgba(255,255,255,0.16); }
 
 /* pager */
 .pager { display: flex; justify-content: space-between; gap: 16px; margin-top: 8px; }
@@ -299,32 +307,38 @@ pip<span class="w"> </span>install<span class="w"> </span>semantica<span class="
 
 <hr /></section>
 <section id="sec-3"><h2><span class="pill-num">3</span>步骤 1：文档解析器</h2><p>使用通用 DocumentParser 解析各种文档格式。</p>
-<div class="codehilite"><pre><span></span><code><span class="err">!</span><span class="n">pip</span> <span class="n">install</span> <span class="n">semantica</span>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 安装 semantica 包</span>
+<span class="err">!</span><span class="n">pip</span> <span class="n">install</span> <span class="n">semantica</span>
 </code></pre></div>
 
-<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">semantica.parse</span><span class="w"> </span><span class="kn">import</span> <span class="n">DocumentParser</span>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 使用通用 DocumentParser 抽取文本内容与元数据</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">semantica.parse</span><span class="w"> </span><span class="kn">import</span> <span class="n">DocumentParser</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">tempfile</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 
 <span class="n">document_parser</span> <span class="o">=</span> <span class="n">DocumentParser</span><span class="p">()</span>
 
+<span class="c1"># 创建临时目录并写入示例文本文件</span>
 <span class="n">temp_dir</span> <span class="o">=</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">mkdtemp</span><span class="p">()</span>
 <span class="n">sample_txt</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">temp_dir</span><span class="p">,</span> <span class="s2">"sample.txt"</span><span class="p">)</span>
 
 <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">sample_txt</span><span class="p">,</span> <span class="s1">'w'</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
     <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">"Apple Inc. is a technology company. Tim Cook is the CEO."</span><span class="p">)</span>
 
+<span class="c1"># 抽取文本与元数据</span>
 <span class="n">text</span> <span class="o">=</span> <span class="n">document_parser</span><span class="o">.</span><span class="n">extract_text</span><span class="p">(</span><span class="n">sample_txt</span><span class="p">)</span>
 <span class="n">metadata</span> <span class="o">=</span> <span class="n">document_parser</span><span class="o">.</span><span class="n">extract_metadata</span><span class="p">(</span><span class="n">sample_txt</span><span class="p">)</span>
 
 <span class="n">text</span><span class="p">[:</span><span class="mi">50</span><span class="p">],</span> <span class="n">metadata</span>
 </code></pre></div></section>
 <section id="sec-4"><h2><span class="pill-num">4</span>步骤 2：CSV 解析器</h2><p>解析 CSV 文件以抽取结构化数据。</p>
-<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">semantica.parse</span><span class="w"> </span><span class="kn">import</span> <span class="n">CSVParser</span>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 解析 CSV 文件以抽取结构化表格数据</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">semantica.parse</span><span class="w"> </span><span class="kn">import</span> <span class="n">CSVParser</span>
 
 <span class="n">csv_parser</span> <span class="o">=</span> <span class="n">CSVParser</span><span class="p">()</span>
 <span class="n">csv_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">temp_dir</span><span class="p">,</span> <span class="s2">"data.csv"</span><span class="p">)</span>
 
+<span class="c1"># 写入带表头的示例 CSV 数据</span>
 <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">csv_file</span><span class="p">,</span> <span class="s1">'w'</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
     <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">"name,company,role</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span>
     <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">"Tim Cook,Apple Inc.,CEO</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span>
@@ -332,18 +346,21 @@ pip<span class="w"> </span>install<span class="w"> </span>semantica<span class="
 
 <span class="n">csv_data</span> <span class="o">=</span> <span class="n">csv_parser</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">csv_file</span><span class="p">)</span>
 
+<span class="c1"># 输出行数、列名与前两行数据</span>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Parsed CSV with </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">csv_data</span><span class="o">.</span><span class="n">rows</span><span class="p">)</span><span class="si">}</span><span class="s2"> rows"</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Columns: </span><span class="si">{</span><span class="n">csv_data</span><span class="o">.</span><span class="n">headers</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">csv_data</span><span class="o">.</span><span class="n">rows</span><span class="p">[:</span><span class="mi">2</span><span class="p">]:</span>
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  </span><span class="si">{</span><span class="n">row</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 </code></pre></div></section>
 <section id="sec-5"><h2><span class="pill-num">5</span>步骤 3：JSON 解析器</h2><p>解析 JSON 文件以抽取结构化数据。</p>
-<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">semantica.parse</span><span class="w"> </span><span class="kn">import</span> <span class="n">JSONParser</span>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 解析 JSON 文件以抽取结构化数据</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">semantica.parse</span><span class="w"> </span><span class="kn">import</span> <span class="n">JSONParser</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
 
 <span class="n">json_parser</span> <span class="o">=</span> <span class="n">JSONParser</span><span class="p">()</span>
 <span class="n">json_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">temp_dir</span><span class="p">,</span> <span class="s2">"data.json"</span><span class="p">)</span>
 
+<span class="c1"># 构造示例 JSON 数据并写入文件</span>
 <span class="n">data</span> <span class="o">=</span> <span class="p">{</span>
     <span class="s2">"companies"</span><span class="p">:</span> <span class="p">[</span>
         <span class="p">{</span><span class="s2">"name"</span><span class="p">:</span> <span class="s2">"Apple Inc."</span><span class="p">,</span> <span class="s2">"ceo"</span><span class="p">:</span> <span class="s2">"Tim Cook"</span><span class="p">},</span>
@@ -360,11 +377,13 @@ pip<span class="w"> </span>install<span class="w"> </span>semantica<span class="
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Companies: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">json_data</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'companies'</span><span class="p">,</span><span class="w"> </span><span class="p">[]))</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 </code></pre></div></section>
 <section id="sec-6"><h2><span class="pill-num">6</span>步骤 4：XML 解析器</h2><p>解析 XML 文件以抽取结构化数据。</p>
-<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">semantica.parse</span><span class="w"> </span><span class="kn">import</span> <span class="n">XMLParser</span>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 解析 XML 文件以抽取结构化数据</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">semantica.parse</span><span class="w"> </span><span class="kn">import</span> <span class="n">XMLParser</span>
 
 <span class="n">xml_parser</span> <span class="o">=</span> <span class="n">XMLParser</span><span class="p">()</span>
 <span class="n">xml_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">temp_dir</span><span class="p">,</span> <span class="s2">"data.xml"</span><span class="p">)</span>
 
+<span class="c1"># 定义示例 XML 内容并写入文件</span>
 <span class="n">xml_content</span> <span class="o">=</span> <span class="s2">"""&lt;?xml version="1.0"?&gt;</span>
 <span class="s2">&lt;companies&gt;</span>
 <span class="s2">    &lt;company name="Apple Inc." ceo="Tim Cook"/&gt;</span>
@@ -380,11 +399,13 @@ pip<span class="w"> </span>install<span class="w"> </span>semantica<span class="
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Root element: </span><span class="si">{</span><span class="n">xml_data</span><span class="o">.</span><span class="n">root</span><span class="o">.</span><span class="n">tag</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">xml_data</span><span class="o">.</span><span class="n">root</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">'None'</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 </code></pre></div></section>
 <section id="sec-7"><h2><span class="pill-num">7</span>步骤 5：HTML 解析器</h2><p>解析 HTML 文件以抽取内容和结构。</p>
-<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">semantica.parse</span><span class="w"> </span><span class="kn">import</span> <span class="n">HTMLParser</span>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 解析 HTML 文件以抽取页面标题与正文内容</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">semantica.parse</span><span class="w"> </span><span class="kn">import</span> <span class="n">HTMLParser</span>
 
 <span class="n">html_parser</span> <span class="o">=</span> <span class="n">HTMLParser</span><span class="p">()</span>
 <span class="n">html_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">temp_dir</span><span class="p">,</span> <span class="s2">"page.html"</span><span class="p">)</span>
 
+<span class="c1"># 定义示例 HTML 页面并写入文件</span>
 <span class="n">html_content</span> <span class="o">=</span> <span class="s2">"""&lt;html&gt;</span>
 <span class="s2">&lt;head&gt;&lt;title&gt;Sample Page&lt;/title&gt;&lt;/head&gt;</span>
 <span class="s2">&lt;body&gt;</span>
@@ -403,10 +424,12 @@ pip<span class="w"> </span>install<span class="w"> </span>semantica<span class="
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Text content: </span><span class="si">{</span><span class="n">html_data</span><span class="o">.</span><span class="n">text</span><span class="p">[:</span><span class="mi">50</span><span class="p">]</span><span class="si">}</span><span class="s2">..."</span><span class="p">)</span>
 </code></pre></div></section>
 <section id="sec-8"><h2><span class="pill-num">8</span>步骤 6：结构化数据解析器</h2><p>使用 StructuredDataParser 处理多种格式。</p>
-<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">semantica.parse</span><span class="w"> </span><span class="kn">import</span> <span class="n">StructuredDataParser</span>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 使用 StructuredDataParser 统一解析多种结构化格式</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">semantica.parse</span><span class="w"> </span><span class="kn">import</span> <span class="n">StructuredDataParser</span>
 
 <span class="n">structured_parser</span> <span class="o">=</span> <span class="n">StructuredDataParser</span><span class="p">()</span>
 
+<span class="c1"># 复用前面生成的 JSON 与 CSV 文件，按格式参数解析</span>
 <span class="n">parsed_json</span> <span class="o">=</span> <span class="n">structured_parser</span><span class="o">.</span><span class="n">parse_data</span><span class="p">(</span><span class="n">json_file</span><span class="p">,</span> <span class="n">data_format</span><span class="o">=</span><span class="s2">"json"</span><span class="p">)</span>
 <span class="n">parsed_csv</span> <span class="o">=</span> <span class="n">structured_parser</span><span class="o">.</span><span class="n">parse_data</span><span class="p">(</span><span class="n">csv_file</span><span class="p">,</span> <span class="n">data_format</span><span class="o">=</span><span class="s2">"csv"</span><span class="p">)</span>
 
@@ -428,6 +451,41 @@ pip<span class="w"> </span>install<span class="w"> </span>semantica<span class="
 </div>
 
 <footer>由 Semantica 官方 Cookbook 生成的中文说明页 · <a href="https://github.com/semantica-agi/semantica">semantica-agi/semantica</a></footer>
+
+<script>
+(function() {
+  function legacyCopy(text, done) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); done(); } catch (e) {}
+    document.body.removeChild(ta);
+  }
+  function copyText(text, btn) {
+    function done() {
+      btn.textContent = '已复制';
+      setTimeout(function() { btn.textContent = '复制'; }, 1500);
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done, function() { legacyCopy(text, done); });
+    } else {
+      legacyCopy(text, done);
+    }
+  }
+  document.querySelectorAll('.codehilite').forEach(function(block) {
+    var btn = document.createElement('button');
+    btn.className = 'copy-btn';
+    btn.type = 'button';
+    btn.textContent = '复制';
+    btn.setAttribute('aria-label', '复制代码');
+    btn.addEventListener('click', function() {
+      copyText(block.querySelector('pre').innerText, btn);
+    });
+    block.appendChild(btn);
+  });
+})();
+</script>
 
 </body>
 </html>

@@ -136,8 +136,16 @@ pre {
   margin: 10px 0 18px;
 }
 pre code { background: transparent; color: inherit; padding: 0; border-radius: 0; font-size: 13px; }
-.codehilite { background: var(--code-bg); border-radius: 10px; overflow-x: auto; margin: 10px 0 18px; }
+.codehilite { background: var(--code-bg); border-radius: 10px; overflow-x: auto; margin: 10px 0 18px; position: relative; }
 .codehilite pre { margin: 0; padding: 16px 18px; background: transparent; }
+.copy-btn {
+  position: absolute; top: 8px; right: 8px;
+  background: rgba(255,255,255,0.08); color: #cbd0e6;
+  border: 1px solid rgba(255,255,255,0.18); border-radius: 6px;
+  padding: 3px 10px; font-size: 12px; cursor: pointer;
+  font-family: inherit; opacity: 0.7; transition: opacity 0.15s, background 0.15s;
+}
+.copy-btn:hover { opacity: 1; background: rgba(255,255,255,0.16); }
 
 /* pager */
 .pager { display: flex; justify-content: space-between; gap: 16px; margin-top: 8px; }
@@ -298,7 +306,8 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
           ├── ContextGraph               ← 带分析能力的内存图谱
           └── Reasoner                   ← 基于规则的推断
 </code></pre></div></section>
-<section id="sec-2"><h2><span class="pill-num">2</span>安装</h2><div class="codehilite"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>semantica<span class="o">[</span>agno<span class="o">]</span>
+<section id="sec-2"><h2><span class="pill-num">2</span>安装</h2><div class="codehilite"><pre><span></span><code><span class="c1"># 安装带 Agno 集成的 semantica</span>
+pip<span class="w"> </span>install<span class="w"> </span>semantica<span class="o">[</span>agno<span class="o">]</span>
 </code></pre></div></section>
 <section id="sec-3"><h2><span class="pill-num">3</span>1. 导入 — Semantica 核心 + Agno 集成</h2><div class="codehilite"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">sys</span><span class="o">,</span><span class="w"> </span><span class="nn">os</span><span class="o">,</span><span class="w"> </span><span class="nn">json</span>
 <span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="s2">"../../"</span><span class="p">))</span>
@@ -427,13 +436,15 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 2. 在上下文图谱中进行实体查找
 3. 对实体邻域进行图谱跳转扩展
 4. 将上下文注入返回的文档</p>
-<div class="codehilite"><pre><span></span><code><span class="n">queries</span> <span class="o">=</span> <span class="p">[</span>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 用一组监管合规问题测试 GraphRAG 的多跳检索能力</span>
+<span class="n">queries</span> <span class="o">=</span> <span class="p">[</span>
     <span class="s2">"What is the minimum CET1 ratio required under Basel IV?"</span><span class="p">,</span>
     <span class="s2">"Which authorities supervise critical ICT providers under DORA?"</span><span class="p">,</span>
     <span class="s2">"What are the reporting timelines for major ICT incidents?"</span><span class="p">,</span>
     <span class="s2">"How does AMLD6 handle customer due diligence?"</span><span class="p">,</span>
 <span class="p">]</span>
 
+<span class="c1"># 对每个问题执行多跳图检索，并打印命中的文档片段</span>
 <span class="k">for</span> <span class="n">query</span> <span class="ow">in</span> <span class="n">queries</span><span class="p">:</span>
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Q: </span><span class="si">{</span><span class="n">query</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
     <span class="n">results</span> <span class="o">=</span> <span class="n">kg</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">num_documents</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
@@ -451,7 +462,8 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
     <span class="nb">print</span><span class="p">(</span><span class="n">ctx</span> <span class="k">if</span> <span class="n">ctx</span> <span class="k">else</span> <span class="s2">"  (no graph nodes found — depends on NER extraction quality)"</span><span class="p">)</span>
 </code></pre></div></section>
 <section id="sec-8"><h2><span class="pill-num">8</span>6. AgnoKGToolkit — 实时图谱构建</h2><p><code>AgnoKGToolkit</code> 暴露 7 个工具，LLM 可以在推理过程中调用它们来<strong>主动修改和查询图谱</strong>。</p>
-<div class="codehilite"><pre><span></span><code><span class="n">toolkit</span> <span class="o">=</span> <span class="n">AgnoKGToolkit</span><span class="p">(</span>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 构建 Agno 知识图谱工具包，供智能体调用</span>
+<span class="n">toolkit</span> <span class="o">=</span> <span class="n">AgnoKGToolkit</span><span class="p">(</span>
     <span class="n">ner_extractor</span><span class="o">=</span><span class="n">ner</span><span class="p">,</span>
     <span class="n">relation_extractor</span><span class="o">=</span><span class="n">rel_extractor</span><span class="p">,</span>
     <span class="n">reasoner</span><span class="o">=</span><span class="n">reasoner</span><span class="p">,</span>
@@ -567,10 +579,12 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
     <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">export_result</span><span class="p">[</span><span class="s1">'nodes'</span><span class="p">][:</span><span class="mi">5</span><span class="p">]:</span>
         <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  </span><span class="si">{</span><span class="n">node</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 </code></pre></div></section>
-<section id="sec-9"><h2><span class="pill-num">9</span>7. 运行完整的 Agno GraphRAG 智能体（需要 API 密钥）</h2><div class="codehilite"><pre><span></span><code><span class="k">if</span> <span class="n">AGNO_AVAILABLE</span><span class="p">:</span>
+<section id="sec-9"><h2><span class="pill-num">9</span>7. 运行完整的 Agno GraphRAG 智能体（需要 API 密钥）</h2><div class="codehilite"><pre><span></span><code><span class="c1"># 运行完整的 Agno GraphRAG 智能体：已安装 Agno 时由 LLM 结合知识图谱回答合规问题</span>
+<span class="k">if</span> <span class="n">AGNO_AVAILABLE</span><span class="p">:</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">agno.agent</span><span class="w"> </span><span class="kn">import</span> <span class="n">Agent</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">agno.models.openai</span><span class="w"> </span><span class="kn">import</span> <span class="n">OpenAIChat</span>
 
+    <span class="c1"># 构建合规分析智能体，挂载 GraphRAG 知识库与实时图谱工具</span>
     <span class="n">compliance_agent</span> <span class="o">=</span> <span class="n">Agent</span><span class="p">(</span>
         <span class="n">name</span><span class="o">=</span><span class="s2">"ComplianceAnalyst"</span><span class="p">,</span>
         <span class="n">model</span><span class="o">=</span><span class="n">OpenAIChat</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="s2">"gpt-4o"</span><span class="p">),</span>
@@ -586,11 +600,13 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
         <span class="p">),</span>
     <span class="p">)</span>
 
+    <span class="c1"># 向智能体提出跨 DORA 与 Basel IV 的合规问题</span>
     <span class="n">compliance_agent</span><span class="o">.</span><span class="n">print_response</span><span class="p">(</span>
         <span class="s2">"Which supervisory authorities are responsible for overseeing DORA compliance "</span>
         <span class="s2">"for UK banks, and how does this relate to Basel IV capital requirements?"</span>
     <span class="p">)</span>
 <span class="k">else</span><span class="p">:</span>
+    <span class="c1"># 未安装 Agno 时，打印预期的多跳推理流程</span>
     <span class="nb">print</span><span class="p">(</span><span class="s2">"[Agno not installed — skipping live agent run]"</span><span class="p">)</span>
     <span class="nb">print</span><span class="p">()</span>
     <span class="nb">print</span><span class="p">(</span><span class="s2">"Expected reasoning flow:"</span><span class="p">)</span>
@@ -684,6 +700,41 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 </div>
 
 <footer>由 Semantica 官方 Cookbook 生成的中文说明页 · <a href="https://github.com/semantica-agi/semantica">semantica-agi/semantica</a></footer>
+
+<script>
+(function() {
+  function legacyCopy(text, done) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); done(); } catch (e) {}
+    document.body.removeChild(ta);
+  }
+  function copyText(text, btn) {
+    function done() {
+      btn.textContent = '已复制';
+      setTimeout(function() { btn.textContent = '复制'; }, 1500);
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done, function() { legacyCopy(text, done); });
+    } else {
+      legacyCopy(text, done);
+    }
+  }
+  document.querySelectorAll('.codehilite').forEach(function(block) {
+    var btn = document.createElement('button');
+    btn.className = 'copy-btn';
+    btn.type = 'button';
+    btn.textContent = '复制';
+    btn.setAttribute('aria-label', '复制代码');
+    btn.addEventListener('click', function() {
+      copyText(block.querySelector('pre').innerText, btn);
+    });
+    block.appendChild(btn);
+  });
+})();
+</script>
 
 </body>
 </html>

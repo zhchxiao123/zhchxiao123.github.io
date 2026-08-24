@@ -136,8 +136,16 @@ pre {
   margin: 10px 0 18px;
 }
 pre code { background: transparent; color: inherit; padding: 0; border-radius: 0; font-size: 13px; }
-.codehilite { background: var(--code-bg); border-radius: 10px; overflow-x: auto; margin: 10px 0 18px; }
+.codehilite { background: var(--code-bg); border-radius: 10px; overflow-x: auto; margin: 10px 0 18px; position: relative; }
 .codehilite pre { margin: 0; padding: 16px 18px; background: transparent; }
+.copy-btn {
+  position: absolute; top: 8px; right: 8px;
+  background: rgba(255,255,255,0.08); color: #cbd0e6;
+  border: 1px solid rgba(255,255,255,0.18); border-radius: 6px;
+  padding: 3px 10px; font-size: 12px; cursor: pointer;
+  font-family: inherit; opacity: 0.7; transition: opacity 0.15s, background 0.15s;
+}
+.copy-btn:hover { opacity: 1; background: rgba(255,255,255,0.16); }
 
 /* pager */
 .pager { display: flex; justify-content: space-between; gap: 16px; margin-top: 8px; }
@@ -337,7 +345,8 @@ aws<span class="w"> </span>cloudformation<span class="w"> </span>describe-stacks
 - <code>AwsSecretAccessKey</code> - IAM 用户秘密密钥，<strong>明文</strong>（用作 <code>AWS_SECRET_ACCESS_KEY</code>）
 - <code>AwsRegion</code> - 部署区域（用作 <code>AWS_REGION</code>）</p>
 <p><strong>清理：</strong></p>
-<div class="codehilite"><pre><span></span><code>aws<span class="w"> </span>cloudformation<span class="w"> </span>delete-stack<span class="w"> </span>--stack-name<span class="w"> </span>semantica-neptune
+<div class="codehilite"><pre><span></span><code><span class="c1"># 删除 CloudFormation 栈</span>
+aws<span class="w"> </span>cloudformation<span class="w"> </span>delete-stack<span class="w"> </span>--stack-name<span class="w"> </span>semantica-neptune
 </code></pre></div>
 
 <p><strong>预估月度成本（在 100% 利用率下约为每月 100-105 美元）：</strong></p>
@@ -386,7 +395,8 @@ pip<span class="w"> </span>install<span class="w"> </span>semantica
 pip<span class="w"> </span>install<span class="w"> </span>boto3<span class="w"> </span>neo4j
 </code></pre></div>
 
-<div class="codehilite"><pre><span></span><code><span class="err">!</span><span class="n">pip</span> <span class="n">install</span> <span class="n">semantica</span>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 安装 semantica 包</span>
+<span class="err">!</span><span class="n">pip</span> <span class="n">install</span> <span class="n">semantica</span>
 </code></pre></div></section>
 <section id="sec-3"><h2><span class="pill-num">3</span>配置</h2><p>设置你的 Neptune 集群端点和 AWS 凭证。将占位值替换为你的实际配置。</p>
 <div class="codehilite"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
@@ -732,6 +742,41 @@ pip<span class="w"> </span>install<span class="w"> </span>boto3<span class="w"> 
 </div>
 
 <footer>由 Semantica 官方 Cookbook 生成的中文说明页 · <a href="https://github.com/semantica-agi/semantica">semantica-agi/semantica</a></footer>
+
+<script>
+(function() {
+  function legacyCopy(text, done) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); done(); } catch (e) {}
+    document.body.removeChild(ta);
+  }
+  function copyText(text, btn) {
+    function done() {
+      btn.textContent = '已复制';
+      setTimeout(function() { btn.textContent = '复制'; }, 1500);
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done, function() { legacyCopy(text, done); });
+    } else {
+      legacyCopy(text, done);
+    }
+  }
+  document.querySelectorAll('.codehilite').forEach(function(block) {
+    var btn = document.createElement('button');
+    btn.className = 'copy-btn';
+    btn.type = 'button';
+    btn.textContent = '复制';
+    btn.setAttribute('aria-label', '复制代码');
+    btn.addEventListener('click', function() {
+      copyText(block.querySelector('pre').innerText, btn);
+    });
+    block.appendChild(btn);
+  });
+})();
+</script>
 
 </body>
 </html>

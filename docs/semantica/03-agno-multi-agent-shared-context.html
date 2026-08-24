@@ -136,8 +136,16 @@ pre {
   margin: 10px 0 18px;
 }
 pre code { background: transparent; color: inherit; padding: 0; border-radius: 0; font-size: 13px; }
-.codehilite { background: var(--code-bg); border-radius: 10px; overflow-x: auto; margin: 10px 0 18px; }
+.codehilite { background: var(--code-bg); border-radius: 10px; overflow-x: auto; margin: 10px 0 18px; position: relative; }
 .codehilite pre { margin: 0; padding: 16px 18px; background: transparent; }
+.copy-btn {
+  position: absolute; top: 8px; right: 8px;
+  background: rgba(255,255,255,0.08); color: #cbd0e6;
+  border: 1px solid rgba(255,255,255,0.18); border-radius: 6px;
+  padding: 3px 10px; font-size: 12px; cursor: pointer;
+  font-family: inherit; opacity: 0.7; transition: opacity 0.15s, background 0.15s;
+}
+.copy-btn:hover { opacity: 1; background: rgba(255,255,255,0.16); }
 
 /* pager */
 .pager { display: flex; justify-content: space-between; gap: 16px; margin-top: 8px; }
@@ -330,7 +338,8 @@ Agno Team
    ├── Analyst     memory=analyst_store     tools=[AgnoDecisionKit(context=shared)]
    └── Strategist  memory=strategist_store  tools=[AgnoKGToolkit, AgnoDecisionKit]
 </code></pre></div></section>
-<section id="sec-2"><h2><span class="pill-num">2</span>安装</h2><div class="codehilite"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>semantica<span class="o">[</span>agno<span class="o">]</span>
+<section id="sec-2"><h2><span class="pill-num">2</span>安装</h2><div class="codehilite"><pre><span></span><code><span class="c1"># 安装带 Agno 集成的 semantica</span>
+pip<span class="w"> </span>install<span class="w"> </span>semantica<span class="o">[</span>agno<span class="o">]</span>
 </code></pre></div></section>
 <section id="sec-3"><h2><span class="pill-num">3</span>1. 导入</h2><div class="codehilite"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">sys</span><span class="o">,</span><span class="w"> </span><span class="nn">os</span><span class="o">,</span><span class="w"> </span><span class="nn">json</span>
 <span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="s2">"../../"</span><span class="p">))</span>
@@ -605,12 +614,14 @@ Agno Team
     <span class="n">text</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="s1">'memory'</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">m</span><span class="p">))</span>
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  [</span><span class="si">{</span><span class="n">uid</span><span class="si">:</span><span class="s2">12s</span><span class="si">}</span><span class="s2">] </span><span class="si">{</span><span class="n">text</span><span class="p">[:</span><span class="mi">80</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 </code></pre></div></section>
-<section id="sec-10"><h2><span class="pill-num">10</span>8. 接入 Agno Team（需要 API 密钥）</h2><div class="codehilite"><pre><span></span><code><span class="k">if</span> <span class="n">AGNO_AVAILABLE</span><span class="p">:</span>
+<section id="sec-10"><h2><span class="pill-num">10</span>8. 接入 Agno Team（需要 API 密钥）</h2><div class="codehilite"><pre><span></span><code><span class="c1"># 接入 Agno Team：已安装 Agno 时组建三智能体团队共享上下文运行，否则打印预期的协作流程</span>
+<span class="k">if</span> <span class="n">AGNO_AVAILABLE</span><span class="p">:</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">agno.agent</span><span class="w"> </span><span class="kn">import</span> <span class="n">Agent</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">agno.team</span><span class="w"> </span><span class="kn">import</span> <span class="n">Team</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">agno.memory</span><span class="w"> </span><span class="kn">import</span> <span class="n">AgentMemory</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">agno.models.openai</span><span class="w"> </span><span class="kn">import</span> <span class="n">OpenAIChat</span>
 
+    <span class="c1"># Researcher 智能体——抽取竞争情报并写入共享图谱</span>
     <span class="n">researcher_agent</span> <span class="o">=</span> <span class="n">Agent</span><span class="p">(</span>
         <span class="n">name</span><span class="o">=</span><span class="s2">"Researcher"</span><span class="p">,</span>
         <span class="n">model</span><span class="o">=</span><span class="n">OpenAIChat</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="s2">"gpt-4o"</span><span class="p">),</span>
@@ -625,6 +636,7 @@ Agno Team
         <span class="p">),</span>
     <span class="p">)</span>
 
+    <span class="c1"># Analyst 智能体——基于共享图谱评估威胁并记录决策</span>
     <span class="n">analyst_agent</span> <span class="o">=</span> <span class="n">Agent</span><span class="p">(</span>
         <span class="n">name</span><span class="o">=</span><span class="s2">"Analyst"</span><span class="p">,</span>
         <span class="n">model</span><span class="o">=</span><span class="n">OpenAIChat</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="s2">"gpt-4o"</span><span class="p">),</span>
@@ -638,6 +650,7 @@ Agno Team
         <span class="p">),</span>
     <span class="p">)</span>
 
+    <span class="c1"># Strategist 智能体——综合图谱与决策记录形成最终战略</span>
     <span class="n">strategist_agent</span> <span class="o">=</span> <span class="n">Agent</span><span class="p">(</span>
         <span class="n">name</span><span class="o">=</span><span class="s2">"Strategist"</span><span class="p">,</span>
         <span class="n">model</span><span class="o">=</span><span class="n">OpenAIChat</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="s2">"gpt-4o"</span><span class="p">),</span>
@@ -652,17 +665,20 @@ Agno Team
         <span class="p">),</span>
     <span class="p">)</span>
 
+    <span class="c1"># 组建协调模式的 Agno Team，三个智能体共享同一上下文</span>
     <span class="n">strategy_team</span> <span class="o">=</span> <span class="n">Team</span><span class="p">(</span>
         <span class="n">name</span><span class="o">=</span><span class="s2">"Product Strategy Team"</span><span class="p">,</span>
         <span class="n">agents</span><span class="o">=</span><span class="p">[</span><span class="n">researcher_agent</span><span class="p">,</span> <span class="n">analyst_agent</span><span class="p">,</span> <span class="n">strategist_agent</span><span class="p">],</span>
         <span class="n">mode</span><span class="o">=</span><span class="s2">"coordinate"</span><span class="p">,</span>
     <span class="p">)</span>
 
+    <span class="c1"># 向团队提出竞争分析任务</span>
     <span class="n">strategy_team</span><span class="o">.</span><span class="n">print_response</span><span class="p">(</span>
         <span class="s2">"Competitor Beta just announced a native Azure integration. "</span>
         <span class="s2">"Analyse the competitive landscape and recommend our Q1 2026 product strategy."</span>
     <span class="p">)</span>
 <span class="k">else</span><span class="p">:</span>
+    <span class="c1"># 未安装 Agno 时，打印预期的团队协作流程</span>
     <span class="nb">print</span><span class="p">(</span><span class="s2">"[Agno not installed — skipping live team run]"</span><span class="p">)</span>
     <span class="nb">print</span><span class="p">()</span>
     <span class="nb">print</span><span class="p">(</span><span class="s2">"Expected team coordination flow:"</span><span class="p">)</span>
@@ -777,6 +793,41 @@ Agno Team
 </div>
 
 <footer>由 Semantica 官方 Cookbook 生成的中文说明页 · <a href="https://github.com/semantica-agi/semantica">semantica-agi/semantica</a></footer>
+
+<script>
+(function() {
+  function legacyCopy(text, done) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); done(); } catch (e) {}
+    document.body.removeChild(ta);
+  }
+  function copyText(text, btn) {
+    function done() {
+      btn.textContent = '已复制';
+      setTimeout(function() { btn.textContent = '复制'; }, 1500);
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done, function() { legacyCopy(text, done); });
+    } else {
+      legacyCopy(text, done);
+    }
+  }
+  document.querySelectorAll('.codehilite').forEach(function(block) {
+    var btn = document.createElement('button');
+    btn.className = 'copy-btn';
+    btn.type = 'button';
+    btn.textContent = '复制';
+    btn.setAttribute('aria-label', '复制代码');
+    btn.addEventListener('click', function() {
+      copyText(block.querySelector('pre').innerText, btn);
+    });
+    block.appendChild(btn);
+  });
+})();
+</script>
 
 </body>
 </html>

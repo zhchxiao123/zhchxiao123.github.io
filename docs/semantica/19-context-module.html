@@ -136,8 +136,16 @@ pre {
   margin: 10px 0 18px;
 }
 pre code { background: transparent; color: inherit; padding: 0; border-radius: 0; font-size: 13px; }
-.codehilite { background: var(--code-bg); border-radius: 10px; overflow-x: auto; margin: 10px 0 18px; }
+.codehilite { background: var(--code-bg); border-radius: 10px; overflow-x: auto; margin: 10px 0 18px; position: relative; }
 .codehilite pre { margin: 0; padding: 16px 18px; background: transparent; }
+.copy-btn {
+  position: absolute; top: 8px; right: 8px;
+  background: rgba(255,255,255,0.08); color: #cbd0e6;
+  border: 1px solid rgba(255,255,255,0.18); border-radius: 6px;
+  padding: 3px 10px; font-size: 12px; cursor: pointer;
+  font-family: inherit; opacity: 0.7; transition: opacity 0.15s, background 0.15s;
+}
+.copy-btn:hover { opacity: 1; background: rgba(255,255,255,0.16); }
 
 /* pager */
 .pager { display: flex; justify-content: space-between; gap: 16px; margin-top: 8px; }
@@ -292,64 +300,86 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 <li><strong>可扩展性 + 配置</strong>，通过 <code>registry</code> 和 <code>config</code></li>
 </ul>
 <p>本 notebook 专注于小而可运行的示例，并将导入限定在每个单元格内。</p>
-<div class="codehilite"><pre><span></span><code><span class="err">!</span><span class="n">pip</span> <span class="n">install</span> <span class="o">-</span><span class="n">q</span> <span class="n">semantica</span>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 安装 semantica 包</span>
+<span class="err">!</span><span class="n">pip</span> <span class="n">install</span> <span class="o">-</span><span class="n">q</span> <span class="n">semantica</span>
 </code></pre></div></div></section>
 <section id="sec-1"><h2><span class="pill-num">1</span>1) 向量存储（用于长期记忆）</h2><p><code>VectorStore</code> 可以通过其内部嵌入器生成嵌入。如果你的环境中没有可用的嵌入器，它会回退到随机向量，以便 API 在演示中仍可使用。</p>
-<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">semantica.vector_store</span><span class="w"> </span><span class="kn">import</span> <span class="n">VectorStore</span>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 创建内存向量存储，用于长期记忆</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">semantica.vector_store</span><span class="w"> </span><span class="kn">import</span> <span class="n">VectorStore</span>
 
+<span class="c1"># 创建内存后端、384 维的向量存储</span>
 <span class="n">vs</span> <span class="o">=</span> <span class="n">VectorStore</span><span class="p">(</span><span class="n">backend</span><span class="o">=</span><span class="s2">"inmemory"</span><span class="p">,</span> <span class="n">dimension</span><span class="o">=</span><span class="mi">384</span><span class="p">)</span>
 
+<span class="c1"># 若存在嵌入器，则配置为 fastembed 文本模型</span>
 <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">vs</span><span class="p">,</span> <span class="s2">"embedder"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">vs</span><span class="o">.</span><span class="n">embedder</span><span class="p">,</span> <span class="s2">"set_text_model"</span><span class="p">):</span>
     <span class="n">vs</span><span class="o">.</span><span class="n">embedder</span><span class="o">.</span><span class="n">set_text_model</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="s2">"fastembed"</span><span class="p">,</span> <span class="n">model_name</span><span class="o">=</span><span class="s2">"BAAI/bge-small-en-v1.5"</span><span class="p">)</span>
 
+<span class="c1"># 查看后端类型与维度</span>
 <span class="n">vs</span><span class="o">.</span><span class="n">backend</span><span class="p">,</span> <span class="n">vs</span><span class="o">.</span><span class="n">dimension</span>
 </code></pre></div></section>
 <section id="sec-2"><h2><span class="pill-num">2</span>2) 使用 `AgentContext` 快速开始（推荐）</h2><p><code>AgentContext</code> 是用户友好的接口，将记忆、向量存储和图谱绑定在一起。如果你传入一个 <code>ContextGraph</code>，系统就可以进行 GraphRAG 风格的检索。</p>
-<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">semantica.context</span><span class="w"> </span><span class="kn">import</span> <span class="n">AgentContext</span><span class="p">,</span> <span class="n">ContextGraph</span>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 通过 AgentContext 绑定向量存储与上下文图谱</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">semantica.context</span><span class="w"> </span><span class="kn">import</span> <span class="n">AgentContext</span><span class="p">,</span> <span class="n">ContextGraph</span>
 
+<span class="c1"># 创建上下文图谱</span>
 <span class="n">kg</span> <span class="o">=</span> <span class="n">ContextGraph</span><span class="p">()</span>
+<span class="c1"># 将向量存储与图谱绑定到 AgentContext</span>
 <span class="n">context</span> <span class="o">=</span> <span class="n">AgentContext</span><span class="p">(</span><span class="n">vector_store</span><span class="o">=</span><span class="n">vs</span><span class="p">,</span> <span class="n">knowledge_graph</span><span class="o">=</span><span class="n">kg</span><span class="p">)</span>
 
+<span class="c1"># 查看默认配置</span>
 <span class="n">context</span><span class="o">.</span><span class="n">config</span>
 </code></pre></div></section>
 <section id="sec-3"><h2><span class="pill-num">3</span>3) 存储和检索记忆</h2><p>单个字符串被视为一条记忆项。你可以通过对元数据友好的参数附加 <code>conversation_id</code> 和 <code>user_id</code>。</p>
-<div class="codehilite"><pre><span></span><code><span class="n">memory_id</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="n">store</span><span class="p">(</span>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 存储一条记忆项并按其 ID 检索</span>
+<span class="c1"># 存储带会话与用户元数据的记忆</span>
+<span class="n">memory_id</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="n">store</span><span class="p">(</span>
     <span class="s2">"User prefers short answers about Python."</span><span class="p">,</span>
     <span class="n">conversation_id</span><span class="o">=</span><span class="s2">"conv_1"</span><span class="p">,</span>
     <span class="n">user_id</span><span class="o">=</span><span class="s2">"user_1"</span><span class="p">,</span>
     <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"preference"</span><span class="p">},</span>
 <span class="p">)</span>
 
+<span class="c1"># 按记忆 ID 获取记忆内容</span>
 <span class="n">context</span><span class="o">.</span><span class="n">get_memory</span><span class="p">(</span><span class="n">memory_id</span><span class="p">)</span>
 </code></pre></div>
 
-<div class="codehilite"><pre><span></span><code><span class="n">context</span><span class="o">.</span><span class="n">store</span><span class="p">(</span>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 再存一条记忆，并基于语义检索相关记忆</span>
+<span class="c1"># 存储另一条会话记忆</span>
+<span class="n">context</span><span class="o">.</span><span class="n">store</span><span class="p">(</span>
     <span class="s2">"User is working on Semantica context module examples."</span><span class="p">,</span>
     <span class="n">conversation_id</span><span class="o">=</span><span class="s2">"conv_1"</span><span class="p">,</span>
     <span class="n">user_id</span><span class="o">=</span><span class="s2">"user_1"</span><span class="p">,</span>
     <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"note"</span><span class="p">},</span>
 <span class="p">)</span>
 
+<span class="c1"># 检索与查询最相关的记忆</span>
 <span class="n">context</span><span class="o">.</span><span class="n">retrieve</span><span class="p">(</span><span class="s2">"Python answers"</span><span class="p">,</span> <span class="n">max_results</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
 </code></pre></div>
 
-<div class="codehilite"><pre><span></span><code><span class="n">context</span><span class="o">.</span><span class="n">conversation</span><span class="p">(</span><span class="s2">"conv_1"</span><span class="p">,</span> <span class="n">max_items</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 获取指定会话的最近记忆列表</span>
+<span class="n">context</span><span class="o">.</span><span class="n">conversation</span><span class="p">(</span><span class="s2">"conv_1"</span><span class="p">,</span> <span class="n">max_items</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
 </code></pre></div></section>
 <section id="sec-4"><h2><span class="pill-num">4</span>4) 导出、保存、加载</h2><p><code>AgentContext</code> 包含简单的持久化辅助方法。此示例使用一个临时目录。</p>
-<div class="codehilite"><pre><span></span><code><span class="n">export_json</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="n">export</span><span class="p">(</span><span class="n">conversation_id</span><span class="o">=</span><span class="s2">"conv_1"</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">"json"</span><span class="p">)</span>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 将会话记忆导出为 JSON 并预览前 300 个字符</span>
+<span class="n">export_json</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="n">export</span><span class="p">(</span><span class="n">conversation_id</span><span class="o">=</span><span class="s2">"conv_1"</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">"json"</span><span class="p">)</span>
 <span class="n">export_json</span><span class="p">[:</span><span class="mi">300</span><span class="p">]</span>
 </code></pre></div>
 
-<div class="codehilite"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">tempfile</span>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 使用临时目录测试上下文的保存与加载</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">tempfile</span>
 
+<span class="c1"># 在临时目录中保存并重新加载上下文</span>
 <span class="k">with</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">TemporaryDirectory</span><span class="p">()</span> <span class="k">as</span> <span class="n">d</span><span class="p">:</span>
     <span class="n">context</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
     <span class="n">context</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
 
+<span class="c1"># 生成会话摘要</span>
 <span class="n">context</span><span class="o">.</span><span class="n">conversation_summary</span><span class="p">(</span><span class="s2">"conv_1"</span><span class="p">)</span>
 </code></pre></div></section>
 <section id="sec-5"><h2><span class="pill-num">5</span>5) 存储文档并构建上下文图谱</h2><p>如果你存储一个列表，<code>AgentContext.store(...)</code> 会将其视为文档。为了让本 notebook 保持轻量且确定，我们为每个文档传入预先抽取好的实体和关系。</p>
-<div class="codehilite"><pre><span></span><code><span class="n">documents</span> <span class="o">=</span> <span class="p">[</span>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 存储文档并构建上下文图谱（使用预抽取的实体与关系）</span>
+<span class="c1"># 定义两个带预抽取实体与关系的文档</span>
+<span class="n">documents</span> <span class="o">=</span> <span class="p">[</span>
     <span class="p">{</span>
         <span class="s2">"id"</span><span class="p">:</span> <span class="s2">"doc_1"</span><span class="p">,</span>
         <span class="s2">"content"</span><span class="p">:</span> <span class="s2">"Python is used for machine learning."</span><span class="p">,</span>
@@ -386,6 +416,7 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
     <span class="p">},</span>
 <span class="p">]</span>
 
+<span class="c1"># 存储文档：跳过抽取，仅做实体链接</span>
 <span class="n">stats</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="n">store</span><span class="p">(</span>
     <span class="n">documents</span><span class="p">,</span>
     <span class="n">extract_entities</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
@@ -393,58 +424,77 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
     <span class="n">link_entities</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
 <span class="p">)</span>
 
+<span class="c1"># 查看存储统计信息</span>
 <span class="n">stats</span>
 </code></pre></div>
 
-<div class="codehilite"><pre><span></span><code><span class="n">kg</span><span class="o">.</span><span class="n">stats</span><span class="p">()</span>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 查看上下文图谱的统计信息</span>
+<span class="n">kg</span><span class="o">.</span><span class="n">stats</span><span class="p">()</span>
 </code></pre></div></section>
 <section id="sec-6"><h2><span class="pill-num">6</span>6) 使用 `ContextGraph` 探索图谱</h2><p>该图谱支持关键词查询和邻居扩展。</p>
-<div class="codehilite"><pre><span></span><code><span class="n">kg</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s2">"machine learning"</span><span class="p">)</span>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 在上下文图谱中执行关键词查询</span>
+<span class="n">kg</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s2">"machine learning"</span><span class="p">)</span>
 </code></pre></div>
 
-<div class="codehilite"><pre><span></span><code><span class="n">kg</span><span class="o">.</span><span class="n">get_neighbors</span><span class="p">(</span><span class="s2">"e_python"</span><span class="p">,</span> <span class="n">hops</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 获取节点 e_python 两跳以内的邻居</span>
+<span class="n">kg</span><span class="o">.</span><span class="n">get_neighbors</span><span class="p">(</span><span class="s2">"e_python"</span><span class="p">,</span> <span class="n">hops</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
 </code></pre></div></section>
 <section id="sec-7"><h2><span class="pill-num">7</span>7) 使用 `EntityLinker` 进行实体链接</h2><p><code>EntityLinker</code> 分配稳定的 URI，并可以跨来源链接相关或重复的实体。</p>
-<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">semantica.context</span><span class="w"> </span><span class="kn">import</span> <span class="n">EntityLinker</span>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 使用 EntityLinker 将文本中的实体链接到稳定 URI</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">semantica.context</span><span class="w"> </span><span class="kn">import</span> <span class="n">EntityLinker</span>
 
+<span class="c1"># 创建链接器并传入已有实体作为知识库</span>
 <span class="n">linker</span> <span class="o">=</span> <span class="n">EntityLinker</span><span class="p">(</span><span class="n">knowledge_graph</span><span class="o">=</span><span class="p">{</span><span class="s2">"entities"</span><span class="p">:</span> <span class="p">[{</span><span class="s2">"id"</span><span class="p">:</span> <span class="s2">"e_py"</span><span class="p">,</span> <span class="s2">"text"</span><span class="p">:</span> <span class="s2">"Python"</span><span class="p">,</span> <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"PROGRAMMING_LANGUAGE"</span><span class="p">}]})</span>
 
+<span class="c1"># 待链接的候选实体列表</span>
 <span class="n">entities</span> <span class="o">=</span> <span class="p">[</span>
     <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="s2">"e1"</span><span class="p">,</span> <span class="s2">"text"</span><span class="p">:</span> <span class="s2">"Python"</span><span class="p">,</span> <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"PROGRAMMING_LANGUAGE"</span><span class="p">},</span>
     <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="s2">"e2"</span><span class="p">,</span> <span class="s2">"text"</span><span class="p">:</span> <span class="s2">"PyTorch"</span><span class="p">,</span> <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"FRAMEWORK"</span><span class="p">},</span>
 <span class="p">]</span>
 
+<span class="c1"># 链接文本中的实体并展示 URI 与关联实体数</span>
 <span class="n">linked</span> <span class="o">=</span> <span class="n">linker</span><span class="o">.</span><span class="n">link</span><span class="p">(</span><span class="s2">"Python and PyTorch"</span><span class="p">,</span> <span class="n">entities</span><span class="o">=</span><span class="n">entities</span><span class="p">)</span>
 <span class="p">[(</span><span class="n">e</span><span class="o">.</span><span class="n">entity_id</span><span class="p">,</span> <span class="n">e</span><span class="o">.</span><span class="n">uri</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">linked_entities</span><span class="p">))</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">linked</span><span class="p">]</span>
 </code></pre></div>
 
-<div class="codehilite"><pre><span></span><code><span class="n">linker</span><span class="o">.</span><span class="n">link_entities</span><span class="p">(</span><span class="s2">"e1"</span><span class="p">,</span> <span class="s2">"e2"</span><span class="p">,</span> <span class="n">link_type</span><span class="o">=</span><span class="s2">"related_to"</span><span class="p">,</span> <span class="n">confidence</span><span class="o">=</span><span class="mf">0.8</span><span class="p">)</span>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 手动建立实体间链接并查询已有链接</span>
+<span class="n">linker</span><span class="o">.</span><span class="n">link_entities</span><span class="p">(</span><span class="s2">"e1"</span><span class="p">,</span> <span class="s2">"e2"</span><span class="p">,</span> <span class="n">link_type</span><span class="o">=</span><span class="s2">"related_to"</span><span class="p">,</span> <span class="n">confidence</span><span class="o">=</span><span class="mf">0.8</span><span class="p">)</span>
 <span class="n">linker</span><span class="o">.</span><span class="n">get_entity_links</span><span class="p">(</span><span class="s2">"e1"</span><span class="p">)[:</span><span class="mi">2</span><span class="p">]</span>
 </code></pre></div>
 
-<div class="codehilite"><pre><span></span><code><span class="n">linker</span><span class="o">.</span><span class="n">build_entity_web</span><span class="p">()[</span><span class="s2">"statistics"</span><span class="p">]</span>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 构建实体网络并查看统计信息</span>
+<span class="n">linker</span><span class="o">.</span><span class="n">build_entity_web</span><span class="p">()[</span><span class="s2">"statistics"</span><span class="p">]</span>
 </code></pre></div></section>
 <section id="sec-8"><h2><span class="pill-num">8</span>8) 底层构建块：`AgentMemory` 和 `ContextRetriever`</h2><p>如果你想要比 <code>AgentContext</code> 更多的控制，可以直接连接各个部分。</p>
-<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">semantica.context</span><span class="w"> </span><span class="kn">import</span> <span class="n">AgentMemory</span><span class="p">,</span> <span class="n">ContextRetriever</span>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 直接组合 AgentMemory 与 ContextRetriever 进行混合检索</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">semantica.context</span><span class="w"> </span><span class="kn">import</span> <span class="n">AgentMemory</span><span class="p">,</span> <span class="n">ContextRetriever</span>
 
+<span class="c1"># 创建无保留限制的记忆存储并写入一条事实</span>
 <span class="n">memory</span> <span class="o">=</span> <span class="n">AgentMemory</span><span class="p">(</span><span class="n">vector_store</span><span class="o">=</span><span class="n">vs</span><span class="p">,</span> <span class="n">knowledge_graph</span><span class="o">=</span><span class="n">kg</span><span class="p">,</span> <span class="n">retention_policy</span><span class="o">=</span><span class="s2">"unlimited"</span><span class="p">)</span>
 <span class="n">memory</span><span class="o">.</span><span class="n">store</span><span class="p">(</span><span class="s2">"Python powers Semantica."</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"fact"</span><span class="p">,</span> <span class="s2">"conversation_id"</span><span class="p">:</span> <span class="s2">"conv_2"</span><span class="p">})</span>
 
+<span class="c1"># 创建检索器，融合记忆、图谱与向量存储</span>
 <span class="n">retriever</span> <span class="o">=</span> <span class="n">ContextRetriever</span><span class="p">(</span><span class="n">memory_store</span><span class="o">=</span><span class="n">memory</span><span class="p">,</span> <span class="n">knowledge_graph</span><span class="o">=</span><span class="n">kg</span><span class="p">,</span> <span class="n">vector_store</span><span class="o">=</span><span class="n">vs</span><span class="p">)</span>
 <span class="n">results</span> <span class="o">=</span> <span class="n">retriever</span><span class="o">.</span><span class="n">retrieve</span><span class="p">(</span><span class="s2">"Python Semantica"</span><span class="p">,</span> <span class="n">max_results</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
 
+<span class="c1"># 展示检索结果的内容、来源与分数</span>
 <span class="p">[(</span><span class="n">r</span><span class="o">.</span><span class="n">content</span><span class="p">,</span> <span class="n">r</span><span class="o">.</span><span class="n">source</span><span class="p">,</span> <span class="nb">round</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">score</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">results</span><span class="p">]</span>
 </code></pre></div></section>
 <section id="sec-9"><h2><span class="pill-num">9</span>9) 方法、注册表和配置</h2><p><code>methods</code> 层暴露便捷函数，而 <code>registry</code> 让你插入自己的实现。<code>config</code> 提供运行时配置。</p>
-<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">semantica.context.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">context_config</span>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 通过全局配置对象调整运行时配置</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">semantica.context.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">context_config</span>
 
+<span class="c1"># 设置保留策略为 7 天</span>
 <span class="n">context_config</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">"retention_policy"</span><span class="p">,</span> <span class="s2">"7_days"</span><span class="p">)</span>
+<span class="c1"># 读取当前保留策略</span>
 <span class="n">context_config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"retention_policy"</span><span class="p">)</span>
 </code></pre></div>
 
-<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">semantica.context.methods</span><span class="w"> </span><span class="kn">import</span> <span class="n">build_context_graph</span>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 注册自定义图谱构建方法到注册表</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">semantica.context.methods</span><span class="w"> </span><span class="kn">import</span> <span class="n">build_context_graph</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">semantica.context.registry</span><span class="w"> </span><span class="kn">import</span> <span class="n">method_registry</span>
 
+<span class="c1"># 定义自定义图谱构建方法（此处返回空图）</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">custom_graph_method</span><span class="p">(</span><span class="n">entities</span><span class="p">,</span> <span class="n">relationships</span><span class="p">,</span> <span class="n">conversations</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
     <span class="k">return</span> <span class="p">{</span>
         <span class="s2">"nodes"</span><span class="p">:</span> <span class="p">[],</span>
@@ -452,11 +502,13 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
         <span class="s2">"statistics"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"node_count"</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">"edge_count"</span><span class="p">:</span> <span class="mi">0</span><span class="p">},</span>
     <span class="p">}</span>
 
+<span class="c1"># 注册自定义方法并列出所有已注册方法</span>
 <span class="n">method_registry</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="s2">"graph"</span><span class="p">,</span> <span class="s2">"custom_demo"</span><span class="p">,</span> <span class="n">custom_graph_method</span><span class="p">)</span>
 <span class="n">method_registry</span><span class="o">.</span><span class="n">list_all</span><span class="p">(</span><span class="s2">"graph"</span><span class="p">)</span>
 </code></pre></div>
 
-<div class="codehilite"><pre><span></span><code><span class="n">build_context_graph</span><span class="p">(</span>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 调用自定义方法构建上下文图谱</span>
+<span class="n">build_context_graph</span><span class="p">(</span>
     <span class="n">entities</span><span class="o">=</span><span class="p">[{</span><span class="s2">"id"</span><span class="p">:</span> <span class="s2">"e1"</span><span class="p">,</span> <span class="s2">"text"</span><span class="p">:</span> <span class="s2">"Python"</span><span class="p">,</span> <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"PROGRAMMING_LANGUAGE"</span><span class="p">}],</span>
     <span class="n">relationships</span><span class="o">=</span><span class="p">[{</span><span class="s2">"source_id"</span><span class="p">:</span> <span class="s2">"e1"</span><span class="p">,</span> <span class="s2">"target_id"</span><span class="p">:</span> <span class="s2">"e2"</span><span class="p">,</span> <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"related_to"</span><span class="p">}],</span>
     <span class="n">method</span><span class="o">=</span><span class="s2">"custom_demo"</span><span class="p">,</span>
@@ -467,6 +519,41 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 </div>
 
 <footer>由 Semantica 官方 Cookbook 生成的中文说明页 · <a href="https://github.com/semantica-agi/semantica">semantica-agi/semantica</a></footer>
+
+<script>
+(function() {
+  function legacyCopy(text, done) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); done(); } catch (e) {}
+    document.body.removeChild(ta);
+  }
+  function copyText(text, btn) {
+    function done() {
+      btn.textContent = '已复制';
+      setTimeout(function() { btn.textContent = '复制'; }, 1500);
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done, function() { legacyCopy(text, done); });
+    } else {
+      legacyCopy(text, done);
+    }
+  }
+  document.querySelectorAll('.codehilite').forEach(function(block) {
+    var btn = document.createElement('button');
+    btn.className = 'copy-btn';
+    btn.type = 'button';
+    btn.textContent = '复制';
+    btn.setAttribute('aria-label', '复制代码');
+    btn.addEventListener('click', function() {
+      copyText(block.querySelector('pre').innerText, btn);
+    });
+    block.appendChild(btn);
+  });
+})();
+</script>
 
 </body>
 </html>

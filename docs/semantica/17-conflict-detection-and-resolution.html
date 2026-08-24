@@ -136,8 +136,16 @@ pre {
   margin: 10px 0 18px;
 }
 pre code { background: transparent; color: inherit; padding: 0; border-radius: 0; font-size: 13px; }
-.codehilite { background: var(--code-bg); border-radius: 10px; overflow-x: auto; margin: 10px 0 18px; }
+.codehilite { background: var(--code-bg); border-radius: 10px; overflow-x: auto; margin: 10px 0 18px; position: relative; }
 .codehilite pre { margin: 0; padding: 16px 18px; background: transparent; }
+.copy-btn {
+  position: absolute; top: 8px; right: 8px;
+  background: rgba(255,255,255,0.08); color: #cbd0e6;
+  border: 1px solid rgba(255,255,255,0.18); border-radius: 6px;
+  padding: 3px 10px; font-size: 12px; cursor: pointer;
+  font-family: inherit; opacity: 0.7; transition: opacity 0.15s, background 0.15s;
+}
+.copy-btn:hover { opacity: 1; background: rgba(255,255,255,0.16); }
 
 /* pager */
 .pager { display: flex; justify-content: space-between; gap: 16px; margin-top: 8px; }
@@ -335,7 +343,8 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 </li>
 </ol></section>
 <section id="sec-2"><h2><span class="pill-num">2</span>安装</h2><p>确保你的环境中已安装 Semantica：</p>
-<div class="codehilite"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>semantica
+<div class="codehilite"><pre><span></span><code><span class="c1"># 安装 semantica</span>
+pip<span class="w"> </span>install<span class="w"> </span>semantica
 </code></pre></div>
 
 <ul>
@@ -343,10 +352,12 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 <li><code>pip install -e .</code></li>
 <li>如果你使用托管的 notebook 环境，<code>%pip install semantica</code> 通常比 <code>!pip install ...</code> 更可靠，因为它会安装到当前内核中。</li>
 </ul>
-<div class="codehilite"><pre><span></span><code><span class="err">!</span><span class="n">pip</span> <span class="n">install</span> <span class="o">-</span><span class="n">q</span> <span class="n">semantica</span>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 安装 semantica 包</span>
+<span class="err">!</span><span class="n">pip</span> <span class="n">install</span> <span class="o">-</span><span class="n">q</span> <span class="n">semantica</span>
 </code></pre></div>
 
-<div class="codehilite"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 导入 json 与 datetime 工具，用于处理记录数据和时间戳</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
 </code></pre></div></section>
 <section id="sec-3"><h2><span class="pill-num">3</span>步骤 1：模拟多来源数据</h2><p>为了演示该框架，我们将模拟一个涉及员工数据的真实场景。</p>
@@ -416,11 +427,14 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 <li>之后使用分析重新审视分数（例如"哪些来源经常出错？"）。</li>
 </ul>
 <p>我们遍历模拟的来源并注册它们。</p>
-<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">semantica.conflicts</span><span class="w"> </span><span class="kn">import</span> <span class="n">SourceTracker</span>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 使用 SourceTracker 注册来源及其可信度分数</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">semantica.conflicts</span><span class="w"> </span><span class="kn">import</span> <span class="n">SourceTracker</span>
 
+<span class="c1"># 创建来源追踪器实例</span>
 <span class="n">source_tracker</span> <span class="o">=</span> <span class="n">SourceTracker</span><span class="p">()</span>
 
 <span class="nb">print</span><span class="p">(</span><span class="s2">"Registering sources..."</span><span class="p">)</span>
+<span class="c1"># 遍历所有来源并注册其类型与可信度分数</span>
 <span class="k">for</span> <span class="n">source_id</span><span class="p">,</span> <span class="n">metadata</span> <span class="ow">in</span> <span class="n">sources_metadata</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
     <span class="n">source_tracker</span><span class="o">.</span><span class="n">register_source</span><span class="p">(</span>
         <span class="n">source_id</span><span class="o">=</span><span class="n">source_id</span><span class="p">,</span>
@@ -479,11 +493,14 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 <li>使用结果调整可信度分数（步骤 2）或优化摄取/清洗规则。</li>
 <li>随时间追踪趋势，以捕捉上游系统的回归。</li>
 </ul>
-<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">semantica.conflicts</span><span class="w"> </span><span class="kn">import</span> <span class="n">ConflictAnalyzer</span>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 分析冲突模式，识别有噪声的来源与分布</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">semantica.conflicts</span><span class="w"> </span><span class="kn">import</span> <span class="n">ConflictAnalyzer</span>
 
+<span class="c1"># 创建分析器并分析已检测到的冲突</span>
 <span class="n">analyzer</span> <span class="o">=</span> <span class="n">ConflictAnalyzer</span><span class="p">()</span>
 <span class="n">analysis</span> <span class="o">=</span> <span class="n">analyzer</span><span class="o">.</span><span class="n">analyze_conflicts</span><span class="p">(</span><span class="n">conflicts</span><span class="p">)</span>
 
+<span class="c1"># 输出按类型和严重程度的统计</span>
 <span class="nb">print</span><span class="p">(</span><span class="s2">"Conflict Analysis Summary:"</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Total Conflicts: </span><span class="si">{</span><span class="n">analysis</span><span class="p">[</span><span class="s1">'total_conflicts'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"By Type: </span><span class="si">{</span><span class="n">analysis</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'by_type'</span><span class="p">,</span><span class="w"> </span><span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'counts'</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
@@ -583,6 +600,41 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 </div>
 
 <footer>由 Semantica 官方 Cookbook 生成的中文说明页 · <a href="https://github.com/semantica-agi/semantica">semantica-agi/semantica</a></footer>
+
+<script>
+(function() {
+  function legacyCopy(text, done) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); done(); } catch (e) {}
+    document.body.removeChild(ta);
+  }
+  function copyText(text, btn) {
+    function done() {
+      btn.textContent = '已复制';
+      setTimeout(function() { btn.textContent = '复制'; }, 1500);
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done, function() { legacyCopy(text, done); });
+    } else {
+      legacyCopy(text, done);
+    }
+  }
+  document.querySelectorAll('.codehilite').forEach(function(block) {
+    var btn = document.createElement('button');
+    btn.className = 'copy-btn';
+    btn.type = 'button';
+    btn.textContent = '复制';
+    btn.setAttribute('aria-label', '复制代码');
+    btn.addEventListener('click', function() {
+      copyText(block.querySelector('pre').innerText, btn);
+    });
+    block.appendChild(btn);
+  });
+})();
+</script>
 
 </body>
 </html>

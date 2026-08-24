@@ -136,8 +136,16 @@ pre {
   margin: 10px 0 18px;
 }
 pre code { background: transparent; color: inherit; padding: 0; border-radius: 0; font-size: 13px; }
-.codehilite { background: var(--code-bg); border-radius: 10px; overflow-x: auto; margin: 10px 0 18px; }
+.codehilite { background: var(--code-bg); border-radius: 10px; overflow-x: auto; margin: 10px 0 18px; position: relative; }
 .codehilite pre { margin: 0; padding: 16px 18px; background: transparent; }
+.copy-btn {
+  position: absolute; top: 8px; right: 8px;
+  background: rgba(255,255,255,0.08); color: #cbd0e6;
+  border: 1px solid rgba(255,255,255,0.18); border-radius: 6px;
+  padding: 3px 10px; font-size: 12px; cursor: pointer;
+  font-family: inherit; opacity: 0.7; transition: opacity 0.15s, background 0.15s;
+}
+.copy-btn:hover { opacity: 1; background: rgba(255,255,255,0.16); }
 
 /* pager */
 .pager { display: flex; justify-content: space-between; gap: 16px; margin-top: 8px; }
@@ -302,16 +310,20 @@ pip<span class="w"> </span>install<span class="w"> </span>semantica<span class="
 </code></pre></div>
 
 <hr /></section>
-<section id="sec-3"><h2><span class="pill-num">3</span>工作流：事件检测 → 共指消解 → 三元组抽取 → 语义分析 → 网络抽取 → LLM 增强 → 验证</h2><div class="codehilite"><pre><span></span><code><span class="err">!</span><span class="n">pip</span> <span class="n">install</span> <span class="o">-</span><span class="n">q</span> <span class="n">semantica</span>
+<section id="sec-3"><h2><span class="pill-num">3</span>工作流：事件检测 → 共指消解 → 三元组抽取 → 语义分析 → 网络抽取 → LLM 增强 → 验证</h2><div class="codehilite"><pre><span></span><code><span class="c1"># 安装 Semantica</span>
+<span class="err">!</span><span class="n">pip</span> <span class="n">install</span> <span class="o">-</span><span class="n">q</span> <span class="n">semantica</span>
 </code></pre></div>
 
-<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">semantica.semantic_extract</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 导入高级语义抽取所需的全部组件</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">semantica.semantic_extract</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">EventDetector</span><span class="p">,</span> <span class="n">CoreferenceResolver</span><span class="p">,</span> <span class="n">TripletExtractor</span><span class="p">,</span>
     <span class="n">SemanticAnalyzer</span><span class="p">,</span> <span class="n">SemanticNetworkExtractor</span><span class="p">,</span> <span class="n">LLMEnhancer</span><span class="p">,</span> <span class="n">ExtractionValidator</span>
 <span class="p">)</span>
 
+<span class="c1"># 示例文本：包含事件、共指与三元组信息</span>
 <span class="n">text</span> <span class="o">=</span> <span class="s2">"Apple Inc. was founded by Steve Jobs in 1976. The company is now led by Tim Cook."</span>
 
+<span class="c1"># 步骤 1：事件检测</span>
 <span class="n">event_detector</span> <span class="o">=</span> <span class="n">EventDetector</span><span class="p">()</span>
 <span class="n">events</span> <span class="o">=</span> <span class="n">event_detector</span><span class="o">.</span><span class="n">detect_events</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
 
@@ -320,14 +332,16 @@ pip<span class="w"> </span>install<span class="w"> </span>semantica<span class="
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  Event: </span><span class="si">{</span><span class="n">event</span><span class="o">.</span><span class="n">event_type</span><span class="si">}</span><span class="s2"> - </span><span class="si">{</span><span class="n">event</span><span class="o">.</span><span class="n">text</span><span class="p">[:</span><span class="mi">50</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 </code></pre></div></section>
 <section id="sec-4"><h2><span class="pill-num">4</span>步骤 2：共指消解</h2><p>消解文本中的共指。</p>
-<div class="codehilite"><pre><span></span><code><span class="n">coreference_resolver</span> <span class="o">=</span> <span class="n">CoreferenceResolver</span><span class="p">()</span>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 步骤 2：共指消解——将指向同一实体的不同表述归并</span>
+<span class="n">coreference_resolver</span> <span class="o">=</span> <span class="n">CoreferenceResolver</span><span class="p">()</span>
 
 <span class="n">coreferences</span> <span class="o">=</span> <span class="n">coreference_resolver</span><span class="o">.</span><span class="n">resolve</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
 
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Resolved </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">coreferences</span><span class="p">)</span><span class="si">}</span><span class="s2"> coreference chains"</span><span class="p">)</span>
 </code></pre></div></section>
 <section id="sec-5"><h2><span class="pill-num">5</span>步骤 3：三元组抽取</h2><p>抽取 RDF 三元组。</p>
-<div class="codehilite"><pre><span></span><code><span class="n">triplet_extractor</span> <span class="o">=</span> <span class="n">TripletExtractor</span><span class="p">()</span>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 步骤 3：抽取 RDF 三元组（主语-谓词-宾语）</span>
+<span class="n">triplet_extractor</span> <span class="o">=</span> <span class="n">TripletExtractor</span><span class="p">()</span>
 
 <span class="n">triplets</span> <span class="o">=</span> <span class="n">triplet_extractor</span><span class="o">.</span><span class="n">extract_triplets</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
 
@@ -336,14 +350,16 @@ pip<span class="w"> </span>install<span class="w"> </span>semantica<span class="
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  (</span><span class="si">{</span><span class="n">triplet</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'subject'</span><span class="p">,</span><span class="w"> </span><span class="s1">''</span><span class="p">)</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">triplet</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'predicate'</span><span class="p">,</span><span class="w"> </span><span class="s1">''</span><span class="p">)</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">triplet</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'object'</span><span class="p">,</span><span class="w"> </span><span class="s1">''</span><span class="p">)</span><span class="si">}</span><span class="s2">)"</span><span class="p">)</span>
 </code></pre></div></section>
 <section id="sec-6"><h2><span class="pill-num">6</span>步骤 4：语义分析</h2><p>执行语义分析。</p>
-<div class="codehilite"><pre><span></span><code><span class="n">semantic_analyzer</span> <span class="o">=</span> <span class="n">SemanticAnalyzer</span><span class="p">()</span>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 步骤 4：语义分析——标注句子中的语义角色</span>
+<span class="n">semantic_analyzer</span> <span class="o">=</span> <span class="n">SemanticAnalyzer</span><span class="p">()</span>
 
 <span class="n">semantic_roles</span> <span class="o">=</span> <span class="n">semantic_analyzer</span><span class="o">.</span><span class="n">analyze_semantic_roles</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
 
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Analyzed semantic roles: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">semantic_roles</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 </code></pre></div></section>
 <section id="sec-7"><h2><span class="pill-num">7</span>步骤 5：语义网络抽取</h2><p>抽取语义网络。</p>
-<div class="codehilite"><pre><span></span><code><span class="n">semantic_network_extractor</span> <span class="o">=</span> <span class="n">SemanticNetworkExtractor</span><span class="p">()</span>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 步骤 5：抽取语义网络（节点与边）</span>
+<span class="n">semantic_network_extractor</span> <span class="o">=</span> <span class="n">SemanticNetworkExtractor</span><span class="p">()</span>
 
 <span class="n">semantic_network</span> <span class="o">=</span> <span class="n">semantic_network_extractor</span><span class="o">.</span><span class="n">extract_network</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
 
@@ -351,14 +367,16 @@ pip<span class="w"> </span>install<span class="w"> </span>semantica<span class="
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Edges: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">semantic_network</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'edges'</span><span class="p">,</span><span class="w"> </span><span class="p">[]))</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 </code></pre></div></section>
 <section id="sec-8"><h2><span class="pill-num">8</span>步骤 6：LLM 增强</h2><p>使用 LLM 增强抽取结果。</p>
-<div class="codehilite"><pre><span></span><code><span class="n">llm_enhancer</span> <span class="o">=</span> <span class="n">LLMEnhancer</span><span class="p">()</span>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 步骤 6：使用 LLM 增强抽取结果</span>
+<span class="n">llm_enhancer</span> <span class="o">=</span> <span class="n">LLMEnhancer</span><span class="p">()</span>
 
 <span class="n">enhanced_extractions</span> <span class="o">=</span> <span class="n">llm_enhancer</span><span class="o">.</span><span class="n">enhance_extractions</span><span class="p">(</span><span class="n">events</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span>
 
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Enhanced </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">enhanced_extractions</span><span class="p">)</span><span class="si">}</span><span class="s2"> extractions"</span><span class="p">)</span>
 </code></pre></div></section>
 <section id="sec-9"><h2><span class="pill-num">9</span>步骤 7：抽取验证</h2><p>验证抽取结果。</p>
-<div class="codehilite"><pre><span></span><code><span class="n">extraction_validator</span> <span class="o">=</span> <span class="n">ExtractionValidator</span><span class="p">()</span>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 步骤 7：验证抽取结果并输出置信度</span>
+<span class="n">extraction_validator</span> <span class="o">=</span> <span class="n">ExtractionValidator</span><span class="p">()</span>
 
 <span class="n">validation_result</span> <span class="o">=</span> <span class="n">extraction_validator</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">events</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span>
 
@@ -381,6 +399,41 @@ pip<span class="w"> </span>install<span class="w"> </span>semantica<span class="
 </div>
 
 <footer>由 Semantica 官方 Cookbook 生成的中文说明页 · <a href="https://github.com/semantica-agi/semantica">semantica-agi/semantica</a></footer>
+
+<script>
+(function() {
+  function legacyCopy(text, done) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); done(); } catch (e) {}
+    document.body.removeChild(ta);
+  }
+  function copyText(text, btn) {
+    function done() {
+      btn.textContent = '已复制';
+      setTimeout(function() { btn.textContent = '复制'; }, 1500);
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done, function() { legacyCopy(text, done); });
+    } else {
+      legacyCopy(text, done);
+    }
+  }
+  document.querySelectorAll('.codehilite').forEach(function(block) {
+    var btn = document.createElement('button');
+    btn.className = 'copy-btn';
+    btn.type = 'button';
+    btn.textContent = '复制';
+    btn.setAttribute('aria-label', '复制代码');
+    btn.addEventListener('click', function() {
+      copyText(block.querySelector('pre').innerText, btn);
+    });
+    block.appendChild(btn);
+  });
+})();
+</script>
 
 </body>
 </html>

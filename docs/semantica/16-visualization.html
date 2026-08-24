@@ -136,8 +136,16 @@ pre {
   margin: 10px 0 18px;
 }
 pre code { background: transparent; color: inherit; padding: 0; border-radius: 0; font-size: 13px; }
-.codehilite { background: var(--code-bg); border-radius: 10px; overflow-x: auto; margin: 10px 0 18px; }
+.codehilite { background: var(--code-bg); border-radius: 10px; overflow-x: auto; margin: 10px 0 18px; position: relative; }
 .codehilite pre { margin: 0; padding: 16px 18px; background: transparent; }
+.copy-btn {
+  position: absolute; top: 8px; right: 8px;
+  background: rgba(255,255,255,0.08); color: #cbd0e6;
+  border: 1px solid rgba(255,255,255,0.18); border-radius: 6px;
+  padding: 3px 10px; font-size: 12px; cursor: pointer;
+  font-family: inherit; opacity: 0.7; transition: opacity 0.15s, background 0.15s;
+}
+.copy-btn:hover { opacity: 1; background: rgba(255,255,255,0.16); }
 
 /* pager */
 .pager { display: flex; justify-content: space-between; gap: 16px; margin-top: 8px; }
@@ -296,26 +304,33 @@ pip<span class="w"> </span>install<span class="w"> </span>semantica<span class="
 
 <hr /></section>
 <section id="sec-3"><h2><span class="pill-num">3</span>步骤 1：知识图谱可视化</h2><p>可视化知识图谱。</p>
-<div class="codehilite"><pre><span></span><code><span class="err">!</span><span class="n">pip</span> <span class="n">install</span> <span class="o">-</span><span class="n">q</span> <span class="n">semantica</span>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 安装 semantica 包</span>
+<span class="err">!</span><span class="n">pip</span> <span class="n">install</span> <span class="o">-</span><span class="n">q</span> <span class="n">semantica</span>
 </code></pre></div>
 
-<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">semantica.visualization</span><span class="w"> </span><span class="kn">import</span> <span class="n">KGVisualizer</span>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 构建知识图谱并生成交互式网络可视化</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">semantica.visualization</span><span class="w"> </span><span class="kn">import</span> <span class="n">KGVisualizer</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">semantica.kg</span><span class="w"> </span><span class="kn">import</span> <span class="n">GraphBuilder</span>
 
+<span class="c1"># 创建可视化器与图谱构建器实例</span>
 <span class="n">kg_visualizer</span> <span class="o">=</span> <span class="n">KGVisualizer</span><span class="p">()</span>
 <span class="n">builder</span> <span class="o">=</span> <span class="n">GraphBuilder</span><span class="p">()</span>
 
+<span class="c1"># 定义实体列表</span>
 <span class="n">entities</span> <span class="o">=</span> <span class="p">[</span>
     <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="s2">"e1"</span><span class="p">,</span> <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"Organization"</span><span class="p">,</span> <span class="s2">"name"</span><span class="p">:</span> <span class="s2">"Apple Inc."</span><span class="p">,</span> <span class="s2">"properties"</span><span class="p">:</span> <span class="p">{}},</span>
     <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="s2">"e2"</span><span class="p">,</span> <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"Person"</span><span class="p">,</span> <span class="s2">"name"</span><span class="p">:</span> <span class="s2">"Tim Cook"</span><span class="p">,</span> <span class="s2">"properties"</span><span class="p">:</span> <span class="p">{}}</span>
 <span class="p">]</span>
 
+<span class="c1"># 定义实体间的关系</span>
 <span class="n">relationships</span> <span class="o">=</span> <span class="p">[</span>
     <span class="p">{</span><span class="s2">"source"</span><span class="p">:</span> <span class="s2">"e2"</span><span class="p">,</span> <span class="s2">"target"</span><span class="p">:</span> <span class="s2">"e1"</span><span class="p">,</span> <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"CEO_of"</span><span class="p">,</span> <span class="s2">"properties"</span><span class="p">:</span> <span class="p">{}}</span>
 <span class="p">]</span>
 
+<span class="c1"># 构建知识图谱</span>
 <span class="n">kg</span> <span class="o">=</span> <span class="n">builder</span><span class="o">.</span><span class="n">build</span><span class="p">(</span><span class="n">entities</span><span class="p">,</span> <span class="n">relationships</span><span class="p">)</span>
 
+<span class="c1"># 生成交互式网络可视化</span>
 <span class="n">visualization</span> <span class="o">=</span> <span class="n">kg_visualizer</span><span class="o">.</span><span class="n">visualize_network</span><span class="p">(</span><span class="n">kg</span><span class="p">,</span> <span class="n">output</span><span class="o">=</span><span class="s2">"interactive"</span><span class="p">)</span>
 </code></pre></div></section>
 <section id="sec-4"><h2><span class="pill-num">4</span>步骤 2：本体可视化</h2><p>可视化本体。</p>
@@ -333,17 +348,23 @@ pip<span class="w"> </span>install<span class="w"> </span>semantica<span class="
 <span class="n">visualization</span> <span class="o">=</span> <span class="n">ontology_visualizer</span><span class="o">.</span><span class="n">visualize_hierarchy</span><span class="p">(</span><span class="n">ontology</span><span class="p">,</span> <span class="n">output</span><span class="o">=</span><span class="s2">"interactive"</span><span class="p">)</span>
 </code></pre></div></section>
 <section id="sec-5"><h2><span class="pill-num">5</span>步骤 3：嵌入可视化</h2><p>可视化嵌入。</p>
-<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">semantica.visualization</span><span class="w"> </span><span class="kn">import</span> <span class="n">EmbeddingVisualizer</span>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 生成文本嵌入并可视化其二维投影</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">semantica.visualization</span><span class="w"> </span><span class="kn">import</span> <span class="n">EmbeddingVisualizer</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">semantica.embeddings</span><span class="w"> </span><span class="kn">import</span> <span class="n">EmbeddingGenerator</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 
+<span class="c1"># 创建嵌入可视化器与生成器实例</span>
 <span class="n">embedding_visualizer</span> <span class="o">=</span> <span class="n">EmbeddingVisualizer</span><span class="p">()</span>
 <span class="n">generator</span> <span class="o">=</span> <span class="n">EmbeddingGenerator</span><span class="p">()</span>
 
+<span class="c1"># 待嵌入的文本列表</span>
 <span class="n">texts</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"Apple Inc."</span><span class="p">,</span> <span class="s2">"Microsoft Corporation"</span><span class="p">,</span> <span class="s2">"Amazon"</span><span class="p">]</span>
+<span class="c1"># 生成文本嵌入</span>
 <span class="n">embeddings</span> <span class="o">=</span> <span class="n">generator</span><span class="o">.</span><span class="n">generate_embeddings</span><span class="p">(</span><span class="n">texts</span><span class="p">,</span> <span class="n">data_type</span><span class="o">=</span><span class="s2">"text"</span><span class="p">)</span>
+<span class="c1"># 为每个嵌入指定显示标签</span>
 <span class="n">labels</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"Apple"</span><span class="p">,</span> <span class="s2">"Microsoft"</span><span class="p">,</span> <span class="s2">"Amazon"</span><span class="p">]</span>
 
+<span class="c1"># 使用 UMAP 降维并绘制二维投影</span>
 <span class="n">visualization</span> <span class="o">=</span> <span class="n">embedding_visualizer</span><span class="o">.</span><span class="n">visualize_2d_projection</span><span class="p">(</span><span class="n">embeddings</span><span class="p">,</span> <span class="n">labels</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">"umap"</span><span class="p">)</span>
 </code></pre></div></section>
 <section id="sec-6"><h2><span class="pill-num">6</span>步骤 4：语义网络可视化</h2><p>可视化语义网络：结构、节点类型和边类型。</p>
@@ -383,6 +404,41 @@ pip<span class="w"> </span>install<span class="w"> </span>semantica<span class="
 </div>
 
 <footer>由 Semantica 官方 Cookbook 生成的中文说明页 · <a href="https://github.com/semantica-agi/semantica">semantica-agi/semantica</a></footer>
+
+<script>
+(function() {
+  function legacyCopy(text, done) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); done(); } catch (e) {}
+    document.body.removeChild(ta);
+  }
+  function copyText(text, btn) {
+    function done() {
+      btn.textContent = '已复制';
+      setTimeout(function() { btn.textContent = '复制'; }, 1500);
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done, function() { legacyCopy(text, done); });
+    } else {
+      legacyCopy(text, done);
+    }
+  }
+  document.querySelectorAll('.codehilite').forEach(function(block) {
+    var btn = document.createElement('button');
+    btn.className = 'copy-btn';
+    btn.type = 'button';
+    btn.textContent = '复制';
+    btn.setAttribute('aria-label', '复制代码');
+    btn.addEventListener('click', function() {
+      copyText(block.querySelector('pre').innerText, btn);
+    });
+    block.appendChild(btn);
+  });
+})();
+</script>
 
 </body>
 </html>

@@ -136,8 +136,16 @@ pre {
   margin: 10px 0 18px;
 }
 pre code { background: transparent; color: inherit; padding: 0; border-radius: 0; font-size: 13px; }
-.codehilite { background: var(--code-bg); border-radius: 10px; overflow-x: auto; margin: 10px 0 18px; }
+.codehilite { background: var(--code-bg); border-radius: 10px; overflow-x: auto; margin: 10px 0 18px; position: relative; }
 .codehilite pre { margin: 0; padding: 16px 18px; background: transparent; }
+.copy-btn {
+  position: absolute; top: 8px; right: 8px;
+  background: rgba(255,255,255,0.08); color: #cbd0e6;
+  border: 1px solid rgba(255,255,255,0.18); border-radius: 6px;
+  padding: 3px 10px; font-size: 12px; cursor: pointer;
+  font-family: inherit; opacity: 0.7; transition: opacity 0.15s, background 0.15s;
+}
+.copy-btn:hover { opacity: 1; background: rgba(255,255,255,0.16); }
 
 /* pager */
 .pager { display: flex; justify-content: space-between; gap: 16px; margin-top: 8px; }
@@ -315,22 +323,27 @@ pip<span class="w"> </span>install<span class="w"> </span>semantica<span class="
 <p>[!TIP]
 <strong>替代方案：使用 Semantica 框架</strong></p>
 <p>若想采用更简单、更高层的方式，你可以使用 <code>Semantica</code> 框架类，它会编排所有这些步骤：</p>
-<p>```python
-from semantica.core import Semantica</p>
+<p>```python</p>
+<h1>使用 Semantica 框架类编排完整流水线</h1>
+<p>from semantica.core import Semantica</p>
+<h1>初始化框架</h1>
 <p>framework = Semantica()
 framework.initialize()</p>
+<h1>构建知识库：摄取文档并生成嵌入与图谱</h1>
 <p>result = framework.build_knowledge_base(
     sources=["sample_document.txt"],
     embeddings=True,
     graph=True
 )</p>
+<h1>关闭框架，释放资源</h1>
 <p>framework.shutdown()
 ```</p>
 <p>本 notebook 展示的是用于学习的分步方式。更多细节请参阅 <a href="https://github.com/semantica-agi/semantica">Core Module Usage Guide</a>。</p>
 </blockquote>
 <hr /></section>
 <section id="sec-4"><h2><span class="pill-num">4</span>📂 步骤 1：摄取文件</h2><p>在这一步，我们将使用 <code>FileIngestor</code> 加载一份文档。该摄取器支持多种文件格式，包括 PDF、DOCX、TXT 等。</p>
-<div class="codehilite"><pre><span></span><code><span class="err">!</span><span class="n">pip</span> <span class="n">install</span> <span class="n">semantica</span>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 安装 Semantica</span>
+<span class="err">!</span><span class="n">pip</span> <span class="n">install</span> <span class="n">semantica</span>
 </code></pre></div>
 
 <div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">semantica.ingest</span><span class="w"> </span><span class="kn">import</span> <span class="n">FileIngestor</span>
@@ -475,6 +488,41 @@ framework.initialize()</p>
 </div>
 
 <footer>由 Semantica 官方 Cookbook 生成的中文说明页 · <a href="https://github.com/semantica-agi/semantica">semantica-agi/semantica</a></footer>
+
+<script>
+(function() {
+  function legacyCopy(text, done) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); done(); } catch (e) {}
+    document.body.removeChild(ta);
+  }
+  function copyText(text, btn) {
+    function done() {
+      btn.textContent = '已复制';
+      setTimeout(function() { btn.textContent = '复制'; }, 1500);
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done, function() { legacyCopy(text, done); });
+    } else {
+      legacyCopy(text, done);
+    }
+  }
+  document.querySelectorAll('.codehilite').forEach(function(block) {
+    var btn = document.createElement('button');
+    btn.className = 'copy-btn';
+    btn.type = 'button';
+    btn.textContent = '复制';
+    btn.setAttribute('aria-label', '复制代码');
+    btn.addEventListener('click', function() {
+      copyText(block.querySelector('pre').innerText, btn);
+    });
+    block.appendChild(btn);
+  });
+})();
+</script>
 
 </body>
 </html>

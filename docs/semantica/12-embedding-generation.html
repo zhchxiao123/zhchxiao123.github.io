@@ -136,8 +136,16 @@ pre {
   margin: 10px 0 18px;
 }
 pre code { background: transparent; color: inherit; padding: 0; border-radius: 0; font-size: 13px; }
-.codehilite { background: var(--code-bg); border-radius: 10px; overflow-x: auto; margin: 10px 0 18px; }
+.codehilite { background: var(--code-bg); border-radius: 10px; overflow-x: auto; margin: 10px 0 18px; position: relative; }
 .codehilite pre { margin: 0; padding: 16px 18px; background: transparent; }
+.copy-btn {
+  position: absolute; top: 8px; right: 8px;
+  background: rgba(255,255,255,0.08); color: #cbd0e6;
+  border: 1px solid rgba(255,255,255,0.18); border-radius: 6px;
+  padding: 3px 10px; font-size: 12px; cursor: pointer;
+  font-family: inherit; opacity: 0.7; transition: opacity 0.15s, background 0.15s;
+}
+.copy-btn:hover { opacity: 1; background: rgba(255,255,255,0.16); }
 
 /* pager */
 .pager { display: flex; justify-content: space-between; gap: 16px; margin-top: 8px; }
@@ -296,19 +304,24 @@ pip<span class="w"> </span>install<span class="w"> </span>semantica<span class="
 
 <hr /></section>
 <section id="sec-3"><h2><span class="pill-num">3</span>步骤 1：生成嵌入</h2><p>使用 EmbeddingGenerator 生成嵌入。</p>
-<div class="codehilite"><pre><span></span><code><span class="err">!</span><span class="n">pip</span> <span class="n">install</span> <span class="n">semantica</span>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 安装 Semantica</span>
+<span class="err">!</span><span class="n">pip</span> <span class="n">install</span> <span class="n">semantica</span>
 </code></pre></div>
 
-<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">semantica.embeddings</span><span class="w"> </span><span class="kn">import</span> <span class="n">EmbeddingGenerator</span>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 使用 EmbeddingGenerator 为多个文本生成嵌入</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">semantica.embeddings</span><span class="w"> </span><span class="kn">import</span> <span class="n">EmbeddingGenerator</span>
 
+<span class="c1"># 初始化嵌入生成器</span>
 <span class="n">generator</span> <span class="o">=</span> <span class="n">EmbeddingGenerator</span><span class="p">()</span>
 
+<span class="c1"># 待嵌入的文本列表</span>
 <span class="n">texts</span> <span class="o">=</span> <span class="p">[</span>
     <span class="s2">"Apple Inc. is a technology company."</span><span class="p">,</span>
     <span class="s2">"Microsoft Corporation develops software."</span><span class="p">,</span>
     <span class="s2">"Amazon provides cloud services."</span>
 <span class="p">]</span>
 
+<span class="c1"># 批量生成文本嵌入</span>
 <span class="n">embeddings</span> <span class="o">=</span> <span class="n">generator</span><span class="o">.</span><span class="n">generate_embeddings</span><span class="p">(</span><span class="n">texts</span><span class="p">,</span> <span class="n">data_type</span><span class="o">=</span><span class="s2">"text"</span><span class="p">)</span>
 
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Generated embeddings for </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">texts</span><span class="p">)</span><span class="si">}</span><span class="s2"> texts"</span><span class="p">)</span>
@@ -316,12 +329,15 @@ pip<span class="w"> </span>install<span class="w"> </span>semantica<span class="
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"First embedding dimension: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">embeddings</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="nb">len</span><span class="p">(</span><span class="n">embeddings</span><span class="p">)</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">'N/A'</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 </code></pre></div></section>
 <section id="sec-4"><h2><span class="pill-num">4</span>步骤 2：文本嵌入</h2><p>使用 TextEmbedder 生成文本特定的嵌入。</p>
-<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">semantica.embeddings</span><span class="w"> </span><span class="kn">import</span> <span class="n">TextEmbedder</span>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 使用 TextEmbedder 为单个文本生成嵌入</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">semantica.embeddings</span><span class="w"> </span><span class="kn">import</span> <span class="n">TextEmbedder</span>
 
+<span class="c1"># 初始化文本嵌入器</span>
 <span class="n">text_embedder</span> <span class="o">=</span> <span class="n">TextEmbedder</span><span class="p">()</span>
 
 <span class="n">text</span> <span class="o">=</span> <span class="s2">"Semantic knowledge graphs enable intelligent data processing."</span>
 
+<span class="c1"># 生成文本的向量表示</span>
 <span class="n">embedding</span> <span class="o">=</span> <span class="n">text_embedder</span><span class="o">.</span><span class="n">embed_text</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
 
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Generated embedding for text"</span><span class="p">)</span>
@@ -351,6 +367,41 @@ pip<span class="w"> </span>install<span class="w"> </span>semantica<span class="
 </div>
 
 <footer>由 Semantica 官方 Cookbook 生成的中文说明页 · <a href="https://github.com/semantica-agi/semantica">semantica-agi/semantica</a></footer>
+
+<script>
+(function() {
+  function legacyCopy(text, done) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); done(); } catch (e) {}
+    document.body.removeChild(ta);
+  }
+  function copyText(text, btn) {
+    function done() {
+      btn.textContent = '已复制';
+      setTimeout(function() { btn.textContent = '复制'; }, 1500);
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done, function() { legacyCopy(text, done); });
+    } else {
+      legacyCopy(text, done);
+    }
+  }
+  document.querySelectorAll('.codehilite').forEach(function(block) {
+    var btn = document.createElement('button');
+    btn.className = 'copy-btn';
+    btn.type = 'button';
+    btn.textContent = '复制';
+    btn.setAttribute('aria-label', '复制代码');
+    btn.addEventListener('click', function() {
+      copyText(block.querySelector('pre').innerText, btn);
+    });
+    block.appendChild(btn);
+  });
+})();
+</script>
 
 </body>
 </html>
